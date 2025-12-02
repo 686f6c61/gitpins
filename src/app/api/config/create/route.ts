@@ -127,7 +127,15 @@ export async function POST(request: NextRequest) {
     await createRepoSecret(appOctokit, user.username, repoName, 'GITPINS_SYNC_SECRET', syncSecret)
 
     // Generar contenidos
-    const reposOrderArray: string[] = JSON.parse(user.repoOrder.reposOrder)
+    let reposOrderArray: string[] = []
+    try {
+      const parsed = JSON.parse(user.repoOrder.reposOrder)
+      reposOrderArray = Array.isArray(parsed) ? parsed : []
+    } catch {
+      return addSecurityHeaders(
+        NextResponse.json({ error: 'Invalid configuration' }, { status: 400 })
+      )
+    }
     const configJson = generateConfigJson({
       reposOrder: reposOrderArray,
       topN: user.repoOrder.topN,

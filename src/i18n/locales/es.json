@@ -473,5 +473,62 @@
       "p1": "Al usar GitPins, confirmas que has leído, entendido y aceptado todos los términos de este descargo de responsabilidad."
     },
     "backToHome": "Volver al inicio"
+  },
+  "banned": {
+    "title": "Cuenta Suspendida",
+    "message": "Tu cuenta ha sido suspendida por violar nuestros términos de servicio. Si crees que es un error, contacta al administrador.",
+    "contact": "Para apelar esta decisión o más información, abre un issue en nuestro repositorio de GitHub:",
+    "openIssue": "Abrir Issue",
+    "backToHome": "Volver al inicio"
+  },
+  "admin": {
+    "title": "GitPins Admin",
+    "backToDashboard": "Volver al dashboard",
+    "stats": {
+      "totalUsers": "Usuarios Totales",
+      "activeUsers": "Usuarios Activos",
+      "bannedUsers": "Baneados",
+      "configRepos": "Repos Config",
+      "totalSyncs": "Syncs Totales",
+      "syncsToday": "Syncs Hoy",
+      "syncsThisWeek": "Esta Semana"
+    },
+    "charts": {
+      "registrations": "Registros de Usuarios (30 días)",
+      "syncActivity": "Actividad de Sync (30 días)",
+      "daysAgo": "Hace 30 días",
+      "today": "Hoy"
+    },
+    "users": {
+      "title": "Usuarios",
+      "user": "Usuario",
+      "configRepo": "Repo Config",
+      "repos": "Repos",
+      "syncs": "Syncs",
+      "lastLogin": "Último Login",
+      "status": "Estado",
+      "actions": "Acciones",
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "banned": "Baneado",
+      "ban": "Banear",
+      "unban": "Desbanear",
+      "delete": "Eliminar"
+    },
+    "banModal": {
+      "title": "Banear a @{username}",
+      "message": "Este usuario no podrá iniciar sesión ni usar GitPins hasta que sea desbaneado.",
+      "reasonLabel": "Razón (opcional)",
+      "reasonPlaceholder": "Violación de los términos de servicio",
+      "cancel": "Cancelar",
+      "confirm": "Banear Usuario"
+    },
+    "deleteConfirm": "¿Estás seguro de eliminar al usuario @{username}? Esta acción no se puede deshacer.",
+    "errors": {
+      "loadingData": "Error cargando datos",
+      "banningUser": "Error al banear usuario",
+      "unbanningUser": "Error al desbanear usuario",
+      "deletingUser": "Error al eliminar usuario"
+    }
   }
 }

@@ -77,8 +77,16 @@ export async function POST(
     const octokit = createAppOctokit(user.installationId)
 
     // Obtener lista de repos a ordenar
-    const reposOrder: string[] = JSON.parse(repoOrder.reposOrder)
-    const reposToSync = reposOrder.slice(0, repoOrder.topN || reposOrder.length)
+    let reposOrderParsed: string[] = []
+    try {
+      reposOrderParsed = JSON.parse(repoOrder.reposOrder)
+      if (!Array.isArray(reposOrderParsed)) {
+        reposOrderParsed = []
+      }
+    } catch {
+      return NextResponse.json({ error: 'Invalid configuration' }, { status: 400 })
+    }
+    const reposToSync = reposOrderParsed.slice(0, repoOrder.topN || reposOrderParsed.length)
 
     if (reposToSync.length === 0) {
       return NextResponse.json({ message: 'No repos to sync' }, { status: 200 })
@@ -91,8 +99,16 @@ export async function POST(
       const repoFullName = reposToSync[i]
       const [owner, repo] = repoFullName.split('/')
 
-      // Validate repo name format
-      if (!owner || !repo || !/^[a-zA-Z0-9._-]+$/.test(owner) || !/^[a-zA-Z0-9._-]+$/.test(repo)) {
+      // Validate repo name format (GitHub constraints: 1-100 chars, alphanumeric, hyphen, underscore, dot)
+      // Must not start with a dot, and cannot be empty
+      const isValidName = (name: string): boolean => {
+        if (!name || name.length > 100) return false
+        if (name.startsWith('.')) return false
+        if (name === '.' || name === '..') return false
+        return /^[a-zA-Z0-9._-]+$/.test(name)
+      }
+
+      if (!isValidName(owner) || !isValidName(repo)) {
         results.push({
           repo: repoFullName,
           status: 'error',

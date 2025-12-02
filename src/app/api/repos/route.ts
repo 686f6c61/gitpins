@@ -75,7 +75,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Si hay orden guardado, aplicarlo
-    const savedReposOrder: string[] = repoOrder ? JSON.parse(repoOrder.reposOrder) : []
+    let savedReposOrder: string[] = []
+    if (repoOrder) {
+      try {
+        const parsed = JSON.parse(repoOrder.reposOrder)
+        savedReposOrder = Array.isArray(parsed) ? parsed : []
+      } catch {
+        savedReposOrder = []
+      }
+    }
     if (savedReposOrder.length > 0) {
       const orderMap = new Map(
         savedReposOrder.map((fullName, index) => [fullName, index])
