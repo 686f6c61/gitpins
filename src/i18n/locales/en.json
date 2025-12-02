@@ -473,5 +473,62 @@
       "p1": "By using GitPins, you confirm that you have read, understood, and accepted all the terms of this disclaimer."
     },
     "backToHome": "Back to home"
+  },
+  "banned": {
+    "title": "Account Suspended",
+    "message": "Your account has been suspended due to a violation of our terms of service. If you believe this is a mistake, please contact the administrator.",
+    "contact": "To appeal this decision or get more information, please open an issue on our GitHub repository:",
+    "openIssue": "Open an Issue",
+    "backToHome": "Back to home"
+  },
+  "admin": {
+    "title": "GitPins Admin",
+    "backToDashboard": "Back to dashboard",
+    "stats": {
+      "totalUsers": "Total Users",
+      "activeUsers": "Active Users",
+      "bannedUsers": "Banned",
+      "configRepos": "Config Repos",
+      "totalSyncs": "Total Syncs",
+      "syncsToday": "Syncs Today",
+      "syncsThisWeek": "This Week"
+    },
+    "charts": {
+      "registrations": "User Registrations (30 days)",
+      "syncActivity": "Sync Activity (30 days)",
+      "daysAgo": "30 days ago",
+      "today": "Today"
+    },
+    "users": {
+      "title": "Users",
+      "user": "User",
+      "configRepo": "Config Repo",
+      "repos": "Repos",
+      "syncs": "Syncs",
+      "lastLogin": "Last Login",
+      "status": "Status",
+      "actions": "Actions",
+      "active": "Active",
+      "inactive": "Inactive",
+      "banned": "Banned",
+      "ban": "Ban",
+      "unban": "Unban",
+      "delete": "Delete"
+    },
+    "banModal": {
+      "title": "Ban @{username}",
+      "message": "This user will not be able to log in or use GitPins until unbanned.",
+      "reasonLabel": "Reason (optional)",
+      "reasonPlaceholder": "Violation of terms of service",
+      "cancel": "Cancel",
+      "confirm": "Ban User"
+    },
+    "deleteConfirm": "Are you sure you want to delete user @{username}? This action cannot be undone.",
+    "errors": {
+      "loadingData": "Error loading data",
+      "banningUser": "Error banning user",
+      "unbanningUser": "Error unbanning user",
+      "deletingUser": "Error deleting user"
+    }
   }
 }

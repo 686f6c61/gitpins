@@ -68,6 +68,16 @@ export async function GET(request: NextRequest) {
     // Encrypt the access token before storing
     const encryptedToken = encrypt(tokenData.access_token)
 
+    // Check if user is banned before allowing login
+    const existingUser = await prisma.user.findUnique({
+      where: { githubId: githubUser.id },
+      select: { isBanned: true }
+    })
+
+    if (existingUser?.isBanned) {
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/banned`)
+    }
+
     // Crear o actualizar usuario en la base de datos
     const user = await prisma.user.upsert({
       where: { githubId: githubUser.id },

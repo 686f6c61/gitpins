@@ -6,6 +6,13 @@
 
 **Keep your best projects always visible on your GitHub profile**
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Prisma](https://img.shields.io/badge/Prisma-6.0-2D3748?logo=prisma&logoColor=white)](https://www.prisma.io/)
+[![Vercel](https://img.shields.io/badge/Vercel-Deployed-black?logo=vercel&logoColor=white)](https://vercel.com/)
+
 [Live Demo](https://gitpins.vercel.app) | [How It Works](#how-it-works) | [Self-Host](#self-hosting)
 
 ---
@@ -24,6 +31,12 @@
 
 ### Configuration
 ![GitPins Configuration](assets/screenshot-config.png)
+
+### Admin Dashboard
+![GitPins Admin](assets/screenshot-admin.png)
+
+### Ban User
+![GitPins Ban](assets/screenshot-ban.png)
 
 </div>
 
@@ -248,6 +261,40 @@ If you're experiencing "Resource not accessible by integration" errors, the user
 2. Add a PostgreSQL database (Neon recommended)
 3. Configure environment variables
 4. Deploy!
+
+## Admin Dashboard
+
+GitPins includes an admin dashboard for managing users and viewing statistics.
+
+### Accessing the Admin Panel
+
+1. **Get your GitHub User ID:**
+   ```bash
+   curl https://api.github.com/users/YOUR_USERNAME | grep '"id"'
+   ```
+
+2. **Set the environment variable:**
+   ```env
+   ADMIN_GITHUB_ID="your_numeric_github_id"
+   ```
+
+3. **Access the dashboard:**
+   Navigate to `/admin` after logging in with the admin account.
+
+### Admin Features
+
+- **User Statistics**: Total users, active users, banned users, sync counts
+- **User Management**: View all users with their config repos and activity
+- **Ban/Unban Users**: Suspend users who violate terms of service
+- **Delete Users**: Remove users from the application (they can re-register)
+- **Activity Charts**: Visual graphs of registrations and syncs over 30 days
+
+### Security
+
+The admin panel is protected by:
+- Session validation (must be logged in)
+- GitHub ID verification against `ADMIN_GITHUB_ID`
+- All admin API endpoints return 403 Forbidden for non-admin users
 
 ## Project Structure
 

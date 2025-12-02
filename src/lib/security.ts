@@ -25,15 +25,25 @@ import { checkRateLimit, rateLimits } from './rate-limit'
 export function validateOrigin(request: NextRequest): boolean {
   const origin = request.headers.get('origin')
   const referer = request.headers.get('referer')
-  const host = request.headers.get('host')
 
-  // For same-origin requests, origin might not be set
+  // For POST/PUT/DELETE requests, require Origin or Referer header
+  const method = request.method.toUpperCase()
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+    if (!origin && !referer) {
+      return false
+    }
+  }
+
+  // For GET requests without origin/referer, allow (same-origin navigation)
   if (!origin && !referer) {
-    // Could be a same-origin request or a server-to-server call
     return true
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || `http://${host}`
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL
+  if (!appUrl) {
+    return false
+  }
+
   const allowedOrigins = [appUrl]
 
   // Allow localhost in development
@@ -42,12 +52,23 @@ export function validateOrigin(request: NextRequest): boolean {
     allowedOrigins.push('http://127.0.0.1:3000')
   }
 
-  if (origin) {
-    return allowedOrigins.some(allowed => origin.startsWith(allowed))
+  // Use exact URL matching with URL parsing
+  const matchesOrigin = (urlString: string): boolean => {
+    try {
+      const url = new URL(urlString)
+      const originToCheck = `${url.protocol}//${url.host}`
+      return allowedOrigins.includes(originToCheck)
+    } catch {
+      return false
+    }
   }
 
-  if (referer) {
-    return allowedOrigins.some(allowed => referer.startsWith(allowed))
+  if (origin && matchesOrigin(origin)) {
+    return true
+  }
+
+  if (referer && matchesOrigin(referer)) {
+    return true
   }
 
   return false

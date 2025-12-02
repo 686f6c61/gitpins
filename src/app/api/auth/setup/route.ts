@@ -30,12 +30,14 @@ export async function GET(request: NextRequest) {
   }
 
   if (installationId) {
-    // Update the user's installation ID
-    // Note: accessToken is no longer stored in session, it's already in the database
-    await prisma.user.update({
-      where: { id: session.userId },
-      data: { installationId: parseInt(installationId) },
-    })
+    // Validate installationId is a positive integer
+    const parsedId = parseInt(installationId, 10)
+    if (!Number.isNaN(parsedId) && parsedId > 0 && parsedId <= Number.MAX_SAFE_INTEGER) {
+      await prisma.user.update({
+        where: { id: session.userId },
+        data: { installationId: parsedId },
+      })
+    }
   }
 
   return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard`)

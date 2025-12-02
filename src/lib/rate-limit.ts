@@ -108,4 +108,9 @@ export const rateLimits = {
     windowMs: 60 * 1000, // 1 minute
     maxRequests: 10,
   },
+  // Admin endpoints: max 30 requests per minute per admin
+  admin: {
+    windowMs: 60 * 1000, // 1 minute
+    maxRequests: 30,
+  },
 }
