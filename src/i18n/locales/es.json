@@ -1,0 +1,477 @@
+{
+  "nav": {
+    "howItWorks": "Cómo funciona",
+    "dashboard": "Dashboard",
+    "connect": "Conectar GitHub",
+    "login": "Iniciar sesión",
+    "logout": "Cerrar sesión",
+    "backToDashboard": "Volver al dashboard"
+  },
+  "footer": {
+    "copyright": "© {year} GitPins.",
+    "sourceCode": "Revisa el código en",
+    "github": "GitHub",
+    "legal": "Legal y responsabilidad"
+  },
+  "landing": {
+    "hero": {
+      "title1": "Ordena tus repositorios",
+      "title2": "como tú quieras en GitHub",
+      "subtitle": "GitHub ordena tus repos cronológicamente. Un commit en un proyecto viejo y tu mejor trabajo desaparece. Con GitPins, tú decides el orden.",
+      "cta": "Ordenar",
+      "noCreditCard": "Gratis y open source"
+    },
+    "howItWorks": {
+      "title": "Cómo funciona",
+      "step1": {
+        "title": "Conecta tu GitHub",
+        "desc": "Instala la app en tu cuenta en menos de 30 segundos"
+      },
+      "step2": {
+        "title": "Arrastra y ordena",
+        "desc": "Define qué repos quieres que aparezcan primero en tu perfil"
+      },
+      "step3": {
+        "title": "Automático",
+        "desc": "Un GitHub Action mantiene tu orden. Configura una vez, funciona siempre"
+      }
+    },
+    "faq": {
+      "title": "Preguntas frecuentes",
+      "q1": {
+        "question": "¿Modifica mi código?",
+        "answer": "No. Solo hace commits vacíos que se revierten inmediatamente. Tu código y tu historial quedan intactos."
+      },
+      "q2": {
+        "question": "¿Cuánto cuesta?",
+        "answer": "Nada. GitPins es 100% gratuito y open source. Usa los minutos de GitHub Actions de tu cuenta (muy pocos)."
+      },
+      "q3": {
+        "question": "¿Puedo dejar de usarlo?",
+        "answer": "Sí, sin problemas. Borra el repo gitpins-config o desactiva el workflow. Sin vendor lock-in."
+      },
+      "q4": {
+        "question": "¿Funciona con repos privados?",
+        "answer": "Sí. Puedes elegir incluir o excluir repos privados en la configuración."
+      },
+      "q5": {
+        "question": "¿Es seguro para mis repositorios?",
+        "answer": "Sí. GitPins solo tiene permisos para crear commits vacíos. No puede borrar repositorios, modificar tu código ni acceder a información sensible."
+      },
+      "q6": {
+        "question": "¿Qué pasa si desinstalo GitPins?",
+        "answer": "Nada. Tus repositorios quedan exactamente igual. Si quieres, puedes mantener el Action funcionando de forma independiente."
+      }
+    },
+    "features": {
+      "title": "Por qué GitPins",
+      "noLimit": {
+        "title": "Sin límite de repos",
+        "desc": "GitHub solo permite fijar 6 repos. Con GitPins puedes ordenar todos los que quieras."
+      },
+      "automatic": {
+        "title": "Automático",
+        "desc": "Configura una vez y el Action mantiene tu orden. No tienes que hacer nada más."
+      },
+      "noLockIn": {
+        "title": "Sin vendor lock-in",
+        "desc": "Todo corre en tu propia cuenta. Si dejas GitPins, el Action sigue funcionando."
+      },
+      "cleanCommits": {
+        "title": "Commits limpios",
+        "desc": "Los commits vacíos se revierten automáticamente. Tu historial queda intacto."
+      }
+    },
+    "useCases": {
+      "title": "Perfecto para",
+      "interviews": {
+        "title": "Entrevistas de trabajo",
+        "desc": "Controla lo que los recruiters ven primero en tu perfil. Muestra tus mejores proyectos, no el último commit a un repo de pruebas."
+      },
+      "developers": {
+        "title": "Desarrolladores",
+        "desc": "Tu perfil de GitHub es tu portfolio. Asegúrate de que tus proyectos más relevantes estén siempre visibles."
+      },
+      "companies": {
+        "title": "Empresas",
+        "desc": "Que los clientes vean tus proyectos flagship, no los dependabot updates."
+      },
+      "openSource": {
+        "title": "Open Source",
+        "desc": "Destaca tus librerías principales para que contribuidores las encuentren fácilmente."
+      }
+    },
+    "cta": {
+      "title": "Empieza a ordenar tus repos",
+      "subtitle": "Es gratis. Solo toma 2 minutos configurarlo.",
+      "button": "Conectar con GitHub"
+    },
+    "disclaimer": {
+      "title": "Antes de continuar",
+      "text": "GitPins es un proyecto open source que realiza commits vacíos en tus repositorios para mantener el orden que configures. Estos commits son revertidos inmediatamente y no modifican tu código.",
+      "text2": "Al continuar, aceptas que usas este servicio bajo tu propia responsabilidad. El código es open source y está a tu disposición para revisarlo, mejorarlo o ejecutarlo en tu propia infraestructura.",
+      "accept": "Acepto y continuar",
+      "cancel": "Cancelar",
+      "learnMore": "Más información en",
+      "legalLink": "Lee el",
+      "legalLinkText": "aviso legal completo"
+    },
+    "footer": "Hecho con código y café. 100% gratuito."
+  },
+  "dashboard": {
+    "unsavedChanges": "Tienes cambios sin guardar",
+    "saveOrder": "Guardar cambios",
+    "confirmUnsavedChanges": "Tienes cambios sin guardar. ¿Quieres guardarlos antes de continuar?",
+    "saving": "Guardando...",
+    "activateSync": {
+      "title": "Activa la sincronización automática",
+      "desc": "Crea el repositorio de configuración con el GitHub Action que mantendrá tu orden"
+    },
+    "createRepo": "Crear repositorio",
+    "creating": "Creando...",
+    "disclaimerPopup": {
+      "title": "Descargo de responsabilidad",
+      "text": "Al crear el repositorio de configuración, aceptas que:",
+      "item1": "GitPins realizará commits vacíos en tus repositorios seleccionados",
+      "item2": "Estos commits son revertidos inmediatamente y no modifican tu código",
+      "item3": "El servicio se proporciona sin garantías de ningún tipo",
+      "item4": "Eres responsable de revisar y entender cómo funciona el sistema",
+      "accept": "Acepto y continuar",
+      "cancel": "Cancelar"
+    },
+    "syncActive": "Sincronización automática activa",
+    "viewRepo": "Ver repositorio",
+    "pinnedRepos": {
+      "title": "Repos a mantener arriba",
+      "changeLimit": "Cambiar límite",
+      "emptyTitle": "Arrastra repos aquí para fijarlos arriba",
+      "emptyDesc": "Puedes fijar hasta {max} repos",
+      "slotsAvailable_one": "{count} espacio disponible",
+      "slotsAvailable_other": "{count} espacios disponibles"
+    },
+    "allRepos": {
+      "title": "Todos los repositorios",
+      "dragHint": "Arrastra hacia arriba para fijar"
+    }
+  },
+  "settings": {
+    "title": "Configuración",
+    "reposToKeep": {
+      "label": "Repositorios a mantener arriba",
+      "hint": "Arrastra los repos que quieras mantener siempre arriba",
+      "of": "de {total} repos"
+    },
+    "includePrivate": {
+      "label": "Incluir repositorios privados",
+      "desc": "Los repos privados también se ordenarán"
+    },
+    "syncFrequency": {
+      "label": "Frecuencia de sincronización",
+      "hint": "6h recomendado: buen balance entre respuesta y consumo de Actions (~120 min/mes)",
+      "options": {
+        "1": "Cada hora",
+        "2": "Cada 2 horas",
+        "4": "Cada 4 horas",
+        "6": "Cada 6 horas (recomendado)",
+        "8": "Cada 8 horas",
+        "12": "Cada 12 horas",
+        "24": "Cada 24 horas"
+      }
+    },
+    "commitStrategy": {
+      "label": "Estrategia de commits",
+      "revert": {
+        "title": "Commit + Revert",
+        "desc": "Hace un commit vacío y lo revierte inmediatamente."
+      },
+      "branch": {
+        "title": "Branch temporal",
+        "desc": "Crea un branch, hace commit, merge y borra el branch."
+      }
+    },
+    "autoSync": {
+      "label": "Sincronización automática",
+      "desc": "Ejecutar el Action automáticamente"
+    },
+    "configRepoPrivate": {
+      "label": "Repo de configuración privado",
+      "desc": "El repo {name} será {visibility}",
+      "private": "privado",
+      "public": "público"
+    },
+    "close": "Cerrar",
+    "understood": "Entendido"
+  },
+  "strategyInfo": {
+    "title": "Estrategias de commits",
+    "intro": "Para mantener tus repos arriba, GitPins necesita actualizar la fecha de \"último commit\". Esto se hace con commits vacíos que no modifican tu código. Hay dos formas de hacerlo:",
+    "revert": {
+      "title": "Commit + Revert",
+      "desc": "Hace un commit vacío y lo revierte inmediatamente. Tu historial queda exactamente igual que antes, pero la fecha de actualización cambia.",
+      "step1": "# Paso 1: Commit vacío",
+      "step2": "# Paso 2: Revertir",
+      "step3": "# Paso 3: Push",
+      "pro": "+ Simple y rápido",
+      "con": "~ 2 commits en historial"
+    },
+    "branch": {
+      "title": "Branch temporal",
+      "desc": "Crea un branch temporal, hace el commit ahí, mergea a main y borra el branch. Más pasos pero el resultado es más limpio.",
+      "step1": "# Paso 1: Crear branch",
+      "step2": "# Paso 2: Commit vacío",
+      "step3": "# Paso 3: Merge y limpiar",
+      "pro": "+ Solo 1 commit merge",
+      "con": "~ Más operaciones"
+    },
+    "note": "Ambas estrategias son seguras y no modifican tu código. La diferencia es solo en cómo se ve el historial de commits."
+  },
+  "howItWorksPage": {
+    "title": "Cómo funciona GitPins",
+    "subtitle": "Explicación técnica de cómo mantenemos tus repositorios ordenados",
+    "problem": {
+      "title": "El problema",
+      "p1": "GitHub ordena los repositorios en tu perfil por fecha de última actualización. Esto significa que cada vez que haces push a un repo, este sube al principio de tu lista.",
+      "p2": "Si tienes proyectos importantes que quieres mostrar primero, pero trabajas en otros repositorios, tus proyectos destacados quedan enterrados."
+    },
+    "solution": {
+      "title": "La solución",
+      "p1": "GitPins utiliza un mecanismo simple pero efectivo: <strong>actualizar la fecha de último commit</strong> de tus repositorios en el orden que tú elijas.",
+      "p2": "Esto se hace mediante commits vacíos que no afectan tu código, y que inmediatamente se eliminan de tu historial."
+    },
+    "steps": {
+      "title": "Proceso paso a paso",
+      "step1": {
+        "title": "Configuras tu orden",
+        "desc": "En el dashboard de GitPins, arrastras y sueltas tus repositorios en el orden que deseas. Puedes elegir ordenar todos tus repos o solo los primeros N."
+      },
+      "step2": {
+        "title": "Creamos un repositorio de configuración",
+        "desc": "Al activar la sincronización, creamos un repositorio privado llamado <code>gitpins-config</code> en tu cuenta. Este contiene el GitHub Action y tu configuración."
+      },
+      "step3": {
+        "title": "GitHub Actions se ejecuta periódicamente",
+        "desc": "Según la frecuencia que configures (cada 1, 6, 12 o 24 horas), el Action verifica si tus repos están en el orden correcto."
+      },
+      "step4": {
+        "title": "Reordena si es necesario",
+        "desc": "Si algún repositorio está fuera de orden, el Action hace un commit vacío para actualizar su timestamp, restaurando el orden deseado."
+      }
+    },
+    "strategies": {
+      "title": "Estrategias de commit",
+      "intro": "Ofrecemos dos estrategias para mantener tu historial limpio:",
+      "revert": {
+        "title": "Commit + Revert",
+        "desc": "Hacemos un commit vacío y lo revertimos inmediatamente. El resultado es que tu historial queda exactamente igual, pero la fecha de actualización cambia.",
+        "comment": "# Lo que hace el Action:"
+      },
+      "branch": {
+        "title": "Branch temporal",
+        "desc": "Creamos un branch temporal, hacemos el commit, merge a main, y borramos el branch. Más limpio pero ligeramente más complejo.",
+        "comment": "# Lo que hace el Action:"
+      }
+    },
+    "actionCode": {
+      "title": "El GitHub Action",
+      "intro": "Somos 100% transparentes. Al activar la sincronización, se crea un GitHub Action en tu repositorio de configuración que puedes revisar, modificar o auditar cuando quieras.",
+      "whatItDoes": "¿Qué hace el Action?",
+      "steps": {
+        "step1": "Lee tu configuración y lista de repos a ordenar",
+        "step2": "Para cada repositorio (en orden inverso para que el primero quede más reciente):",
+        "step2a": "Detecta el branch principal (main/master)",
+        "step2b": "Crea un commit vacío usando la GitHub API",
+        "step2c": "Lo revierte inmediatamente (o usa branch temporal)",
+        "step3": "Espera 1 segundo entre repos para no saturar la API",
+        "step4": "Reporta el resultado en los logs del Action"
+      },
+      "viewCode": "Ver código completo",
+      "codeLocation": "El código está en <code>.github/workflows/maintain-order.yml</code> dentro de tu repositorio de configuración."
+    },
+    "security": {
+      "title": "Seguridad y permisos",
+      "permissionsTitle": "Permisos exactos de nuestra GitHub App",
+      "permissionsIntro": "Nuestra aplicación solicita los <strong>permisos mínimos necesarios</strong>. Esto es exactamente lo que podemos y NO podemos hacer:",
+      "canDo": {
+        "title": "Lo que SÍ podemos hacer:",
+        "item1": "Leer la lista de tus repositorios (metadata)",
+        "item2": "Crear commits vacíos (sin modificar archivos)",
+        "item3": "Crear/borrar branches temporales",
+        "item4": "Crear el repo de configuración (gitpins-config)"
+      },
+      "cannotDo": {
+        "title": "Lo que NO podemos hacer:",
+        "item1": "<strong>JAMÁS borrar repositorios</strong> - No tenemos ese permiso",
+        "item2": "Modificar, leer o borrar tu código fuente",
+        "item3": "Acceder a tus secrets o variables de entorno",
+        "item4": "Cambiar configuración de tus repos (settings)",
+        "item5": "Acceder a Issues, PRs, Wikis o Discussions",
+        "item6": "Invitar colaboradores o cambiar permisos"
+      },
+      "technicalNote": "<strong>Nota técnica:</strong> Los permisos de GitHub Apps son granulares y verificables. Puedes revisar exactamente qué permisos tiene GitPins instalada en tu cuenta desde",
+      "installationsLink": "github.com/settings/installations",
+      "noCodeStorage": {
+        "title": "No almacenamos tu código",
+        "desc": "Solo guardamos el orden de tus repositorios y tu configuración. Nunca accedemos al contenido de tus repos."
+      },
+      "runsOnYourAccount": {
+        "title": "El Action corre en tu cuenta",
+        "desc": "El GitHub Action se ejecuta en tu propio repositorio, usando tus minutos de Actions. Tienes control total."
+      },
+      "canDisable": {
+        "title": "Puedes desactivarlo cuando quieras",
+        "desc": "Simplemente desactiva el Action o elimina el repositorio de configuración. No hay bloqueos."
+      },
+      "openSource": {
+        "title": "Código abierto y auditable",
+        "desc": "El GitHub Action que se instala en tu cuenta es visible arriba. Puedes revisarlo línea por línea antes de activarlo."
+      }
+    },
+    "faq": {
+      "title": "Preguntas frecuentes",
+      "affectsCode": {
+        "q": "¿Afecta esto a mi código?",
+        "a": "No. Los commits vacíos no modifican ningún archivo. Y al revertirlos inmediatamente, tu historial de commits permanece intacto."
+      },
+      "actionsMinutes": {
+        "q": "¿Cuántos minutos de Actions consume?",
+        "a": "Muy pocos. Cada ejecución tarda menos de 1 minuto. Con la frecuencia por defecto (cada 6 horas), usarás aproximadamente 120 minutos al mes, muy por debajo del límite gratuito de GitHub (2000 min/mes)."
+      },
+      "privateRepos": {
+        "q": "¿Funciona con repositorios privados?",
+        "a": "Sí. Puedes elegir incluir o excluir repositorios privados en la configuración. Ten en cuenta que los repos privados también consumen minutos de Actions (al doble de tasa en el plan gratuito)."
+      },
+      "whatIfPush": {
+        "q": "¿Qué pasa si hago push a un repo?",
+        "a": "En la próxima ejecución del Action, detectará que el orden cambió y lo restaurará automáticamente al orden que configuraste."
+      },
+      "canPause": {
+        "q": "¿Puedo pausar la sincronización?",
+        "a": "Sí. En los ajustes puedes desactivar la sincronización automática sin perder tu configuración. También puedes desactivar el workflow directamente en GitHub."
+      }
+    },
+    "cta": {
+      "title": "¿Listo para ordenar tus repos?",
+      "button": "Empezar con GitHub"
+    },
+    "footer": "GitPins - Controla el orden de tus repositorios"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "private": "Privado",
+    "public": "Público"
+  },
+  "legal": {
+    "title": "Legal y Descargo de Responsabilidad",
+    "subtitle": "Información importante sobre el uso de GitPins",
+    "lastUpdated": "Última actualización: Diciembre 2024",
+    "disclaimer": {
+      "title": "Descargo de Responsabilidad",
+      "p1": "GitPins es un proyecto de código abierto proporcionado \"TAL CUAL\" y \"SEGÚN DISPONIBILIDAD\", sin garantías de ningún tipo, ya sean expresas o implícitas, incluyendo, pero no limitándose a, las garantías implícitas de comerciabilidad, idoneidad para un propósito particular y no infracción.",
+      "p2": "En ningún caso los autores, colaboradores o titulares de los derechos de autor serán responsables de cualquier reclamación, daño u otra responsabilidad, ya sea en una acción contractual, agravio o de otro tipo, que surja de, fuera de o en conexión con el software o el uso u otros tratos en el software.",
+      "p3": "Al usar GitPins, aceptas que lo haces bajo tu propia responsabilidad y riesgo."
+    },
+    "howItWorks": {
+      "title": "Cómo Funciona GitPins - Transparencia Total",
+      "intro": "GitPins modifica las fechas de actualización de tus repositorios mediante commits vacíos. Es importante que entiendas exactamente qué hace:",
+      "step1": {
+        "title": "Commits Vacíos",
+        "desc": "GitPins crea commits que no contienen cambios en el código. Estos commits solo actualizan la fecha de \"último commit\" del repositorio."
+      },
+      "step2": {
+        "title": "Reversión Automática",
+        "desc": "Inmediatamente después del commit vacío, se crea otro commit que lo revierte. Tu historial de git técnicamente tiene 2 commits adicionales, pero sin cambios de código."
+      },
+      "step3": {
+        "title": "GitHub Actions",
+        "desc": "Todo el proceso se ejecuta mediante un GitHub Action en tu propia cuenta. El Action corre con tus credenciales y permisos."
+      }
+    },
+    "risks": {
+      "title": "Riesgos Potenciales",
+      "intro": "Aunque GitPins está diseñado para ser seguro, existen riesgos potenciales que debes conocer:",
+      "risk1": {
+        "title": "Historial de Git",
+        "desc": "Tu historial de commits tendrá entradas adicionales (commit + revert). Aunque el código no cambia, los commits son visibles en el historial."
+      },
+      "risk2": {
+        "title": "Dependencia de APIs",
+        "desc": "GitPins depende de la API de GitHub. Cambios en la API podrían afectar el funcionamiento del servicio."
+      },
+      "risk3": {
+        "title": "Permisos",
+        "desc": "La GitHub App requiere permisos de escritura en tus repositorios para crear commits. Revisa los permisos cuidadosamente."
+      },
+      "risk4": {
+        "title": "Minutos de Actions",
+        "desc": "El GitHub Action consume minutos de tu cuenta. En repos privados, consume el doble de minutos."
+      }
+    },
+    "noDelete": {
+      "title": "GitPins NO Puede Borrar Tus Repositorios",
+      "p1": "Es importante aclarar que GitPins <strong>NO tiene permisos para borrar repositorios</strong>. La GitHub App solicita únicamente los permisos mínimos necesarios:",
+      "canDo": "Lo que GitPins SÍ puede hacer:",
+      "canDo1": "Leer la lista de tus repositorios (metadatos)",
+      "canDo2": "Crear commits vacíos (sin modificar archivos)",
+      "canDo3": "Crear y borrar branches temporales",
+      "canDo4": "Crear el repositorio de configuración (gitpins-config)",
+      "cannotDo": "Lo que GitPins NO puede hacer:",
+      "cannotDo1": "Borrar repositorios - No tenemos ese permiso",
+      "cannotDo2": "Leer, modificar o eliminar tu código fuente",
+      "cannotDo3": "Acceder a secrets o variables de entorno",
+      "cannotDo4": "Cambiar la configuración de tus repositorios",
+      "cannotDo5": "Acceder a Issues, Pull Requests o Wikis",
+      "cannotDo6": "Invitar colaboradores o modificar permisos",
+      "verify": "Puedes verificar los permisos exactos en cualquier momento desde"
+    },
+    "yourResponsibility": {
+      "title": "Tu Responsabilidad",
+      "p1": "Al usar GitPins, aceptas que has leído y entendido cómo funciona el servicio. Entiendes que se crearán commits vacíos en tus repositorios como parte del proceso de ordenación.",
+      "p2": "Aceptas los riesgos potenciales descritos en esta página y eres responsable de monitorear el uso de minutos de GitHub Actions en tu cuenta.",
+      "p3": "Puedes desactivar el servicio en cualquier momento eliminando el repositorio de configuración o deshabilitando el workflow, sin ninguna penalización."
+    },
+    "noWarranty": {
+      "title": "Sin Garantías",
+      "p1": "GitPins se proporciona sin garantía de ningún tipo. No garantizamos que el servicio estará disponible de forma ininterrumpida ni que estará libre de errores.",
+      "p2": "Los resultados pueden no ser exactos o confiables en todos los casos, y el servicio puede no cumplir con tus requisitos específicos. Úsalo bajo tu propia responsabilidad."
+    },
+    "limitation": {
+      "title": "Limitación de Responsabilidad",
+      "p1": "En la máxima medida permitida por la ley aplicable, en ningún caso los creadores, contribuidores o mantenedores de GitPins serán responsables de ningún daño directo, indirecto, incidental, especial, consecuente o punitivo, incluyendo, sin limitación:",
+      "item1": "Pérdida de datos o corrupción",
+      "item2": "Pérdida de beneficios o ingresos",
+      "item3": "Interrupción del negocio",
+      "item4": "Pérdida de reputación",
+      "item5": "Cualquier otro daño pecuniario o no pecuniario",
+      "p2": "Esta limitación se aplica independientemente de si el daño surge de:",
+      "item2_1": "Uso o imposibilidad de usar el servicio",
+      "item2_2": "Acceso no autorizado a tus repositorios",
+      "item2_3": "Errores, virus o bugs en el software",
+      "item2_4": "Cualquier otra circunstancia relacionada con el servicio"
+    },
+    "openSource": {
+      "title": "Código Abierto",
+      "p1": "GitPins es software de código abierto bajo la licencia MIT. Puedes:",
+      "item1": "Revisar el código fuente completo",
+      "item2": "Auditar la seguridad del código",
+      "item3": "Ejecutar tu propia instancia",
+      "item4": "Modificar el código para tus necesidades",
+      "repo": "Repositorio:"
+    },
+    "contact": {
+      "title": "Contacto",
+      "p1": "Para reportar problemas de seguridad, bugs o preguntas legales, abre un issue en nuestro repositorio de GitHub:",
+      "issuesLink": "Abrir issue en GitHub"
+    },
+    "acceptance": {
+      "title": "Aceptación de Términos",
+      "p1": "Al usar GitPins, confirmas que has leído, entendido y aceptado todos los términos de este descargo de responsabilidad."
+    },
+    "backToHome": "Volver al inicio"
+  }
+}

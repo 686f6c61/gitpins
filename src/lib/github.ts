@@ -1,0 +1,142 @@
+/**
+ * GitPins - Control the order of your GitHub repositories
+ * @author 686f6c61
+ * @repository https://github.com/686f6c61/gitpins
+ * @created 2024
+ * @license MIT
+ *
+ * GitHub OAuth Module
+ * Handles OAuth authentication flow with GitHub Apps.
+ * Provides functions for authorization, token exchange, and user data retrieval.
+ */
+
+import { Octokit } from 'octokit'
+
+// GitHub OAuth endpoints
+export const GITHUB_AUTH_URL = 'https://github.com/login/oauth/authorize'
+export const GITHUB_TOKEN_URL = 'https://github.com/login/oauth/access_token'
+export const GITHUB_APP_INSTALL_URL = `https://github.com/apps/gitpins/installations/new`
+
+// Generar URL de autorización
+export function getAuthUrl(state: string): string {
+  const params = new URLSearchParams({
+    client_id: process.env.GITHUB_APP_CLIENT_ID!,
+    redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback`,
+    state,
+    scope: 'repo user:email', // repo for creating config repo, user:email for email access
+  })
+  return `${GITHUB_AUTH_URL}?${params.toString()}`
+}
+
+// Intercambiar código por token
+export async function exchangeCodeForToken(code: string): Promise<{
+  access_token: string
+  token_type: string
+  scope: string
+}> {
+  const response = await fetch(GITHUB_TOKEN_URL, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      client_id: process.env.GITHUB_APP_CLIENT_ID,
+      client_secret: process.env.GITHUB_APP_CLIENT_SECRET,
+      code,
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to exchange code for token')
+  }
+
+  return response.json()
+}
+
+// Crear cliente Octokit con token de usuario
+export function createUserOctokit(accessToken: string): Octokit {
+  return new Octokit({ auth: accessToken })
+}
+
+// Obtener información del usuario
+export async function getGitHubUser(accessToken: string) {
+  const octokit = createUserOctokit(accessToken)
+  const { data: user } = await octokit.rest.users.getAuthenticated()
+
+  // Obtener email si está disponible
+  let email: string | null = user.email
+  if (!email) {
+    try {
+      const { data: emails } = await octokit.rest.users.listEmailsForAuthenticatedUser()
+      const primaryEmail = emails.find(e => e.primary)
+      email = primaryEmail?.email || null
+    } catch {
+      // Si no tiene permiso para ver emails, ignorar
+    }
+  }
+
+  return {
+    id: user.id,
+    username: user.login,
+    email,
+    avatarUrl: user.avatar_url,
+  }
+}
+
+// Obtener instalación del usuario
+export async function getUserInstallation(accessToken: string): Promise<number | null> {
+  const octokit = createUserOctokit(accessToken)
+
+  try {
+    const { data } = await octokit.rest.apps.listInstallationsForAuthenticatedUser()
+    // Buscar la instalación de nuestra app
+    const installation = data.installations.find(
+      inst => inst.app_id === parseInt(process.env.GITHUB_APP_ID!)
+    )
+    return installation?.id || null
+  } catch {
+    return null
+  }
+}
+
+// Obtener repos del usuario
+export async function getUserRepos(accessToken: string) {
+  const octokit = createUserOctokit(accessToken)
+
+  const repos: Array<{
+    id: number
+    name: string
+    fullName: string
+    description: string | null
+    stars: number
+    forks: number
+    language: string | null
+    updatedAt: string
+    isPrivate: boolean
+    url: string
+  }> = []
+
+  // Obtener todos los repos (paginado)
+  for await (const response of octokit.paginate.iterator(
+    octokit.rest.repos.listForAuthenticatedUser,
+    { per_page: 100, sort: 'updated', direction: 'desc' }
+  )) {
+    for (const repo of response.data) {
+      repos.push({
+        id: repo.id,
+        name: repo.name,
+        fullName: repo.full_name,
+        description: repo.description,
+        stars: repo.stargazers_count,
+        forks: repo.forks_count,
+        language: repo.language,
+        updatedAt: repo.updated_at || '',
+        isPrivate: repo.private,
+        url: repo.html_url,
+      })
+    }
+  }
+
+  return repos
+}
