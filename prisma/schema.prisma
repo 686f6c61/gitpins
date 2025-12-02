@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  githubId       Int      @unique
+  username       String   @unique
+  email          String?
+  avatarUrl      String?
+  installationId Int?     @unique
+  accessToken    String?
+  refreshToken   String?
+  tokenExpiresAt DateTime?
+  isAdmin        Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  lastLoginAt    DateTime @default(now())
+
+  repoOrder RepoOrder?
+  syncLogs  SyncLog[]
+
+  @@map("users")
+}
+
+model RepoOrder {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Orden de repos: JSON string de array de repo full names
+  reposOrder    String   @default("[]")
+
+  // Cuantos repos ordenar (0 = todos)
+  topN          Int      @default(10)
+
+  // Incluir repos privados en el ordenamiento
+  includePrivate Boolean @default(true)
+
+  // Configuracion de sync
+  syncFrequency Int      @default(6)
+  autoEnabled   Boolean  @default(true)
+
+  // Estrategia de commits: "branch" o "revert"
+  commitStrategy String  @default("revert")
+
+  // Nombre del repo de config
+  configRepoName String  @default("gitpins-config")
+  configRepoCreated Boolean @default(false)
+  configRepoPrivate Boolean @default(true)
+
+  // Secret para el endpoint de sync (UUID)
+  syncSecret String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("repo_orders")
+}
+
+model SyncLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  action    String
+  status    String
+  details   String?
+  reposAffected String @default("[]")
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("sync_logs")
+}
