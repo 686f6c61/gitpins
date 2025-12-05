@@ -33,6 +33,9 @@ export async function exchangeCodeForToken(code: string): Promise<{
   access_token: string
   token_type: string
   scope: string
+  refresh_token?: string
+  expires_in?: number
+  refresh_token_expires_in?: number
 }> {
   const response = await fetch(GITHUB_TOKEN_URL, {
     method: 'POST',
@@ -49,6 +52,36 @@ export async function exchangeCodeForToken(code: string): Promise<{
 
   if (!response.ok) {
     throw new Error('Failed to exchange code for token')
+  }
+
+  return response.json()
+}
+
+// Refresh access token using refresh token
+export async function refreshAccessToken(refreshToken: string): Promise<{
+  access_token: string
+  token_type: string
+  scope: string
+  refresh_token?: string
+  expires_in?: number
+  refresh_token_expires_in?: number
+}> {
+  const response = await fetch(GITHUB_TOKEN_URL, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      client_id: process.env.GITHUB_APP_CLIENT_ID,
+      client_secret: process.env.GITHUB_APP_CLIENT_SECRET,
+      refresh_token: refreshToken,
+      grant_type: 'refresh_token',
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to refresh access token')
   }
 
   return response.json()
@@ -97,6 +130,85 @@ export async function getUserInstallation(accessToken: string): Promise<number |
     return installation?.id || null
   } catch {
     return null
+  }
+}
+
+/**
+ * Checks if a user's access token is expired or about to expire.
+ * Returns the user with a refreshed token if needed.
+ * @param userId - The user's database ID
+ * @returns Object with the current valid access token and whether it was refreshed
+ */
+export async function ensureValidToken(userId: string): Promise<{
+  accessToken: string
+  wasRefreshed: boolean
+}> {
+  const { prisma } = await import('./prisma')
+  const { decrypt, encrypt } = await import('./crypto')
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      accessToken: true,
+      refreshToken: true,
+      tokenExpiresAt: true,
+    },
+  })
+
+  if (!user?.accessToken) {
+    throw new Error('User has no access token')
+  }
+
+  // If no expiration date is set, token doesn't expire (old GitHub OAuth behavior)
+  if (!user.tokenExpiresAt) {
+    return {
+      accessToken: decrypt(user.accessToken),
+      wasRefreshed: false,
+    }
+  }
+
+  // Check if token is expired or will expire in the next 5 minutes
+  const expiresIn = user.tokenExpiresAt.getTime() - Date.now()
+  const fiveMinutes = 5 * 60 * 1000
+
+  if (expiresIn > fiveMinutes) {
+    // Token is still valid
+    return {
+      accessToken: decrypt(user.accessToken),
+      wasRefreshed: false,
+    }
+  }
+
+  // Token is expired or about to expire, refresh it
+  if (!user.refreshToken) {
+    throw new Error('Token expired and no refresh token available')
+  }
+
+  const decryptedRefreshToken = decrypt(user.refreshToken)
+  const newTokenData = await refreshAccessToken(decryptedRefreshToken)
+
+  // Encrypt and save the new tokens
+  const encryptedToken = encrypt(newTokenData.access_token)
+  const encryptedRefreshToken = newTokenData.refresh_token
+    ? encrypt(newTokenData.refresh_token)
+    : user.refreshToken // Keep old refresh token if new one not provided
+
+  const tokenExpiresAt = newTokenData.expires_in
+    ? new Date(Date.now() + newTokenData.expires_in * 1000)
+    : null
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      accessToken: encryptedToken,
+      refreshToken: encryptedRefreshToken,
+      tokenExpiresAt,
+    },
+  })
+
+  return {
+    accessToken: newTokenData.access_token,
+    wasRefreshed: true,
   }
 }
 

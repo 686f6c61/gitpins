@@ -205,6 +205,11 @@ export function DashboardClient({ user }: DashboardClientProps) {
     }
   }
 
+  function handleRemoveFromPinned(repoFullName: string) {
+    setPinnedRepos(prev => prev.filter(name => name !== repoFullName))
+    setHasChanges(true)
+  }
+
   async function saveOrder() {
     setSaving(true)
     try {
@@ -443,6 +448,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
                               repo={repo}
                               index={index}
                               isTop
+                              onRemove={() => handleRemoveFromPinned(repo.fullName)}
                             />
                           ))}
                         </div>
