@@ -146,6 +146,7 @@ export async function POST(request: NextRequest) {
 
     const workflowYaml = generateWorkflowYaml({
       syncFrequency: user.repoOrder.syncFrequency,
+      appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://gitpins.vercel.app',
     })
 
     const readme = generateReadme(user.username)

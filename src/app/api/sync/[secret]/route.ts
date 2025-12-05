@@ -269,11 +269,13 @@ export async function POST(
 
 /**
  * GET /api/sync/[secret]
- * Alias for POST to facilitate manual testing via browser.
+ * Disabled for security reasons - only POST is allowed to prevent CSRF attacks.
+ * If you need to test manually, use curl or a tool that supports POST requests:
+ * curl -X POST https://your-domain.com/api/sync/YOUR_SECRET
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ secret: string }> }
-) {
-  return POST(request, { params })
+export async function GET() {
+  return NextResponse.json(
+    { error: 'Method not allowed. Use POST instead.' },
+    { status: 405, headers: { Allow: 'POST' } }
+  )
 }

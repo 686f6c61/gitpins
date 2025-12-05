@@ -68,10 +68,12 @@ export function generateConfigJson(options: {
  * Generates the GitHub Actions workflow YAML for automated syncing.
  * The workflow runs on a schedule (cron) and triggers the GitPins sync endpoint.
  * @param options.syncFrequency - How often to sync in hours (converted to cron)
+ * @param options.appUrl - The base URL of the GitPins instance (from NEXT_PUBLIC_APP_URL)
  * @returns YAML string for .github/workflows/maintain-order.yml
  */
 export function generateWorkflowYaml(options: {
   syncFrequency: number
+  appUrl: string
 }): string {
   // Convertir horas a cron expression
   const cronHours = options.syncFrequency
@@ -92,7 +94,7 @@ jobs:
     steps:
       - name: Trigger GitPins Sync
         run: |
-          curl -s -X POST "https://gitpins.vercel.app/api/sync/\${{ secrets.GITPINS_SYNC_SECRET }}" \\
+          curl -s -X POST "${options.appUrl}/api/sync/\${{ secrets.GITPINS_SYNC_SECRET }}" \\
             -H "Content-Type: application/json" \\
             -o response.json
 

@@ -22,6 +22,7 @@ interface SortableRepoItemProps {
   repo: Repo
   index: number
   isTop: boolean
+  onRemove?: () => void
 }
 
 /**
@@ -29,7 +30,7 @@ interface SortableRepoItemProps {
  * Displays a single repo with drag handle and metadata.
  * Uses dnd-kit's useSortable hook for drag-and-drop functionality.
  */
-export function SortableRepoItem({ repo, index, isTop }: SortableRepoItemProps) {
+export function SortableRepoItem({ repo, index, isTop, onRemove }: SortableRepoItemProps) {
   const {
     attributes,
     listeners,
@@ -111,6 +112,30 @@ export function SortableRepoItem({ repo, index, isTop }: SortableRepoItemProps) 
           {repo.forks}
         </span>
       </div>
+
+      {/* Remove button - only shown when in top zone */}
+      {isTop && onRemove && (
+        <button
+          onClick={onRemove}
+          className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors shrink-0"
+          title="Remove from pinned"
+          aria-label="Remove from pinned repos"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+      )}
     </div>
   )
 }
