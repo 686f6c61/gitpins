@@ -65,8 +65,14 @@ export async function GET(request: NextRequest) {
     const adminGithubId = process.env.ADMIN_GITHUB_ID
     const isAdmin = adminGithubId ? githubUser.id === parseInt(adminGithubId, 10) : false
 
-    // Encrypt the access token before storing
+    // Encrypt tokens before storing
     const encryptedToken = encrypt(tokenData.access_token)
+    const encryptedRefreshToken = tokenData.refresh_token ? encrypt(tokenData.refresh_token) : null
+
+    // Calculate token expiration date if expires_in is provided
+    const tokenExpiresAt = tokenData.expires_in
+      ? new Date(Date.now() + tokenData.expires_in * 1000)
+      : null
 
     // Check if user is banned before allowing login
     const existingUser = await prisma.user.findUnique({
@@ -86,6 +92,8 @@ export async function GET(request: NextRequest) {
         email: githubUser.email,
         avatarUrl: githubUser.avatarUrl,
         accessToken: encryptedToken,
+        refreshToken: encryptedRefreshToken,
+        tokenExpiresAt,
         installationId,
         lastLoginAt: new Date(),
         isAdmin,
@@ -96,6 +104,8 @@ export async function GET(request: NextRequest) {
         email: githubUser.email,
         avatarUrl: githubUser.avatarUrl,
         accessToken: encryptedToken,
+        refreshToken: encryptedRefreshToken,
+        tokenExpiresAt,
         installationId,
         isAdmin,
       },
