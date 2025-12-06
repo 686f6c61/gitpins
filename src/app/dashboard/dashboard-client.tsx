@@ -387,18 +387,21 @@ export function DashboardClient({ user }: DashboardClientProps) {
             )}
 
             {settings?.configRepoCreated && (
-              <div className="mb-6 flex items-center gap-2 text-sm text-success">
-                <CheckIcon className="w-4 h-4" />
-                <span>{t('dashboard.syncActive')}</span>
-                <a
-                  href={`https://github.com/${user.username}/${settings.configRepoName}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-foreground underline ml-2"
-                >
-                  {t('dashboard.viewRepo')}
-                </a>
-              </div>
+              <>
+                <div className="mb-6 flex items-center gap-2 text-sm text-success">
+                  <CheckIcon className="w-4 h-4" />
+                  <span>{t('dashboard.syncActive')}</span>
+                  <a
+                    href={`https://github.com/${user.username}/${settings.configRepoName}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground hover:text-foreground underline ml-2"
+                  >
+                    {t('dashboard.viewRepo')}
+                  </a>
+                </div>
+                <CleanupSectionAuto language={locale} />
+              </>
             )}
 
             <DndContext
@@ -507,11 +510,6 @@ export function DashboardClient({ user }: DashboardClientProps) {
                 ) : null}
               </DragOverlay>
             </DndContext>
-
-            {/* Cleanup Section - Only show if user has configured repos */}
-            {settings && settings.configRepoCreated && (
-              <CleanupSectionAuto language={locale} />
-            )}
           </>
         )}
       </main>
