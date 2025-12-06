@@ -542,5 +542,21 @@
       "unbanningUser": "Error al desbanear usuario",
       "deletingUser": "Error al eliminar usuario"
     }
+  },
+  "syncLogs": {
+    "title": "Actividad de Sincronización",
+    "loading": "Cargando actividad...",
+    "noLogs": "No hay actividad de sincronización aún",
+    "refresh": "Actualizar",
+    "justNow": "Ahora mismo",
+    "minutesAgo": "Hace {count} minuto(s)",
+    "hoursAgo": "Hace {count} hora(s)",
+    "daysAgo": "Hace {count} día(s)",
+    "summary": "{total} repos - {successful} exitosos, {failed} fallidos",
+    "actions": {
+      "autoSync": "Sincronización Automática",
+      "autoSyncSkipped": "Sincronización Omitida",
+      "manualSync": "Sincronización Manual"
+    }
   }
 }

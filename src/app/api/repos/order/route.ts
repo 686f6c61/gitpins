@@ -18,7 +18,7 @@ import { validateOrigin, checkAPIRateLimit, isValidRepoFullName, addSecurityHead
 /**
  * POST /api/repos/order
  * Saves repository order and settings to database.
- * Body: { reposOrder, topN, syncFrequency, autoEnabled, commitStrategy, configRepoPrivate }
+ * Body: { reposOrder, topN, syncFrequency, autoEnabled, commitStrategy }
  */
 export async function POST(request: NextRequest) {
   // Validate origin for CSRF protection
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { reposOrder, topN, syncFrequency, autoEnabled, commitStrategy, configRepoPrivate } = body
+    const { reposOrder, topN, syncFrequency, autoEnabled, commitStrategy } = body
 
     // Validate reposOrder array
     if (!Array.isArray(reposOrder)) {
@@ -91,7 +91,6 @@ export async function POST(request: NextRequest) {
         syncFrequency: validSyncFrequency,
         autoEnabled: autoEnabled ?? true,
         commitStrategy: validCommitStrategy,
-        configRepoPrivate: configRepoPrivate ?? true,
       },
       create: {
         userId: session.userId,
@@ -101,7 +100,6 @@ export async function POST(request: NextRequest) {
         syncFrequency: validSyncFrequency,
         autoEnabled: autoEnabled ?? true,
         commitStrategy: validCommitStrategy,
-        configRepoPrivate: configRepoPrivate ?? true,
       },
     })
 

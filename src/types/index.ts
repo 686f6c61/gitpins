@@ -28,7 +28,7 @@ export interface Repo {
 
 /**
  * User's repository ordering settings.
- * Stored in the database and synced to their gitpins-config repo.
+ * Stored in the database.
  */
 export interface RepoOrderSettings {
   topN: number // 0 = todos
@@ -36,9 +36,6 @@ export interface RepoOrderSettings {
   syncFrequency: number
   autoEnabled: boolean
   commitStrategy: 'branch' | 'revert'
-  configRepoName: string
-  configRepoCreated: boolean
-  configRepoPrivate: boolean
   syncSecret?: string
 }
 

@@ -52,11 +52,6 @@ model RepoOrder {
   // Estrategia de commits: "branch" o "revert"
   commitStrategy String  @default("revert")
 
-  // Nombre del repo de config
-  configRepoName String  @default("gitpins-config")
-  configRepoCreated Boolean @default(false)
-  configRepoPrivate Boolean @default(true)
-
   // Secret para el endpoint de sync (UUID)
   syncSecret String?
 

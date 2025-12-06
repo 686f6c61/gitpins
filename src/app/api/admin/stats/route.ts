@@ -46,9 +46,6 @@ export async function GET() {
       where: { isBanned: true }
     })
     const totalSyncs = await prisma.syncLog.count()
-    const configReposCreated = await prisma.repoOrder.count({
-      where: { configRepoCreated: true }
-    })
 
     // Users registered per day (last 30 days)
     const usersPerDay = await prisma.user.groupBy({
@@ -121,7 +118,6 @@ export async function GET() {
         activeUsers,
         bannedUsers,
         syncs: totalSyncs,
-        configRepos: configReposCreated,
         syncsToday,
         syncsThisWeek,
       },

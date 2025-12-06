@@ -40,6 +40,7 @@ import { LanguageToggle } from '@/components/language-toggle'
 import { SortableRepoItem } from './sortable-repo-item'
 import { SettingsModal } from './settings-modal'
 import { Footer } from '@/components/footer'
+import { SyncActivityLog } from '@/components/sync-activity-log'
 import { useTranslation } from '@/i18n'
 import type { Repo, RepoOrderSettings } from '@/types'
 
@@ -79,9 +80,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
   const [settings, setSettings] = useState<RepoOrderSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [creatingConfig, setCreatingConfig] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
-  const [showDisclaimer, setShowDisclaimer] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
@@ -131,12 +130,9 @@ export function DashboardClient({ user }: DashboardClientProps) {
       const loadedSettings = data.settings || {
         topN: 10,
         includePrivate: true,
-        syncFrequency: 6,
+        syncFrequency: 168,
         autoEnabled: true,
         commitStrategy: 'revert',
-        autoCleanup: false,
-        configRepoName: 'gitpins-config',
-        configRepoCreated: false,
       }
       setSettings(loadedSettings)
 
@@ -252,40 +248,6 @@ export function DashboardClient({ user }: DashboardClientProps) {
     }
 
     setHasChanges(true)
-  }
-
-  function handleCreateRepoClick() {
-    // Mostrar el popup de disclaimer primero
-    setShowDisclaimer(true)
-  }
-
-  async function createConfigRepo() {
-    setShowDisclaimer(false)
-
-    // Si hay cambios sin guardar, preguntar al usuario
-    if (hasChanges) {
-      const confirmSave = window.confirm(t('dashboard.confirmUnsavedChanges'))
-      if (confirmSave) {
-        await saveOrder()
-      }
-    }
-
-    setCreatingConfig(true)
-    try {
-      const response = await fetch('/api/config/create', {
-        method: 'POST',
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setSettings((prev) => (prev ? { ...prev, configRepoCreated: true } : null))
-        window.open(data.repoUrl, '_blank')
-      }
-    } catch (error) {
-      console.error('Error creating config repo:', error)
-    } finally {
-      setCreatingConfig(false)
-    }
   }
 
   async function handleSyncNow() {
@@ -405,45 +367,13 @@ export function DashboardClient({ user }: DashboardClientProps) {
               </div>
             )}
 
-            {/* Config repo banner */}
-            {settings && !settings.configRepoCreated && pinnedRepos.length > 0 && (
-              <Card className="mb-6 bg-muted/50">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium mb-1">{t('dashboard.activateSync.title')}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {t('dashboard.activateSync.desc')}
-                    </p>
-                  </div>
-                  <Button onClick={handleCreateRepoClick} disabled={creatingConfig}>
-                    {creatingConfig ? (
-                      <>
-                        <LoaderIcon className="w-4 h-4 mr-2" />
-                        {t('dashboard.creating')}
-                      </>
-                    ) : (
-                      t('dashboard.createRepo')
-                    )}
-                  </Button>
-                </div>
-              </Card>
-            )}
-
-            {settings?.configRepoCreated && (
+            {/* Sync Control */}
+            {settings && pinnedRepos.length > 0 && (
               <>
-                {/* Sync Status */}
                 <div className="mb-6 flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm">
                     <CheckIcon className="w-4 h-4 text-muted-foreground" />
                     <span className="text-muted-foreground">{t('dashboard.syncActive')}</span>
-                    <a
-                      href={`https://github.com/${user.username}/${settings.configRepoName}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-muted-foreground hover:text-foreground underline"
-                    >
-                      {t('dashboard.viewRepo')}
-                    </a>
                   </div>
                   <button
                     onClick={handleSyncNow}
@@ -573,6 +503,11 @@ export function DashboardClient({ user }: DashboardClientProps) {
                 </DroppableZone>
               </div>
 
+              {/* Sync Activity Log */}
+              <div className="mt-8">
+                <SyncActivityLog />
+              </div>
+
               {/* Drag Overlay */}
               <DragOverlay>
                 {activeRepo ? (
@@ -600,38 +535,6 @@ export function DashboardClient({ user }: DashboardClientProps) {
         />
       )}
 
-      {/* Disclaimer Modal */}
-      {showDisclaimer && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-background border border-border rounded-xl max-w-md w-full p-6 shadow-xl">
-            <h3 className="text-lg font-semibold mb-4">
-              {t('dashboard.disclaimerPopup.title')}
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              {t('dashboard.disclaimerPopup.text')}
-            </p>
-            <ul className="text-sm text-muted-foreground space-y-2 mb-6">
-              {[1, 2, 3, 4].map((i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span className="text-foreground mt-1">•</span>
-                  <span>{t(`dashboard.disclaimerPopup.item${i}`)}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="flex gap-3 justify-end">
-              <Button
-                variant="ghost"
-                onClick={() => setShowDisclaimer(false)}
-              >
-                {t('dashboard.disclaimerPopup.cancel')}
-              </Button>
-              <Button onClick={createConfigRepo}>
-                {t('dashboard.disclaimerPopup.accept')}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

@@ -38,8 +38,6 @@ export async function GET() {
       include: {
         repoOrder: {
           select: {
-            configRepoName: true,
-            configRepoCreated: true,
             reposOrder: true,
             syncFrequency: true,
             autoEnabled: true,
@@ -62,9 +60,6 @@ export async function GET() {
       bannedReason: user.bannedReason,
       createdAt: user.createdAt,
       lastLoginAt: user.lastLoginAt,
-      configRepoUrl: user.repoOrder?.configRepoCreated
-        ? `https://github.com/${user.username}/${user.repoOrder.configRepoName}`
-        : null,
       reposConfigured: user.repoOrder
         ? (() => {
             try {
