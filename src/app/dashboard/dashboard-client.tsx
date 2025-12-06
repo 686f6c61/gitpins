@@ -39,7 +39,7 @@ import { ThemeToggle } from '@/components/theme-toggle'
 import { LanguageToggle } from '@/components/language-toggle'
 import { SortableRepoItem } from './sortable-repo-item'
 import { SettingsModal } from './settings-modal'
-import { CleanupSection } from '@/components/cleanup-section'
+import { CleanupSectionAuto } from '@/components/cleanup-section-auto'
 import { Footer } from '@/components/footer'
 import { useTranslation } from '@/i18n'
 import type { Repo, RepoOrderSettings } from '@/types'
@@ -510,9 +510,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
 
             {/* Cleanup Section - Only show if user has configured repos */}
             {settings && settings.configRepoCreated && (
-              <div className="mt-8">
-                <CleanupSection language={locale} />
-              </div>
+              <CleanupSectionAuto language={locale} />
             )}
           </>
         )}
