@@ -73,8 +73,8 @@ export async function POST(request: NextRequest) {
     const validTopN = Math.min(Math.max(1, topN ?? 10), 100)
 
     // Validate syncFrequency
-    const validFrequencies = [1, 2, 4, 6, 8, 12, 24]
-    const validSyncFrequency = validFrequencies.includes(syncFrequency) ? syncFrequency : 6
+    const validFrequencies = [1, 2, 4, 6, 8, 12, 24, 48, 168, 360, 720]
+    const validSyncFrequency = validFrequencies.includes(syncFrequency) ? syncFrequency : 168
 
     // Validate commitStrategy
     const validStrategies = ['branch', 'revert']

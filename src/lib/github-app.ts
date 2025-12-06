@@ -12,6 +12,7 @@
 
 import { Octokit } from 'octokit'
 import { createAppAuth } from '@octokit/auth-app'
+import packageJson from '../../package.json'
 
 /**
  * Creates an Octokit client authenticated as a GitHub App installation.
@@ -49,7 +50,7 @@ export function generateConfigJson(options: {
 }): string {
   return JSON.stringify(
     {
-      version: '1.0',
+      version: packageJson.version,
       owner: options.username,
       repos: options.reposOrder.slice(0, options.topN),
       settings: {

@@ -119,6 +119,7 @@ export async function GET(request: NextRequest) {
               configRepoName: repoOrder.configRepoName,
               configRepoCreated: repoOrder.configRepoCreated,
               configRepoPrivate: repoOrder.configRepoPrivate,
+              syncSecret: repoOrder.syncSecret,
             }
           : null,
       })

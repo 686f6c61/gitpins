@@ -141,6 +141,14 @@
     },
     "syncActive": "Automatic sync active",
     "viewRepo": "View repository",
+    "syncNow": {
+      "button": "Sync now",
+      "syncing": "Syncing...",
+      "success": "Sync completed: {synced} successful, {failed} failed",
+      "alreadyOrdered": "Repositories are already in the correct order",
+      "error": "Sync failed. Please try again",
+      "noSecret": "Sync configuration not found"
+    },
     "pinnedRepos": {
       "title": "Repos to keep on top",
       "changeLimit": "Change limit",
@@ -175,7 +183,11 @@
         "6": "Every 6 hours (recommended)",
         "8": "Every 8 hours",
         "12": "Every 12 hours",
-        "24": "Every 24 hours"
+        "24": "Every 24 hours",
+        "48": "Every 2 days",
+        "168": "Every 7 days",
+        "360": "Every 15 days",
+        "720": "Every 30 days"
       }
     },
     "commitStrategy": {

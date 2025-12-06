@@ -39,6 +39,7 @@ export interface RepoOrderSettings {
   configRepoName: string
   configRepoCreated: boolean
   configRepoPrivate: boolean
+  syncSecret?: string
 }
 
 /**
