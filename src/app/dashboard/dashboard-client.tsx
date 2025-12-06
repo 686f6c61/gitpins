@@ -39,6 +39,7 @@ import { ThemeToggle } from '@/components/theme-toggle'
 import { LanguageToggle } from '@/components/language-toggle'
 import { SortableRepoItem } from './sortable-repo-item'
 import { SettingsModal } from './settings-modal'
+import { CleanupSection } from '@/components/cleanup-section'
 import { Footer } from '@/components/footer'
 import { useTranslation } from '@/i18n'
 import type { Repo, RepoOrderSettings } from '@/types'
@@ -73,7 +74,7 @@ function DroppableZone({ id, children, className }: { id: string; children: Reac
  * Manages repo fetching, drag-and-drop ordering, and sync configuration.
  */
 export function DashboardClient({ user }: DashboardClientProps) {
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
   const [repos, setRepos] = useState<Repo[]>([])
   const [pinnedRepos, setPinnedRepos] = useState<string[]>([]) // fullNames de repos pinneados
   const [settings, setSettings] = useState<RepoOrderSettings | null>(null)
@@ -506,6 +507,13 @@ export function DashboardClient({ user }: DashboardClientProps) {
                 ) : null}
               </DragOverlay>
             </DndContext>
+
+            {/* Cleanup Section - Only show if user has configured repos */}
+            {settings && settings.configRepoCreated && (
+              <div className="mt-8">
+                <CleanupSection language={locale} />
+              </div>
+            )}
           </>
         )}
       </main>
