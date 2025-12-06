@@ -17,6 +17,71 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { createAppOctokit } from '@/lib/github-app'
 import { checkRateLimit, rateLimits } from '@/lib/rate-limit'
+import type { Octokit } from 'octokit'
+
+/**
+ * Obtiene el orden actual de los repositorios desde GitHub API.
+ * Los repositorios se retornan ordenados por 'updated_at' descendente.
+ * @param octokit - Authenticated Octokit client
+ * @param username - GitHub username
+ * @param repoNames - Array of repository full names to filter
+ * @returns Array of repository full names in current order
+ */
+async function getCurrentRepoOrder(
+  octokit: Octokit,
+  username: string,
+  repoNames: string[]
+): Promise<string[]> {
+  try {
+    const { data: repos } = await octokit.rest.repos.listForUser({
+      username,
+      sort: 'updated',
+      direction: 'desc',
+      per_page: 100,
+    })
+
+    // Filtrar solo los repos que nos interesan y mantener el orden actual
+    const relevantRepos = repos
+      .filter(r => repoNames.includes(r.full_name))
+      .map(r => r.full_name)
+
+    return relevantRepos
+  } catch (error) {
+    console.error('Error fetching current repo order:', error)
+    return []
+  }
+}
+
+/**
+ * Verifica si los repositorios ya están en el orden correcto.
+ * Compara los primeros N repos actuales con los N repos deseados.
+ * @param currentOrder - Current order from GitHub API
+ * @param desiredOrder - Desired order from config
+ * @param topN - Number of top repos to verify
+ * @returns true if repos are already in correct order
+ */
+function isRepoOrderCorrect(
+  currentOrder: string[],
+  desiredOrder: string[],
+  topN: number
+): boolean {
+  const currentTop = currentOrder.slice(0, topN)
+  const desiredTop = desiredOrder.slice(0, topN)
+
+  // Verificar que tengamos suficientes repos
+  if (currentTop.length < desiredTop.length) {
+    return false
+  }
+
+  // Verificar que cada repo esté en la posición correcta
+  for (let i = 0; i < desiredTop.length; i++) {
+    if (currentTop[i] !== desiredTop[i]) {
+      return false
+    }
+  }
+
+  return true
+}
 
 /**
  * POST /api/sync/[secret]
@@ -91,6 +156,47 @@ export async function POST(
     if (reposToSync.length === 0) {
       return NextResponse.json({ message: 'No repos to sync' }, { status: 200 })
     }
+
+    // ========== VERIFICACIÓN DE ORDEN ==========
+    // Verificar si los repos ya están en el orden correcto
+    // Si lo están, no necesitamos crear commits innecesarios
+    const currentOrder = await getCurrentRepoOrder(
+      octokit,
+      user.username,
+      reposOrderParsed
+    )
+
+    const isOrdered = isRepoOrderCorrect(
+      currentOrder,
+      reposToSync,
+      repoOrder.topN
+    )
+
+    if (isOrdered) {
+      // Los repos ya están en el orden correcto - no hacer nada
+      await prisma.syncLog.create({
+        data: {
+          userId: user.id,
+          action: 'auto_sync_skipped',
+          status: 'success',
+          details: JSON.stringify({
+            reason: 'Repositories already in correct order',
+            currentOrder: currentOrder.slice(0, repoOrder.topN),
+            desiredOrder: reposToSync,
+          }),
+          reposAffected: JSON.stringify(reposToSync),
+        },
+      })
+
+      return NextResponse.json({
+        success: true,
+        message: 'Repositories already in correct order. No sync needed.',
+        skipped: true,
+        currentOrder: currentOrder.slice(0, repoOrder.topN),
+        desiredOrder: reposToSync,
+      })
+    }
+    // ========== FIN VERIFICACIÓN DE ORDEN ==========
 
     const results: { repo: string; status: string; error?: string }[] = []
 

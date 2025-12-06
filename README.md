@@ -8,9 +8,9 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js&logoColor=white)](https://nextjs.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Prisma](https://img.shields.io/badge/Prisma-6.0-2D3748?logo=prisma&logoColor=white)](https://www.prisma.io/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Prisma](https://img.shields.io/badge/Prisma-7.1-2D3748?logo=prisma&logoColor=white)](https://www.prisma.io/)
 [![Vercel](https://img.shields.io/badge/Vercel-Deployed-black?logo=vercel&logoColor=white)](https://vercel.com/)
 
 [Live Demo](https://gitpins.vercel.app) | [How It Works](#how-it-works) | [Self-Host](#self-hosting)
@@ -49,7 +49,8 @@ GitHub sorts repositories by "last updated" date. This means your most important
 ## Features
 
 - **Drag & Drop Ordering** - Visually arrange your repositories in the order you want
-- **Automatic Syncing** - GitHub Actions keep your repos in order automatically
+- **Smart Sync** - Only creates commits when order changes (no unnecessary commits!)
+- **Commit Cleanup** - Remove old GitPins commits to keep your history clean
 - **Two Commit Strategies** - Choose between "revert" (cleaner history) or "branch" (more commits)
 - **Configurable Frequency** - Sync every 1, 2, 4, 6, 8, 12, or 24 hours
 - **Private Repos Support** - Include or exclude private repositories
@@ -106,10 +107,10 @@ GitPins is designed with security in mind:
 ## Tech Stack
 
 - **Framework**: Next.js 16 (App Router)
-- **Language**: TypeScript
-- **Database**: PostgreSQL (via Prisma)
+- **Language**: TypeScript 5
+- **Database**: PostgreSQL (via Prisma 7)
 - **Auth**: GitHub OAuth (GitHub Apps)
-- **Styling**: Tailwind CSS
+- **Styling**: Tailwind CSS 4
 - **Drag & Drop**: dnd-kit
 - **Deployment**: Vercel
 

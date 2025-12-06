@@ -92,20 +92,33 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger GitPins Sync
+      - name: Check and Sync Repository Order
         run: |
-          curl -s -X POST "${options.appUrl}/api/sync/\${{ secrets.GITPINS_SYNC_SECRET }}" \\
-            -H "Content-Type: application/json" \\
-            -o response.json
+          echo "🔍 Checking repository order..."
 
-          echo "Response:"
-          cat response.json
+          response=\$(curl -s -X POST "${options.appUrl}/api/sync/\${{ secrets.GITPINS_SYNC_SECRET }}" \\
+            -H "Content-Type: application/json")
 
-          # Check if sync was successful
-          if grep -q '"success":true' response.json; then
-            echo "Sync completed successfully!"
+          echo "$response" | jq '.' || echo "$response"
+
+          # Check if sync was skipped (already in order)
+          skipped=\$(echo "$response" | jq -r '.skipped // false')
+
+          if [ "$skipped" = "true" ]; then
+            echo "✅ Repositories already in correct order - sync skipped"
+            echo "No commits created. Your repos are clean!"
           else
-            echo "Sync may have had issues, check response above"
+            synced=\$(echo "$response" | jq -r '.synced // 0')
+            failed=\$(echo "$response" | jq -r '.failed // 0')
+
+            if [ "$synced" -gt 0 ]; then
+              echo "✅ Successfully synced $synced repositories"
+            fi
+
+            if [ "$failed" -gt 0 ]; then
+              echo "⚠️ Failed to sync $failed repositories"
+              exit 1
+            fi
           fi
 `
 }

@@ -1,6 +1,6 @@
 {
   "name": "gitpins",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -18,32 +18,37 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@octokit/auth-app": "^8.1.2",
-    "@prisma/client": "5.22.0",
+    "@prisma/adapter-pg": "^7.1.0",
+    "@prisma/client": "7.1.0",
+    "dotenv": "^16.4.7",
     "jose": "^6.1.3",
     "libsodium-wrappers": "^0.7.15",
-    "next": "16.0.6",
+    "next": "16.0.7",
     "octokit": "^5.0.5",
-    "prisma": "5.22.0",
-    "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "pg": "^8.13.1",
+    "prisma": "7.1.0",
+    "react": "19.2.1",
+    "react-dom": "19.2.1"
   },
   "devDependencies": {
     "@jest/globals": "^30.2.0",
     "@tailwindcss/postcss": "^4",
     "@types/jest": "^30.0.0",
     "@types/libsodium-wrappers": "^0.7.14",
-    "@types/node": "^20",
+    "@types/node": "^24",
+    "@types/pg": "^8.11.10",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.0.6",
+    "eslint-config-next": "16.0.7",
     "jest": "^30.2.0",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.6",
+    "tsx": "^4.19.2",
     "typescript": "^5"
   },
   "overrides": {
-    "prisma": "5.22.0",
-    "@prisma/client": "5.22.0"
+    "prisma": "7.1.0",
+    "@prisma/client": "7.1.0"
   }
 }
