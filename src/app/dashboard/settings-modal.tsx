@@ -209,34 +209,6 @@ export function SettingsModal({ settings, totalRepos, onClose, onChange }: Setti
             </button>
           </div>
 
-          <hr className="border-border" />
-
-          {/* Config repo visibility */}
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-medium text-sm">{t('settings.configRepoPrivate.label')}</div>
-              <div className="text-xs text-muted-foreground">
-                {t('settings.configRepoPrivate.desc', {
-                  name: settings.configRepoName,
-                  visibility: settings.configRepoPrivate
-                    ? t('settings.configRepoPrivate.private')
-                    : t('settings.configRepoPrivate.public')
-                })}
-              </div>
-            </div>
-            <button
-              onClick={() => onChange({ configRepoPrivate: !settings.configRepoPrivate })}
-              className={`w-12 h-6 rounded-full transition-colors ${
-                settings.configRepoPrivate ? 'bg-foreground' : 'bg-muted'
-              }`}
-            >
-              <div
-                className={`w-5 h-5 rounded-full bg-background shadow transition-transform ${
-                  settings.configRepoPrivate ? 'translate-x-6' : 'translate-x-0.5'
-                }`}
-              />
-            </button>
-          </div>
         </div>
 
         {/* Footer */}

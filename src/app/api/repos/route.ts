@@ -56,23 +56,9 @@ export async function GET(request: NextRequest) {
     const repos = await getUserRepos(accessToken)
 
     // Obtener orden guardado del usuario
-    let repoOrder = await prisma.repoOrder.findUnique({
+    const repoOrder = await prisma.repoOrder.findUnique({
       where: { userId: session.userId },
     })
-
-    // Verificar si el repo de config realmente existe en GitHub
-    if (repoOrder?.configRepoCreated) {
-      const configRepoName = repoOrder.configRepoName || 'gitpins-config'
-      const configRepoExists = repos.some(r => r.name === configRepoName)
-
-      if (!configRepoExists) {
-        // El repo fue borrado, actualizar el flag
-        repoOrder = await prisma.repoOrder.update({
-          where: { userId: session.userId },
-          data: { configRepoCreated: false },
-        })
-      }
-    }
 
     // Si hay orden guardado, aplicarlo
     let savedReposOrder: string[] = []
@@ -116,9 +102,6 @@ export async function GET(request: NextRequest) {
               syncFrequency: repoOrder.syncFrequency,
               autoEnabled: repoOrder.autoEnabled,
               commitStrategy: repoOrder.commitStrategy,
-              configRepoName: repoOrder.configRepoName,
-              configRepoCreated: repoOrder.configRepoCreated,
-              configRepoPrivate: repoOrder.configRepoPrivate,
               syncSecret: repoOrder.syncSecret,
             }
           : null,

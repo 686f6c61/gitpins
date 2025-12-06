@@ -542,5 +542,21 @@
       "unbanningUser": "Error unbanning user",
       "deletingUser": "Error deleting user"
     }
+  },
+  "syncLogs": {
+    "title": "Sync Activity",
+    "loading": "Loading activity...",
+    "noLogs": "No sync activity yet",
+    "refresh": "Refresh",
+    "justNow": "Just now",
+    "minutesAgo": "{count} minute(s) ago",
+    "hoursAgo": "{count} hour(s) ago",
+    "daysAgo": "{count} day(s) ago",
+    "summary": "{total} repos - {successful} successful, {failed} failed",
+    "actions": {
+      "autoSync": "Automatic Sync",
+      "autoSyncSkipped": "Sync Skipped",
+      "manualSync": "Manual Sync"
+    }
   }
 }

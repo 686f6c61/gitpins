@@ -199,11 +199,14 @@ export async function POST(
     // ========== FIN VERIFICACIÓN DE ORDEN ==========
 
     const results: { repo: string; status: string; error?: string; cleaned?: boolean }[] = []
+    const detailedLogs: string[] = []
 
     // Procesar repos en orden inverso (el último queda más reciente)
     for (let i = reposToSync.length - 1; i >= 0; i--) {
       const repoFullName = reposToSync[i]
       const [owner, repo] = repoFullName.split('/')
+      const position = i + 1
+      const total = reposToSync.length
 
       // Validate repo name format (GitHub constraints: 1-100 chars, alphanumeric, hyphen, underscore, dot)
       // Must not start with a dot, and cannot be empty
@@ -215,6 +218,7 @@ export async function POST(
       }
 
       if (!isValidName(owner) || !isValidName(repo)) {
+        detailedLogs.push(`[${position}/${total}] ${repoFullName}: Invalid repository name format`)
         results.push({
           repo: repoFullName,
           status: 'error',
@@ -222,6 +226,8 @@ export async function POST(
         })
         continue
       }
+
+      detailedLogs.push(`[${position}/${total}] Ordering ${repoFullName}...`)
 
       try {
         // Obtener referencia del branch principal
@@ -254,6 +260,8 @@ export async function POST(
 
         if (repoOrder.commitStrategy === 'revert') {
           // Estrategia: Commit + Revert
+          detailedLogs.push(`  - Creating commit for position ${position}/${total}...`)
+
           // Crear commit vacío
           const { data: newCommit } = await octokit.rest.git.createCommit({
             owner,
@@ -270,6 +278,8 @@ export async function POST(
             ref: `heads/${defaultBranch}`,
             sha: newCommit.sha,
           })
+
+          detailedLogs.push(`  - Reverting commit...`)
 
           // Revertir inmediatamente
           const { data: revertCommit } = await octokit.rest.git.createCommit({
@@ -291,6 +301,8 @@ export async function POST(
           // Estrategia: Branch temporal
           const tempBranch = `gitpins-${Date.now()}`
 
+          detailedLogs.push(`  - Creating temporary branch ${tempBranch}...`)
+
           // Crear branch temporal
           await octokit.rest.git.createRef({
             owner,
@@ -298,6 +310,8 @@ export async function POST(
             ref: `refs/heads/${tempBranch}`,
             sha: sha,
           })
+
+          detailedLogs.push(`  - Creating commit for position ${position}/${total}...`)
 
           // Commit vacío en el branch temporal
           const { data: newCommit } = await octokit.rest.git.createCommit({
@@ -315,6 +329,8 @@ export async function POST(
             sha: newCommit.sha,
           })
 
+          detailedLogs.push(`  - Merging to ${defaultBranch}...`)
+
           // Merge a main
           await octokit.rest.repos.merge({
             owner,
@@ -323,6 +339,8 @@ export async function POST(
             head: tempBranch,
             commit_message: `[GitPins] Position: ${i + 1}/${reposToSync.length}`,
           })
+
+          detailedLogs.push(`  - Deleting temporary branch...`)
 
           // Borrar branch temporal
           await octokit.rest.git.deleteRef({
@@ -337,6 +355,8 @@ export async function POST(
         // Esto mantiene el repo ordenado (timestamp actualizado) pero limpio (sin commits)
         let cleaned = false
         try {
+          detailedLogs.push(`  - Cleaning GitPins commits...`)
+
           // Esperar 2 segundos para que GitHub procese los commits
           await new Promise((resolve) => setTimeout(resolve, 2000))
 
@@ -345,19 +365,25 @@ export async function POST(
 
           if (cleanupResult.status === 'success') {
             cleaned = true
+            detailedLogs.push(`  - Cleaned ${cleanupResult.removedCommits || 0} commit(s)`)
+          } else {
+            detailedLogs.push(`  - Cleanup skipped`)
           }
         } catch (cleanupError) {
           // Si falla la limpieza, no es crítico - el repo quedó ordenado
           console.error(`Cleanup failed for ${repoFullName}:`, cleanupError)
+          detailedLogs.push(`  - Cleanup failed (repo still ordered)`)
         }
         // ========== FIN LIMPIEZA INMEDIATA ==========
 
+        detailedLogs.push(`[${position}/${total}] ${repoFullName} - SUCCESS`)
         results.push({ repo: repoFullName, status: 'success', cleaned })
 
         // Esperar 1 segundo adicional entre repos para no saturar la API
         await new Promise((resolve) => setTimeout(resolve, 1000))
 
       } catch (error) {
+        detailedLogs.push(`[${position}/${total}] ${repoFullName} - FAILED: ${error instanceof Error ? error.message : 'Operation failed'}`)
         results.push({
           repo: repoFullName,
           status: 'error',
@@ -366,13 +392,22 @@ export async function POST(
       }
     }
 
-    // Registrar en log
+    // Registrar en log con detalles completos
     await prisma.syncLog.create({
       data: {
         userId: user.id,
         action: 'auto_sync',
         status: results.every((r) => r.status === 'success') ? 'success' : 'partial',
-        details: JSON.stringify({ results }),
+        details: JSON.stringify({
+          results,
+          logs: detailedLogs,
+          summary: {
+            total: results.length,
+            successful: results.filter(r => r.status === 'success').length,
+            failed: results.filter(r => r.status === 'error').length,
+            cleaned: results.filter(r => r.cleaned).length,
+          }
+        }),
         reposAffected: JSON.stringify(reposToSync),
       },
     })
