@@ -141,6 +141,14 @@
     },
     "syncActive": "Sincronización automática activa",
     "viewRepo": "Ver repositorio",
+    "syncNow": {
+      "button": "Ejecutar ahora",
+      "syncing": "Sincronizando...",
+      "success": "Sincronización completada: {synced} exitosos, {failed} fallidos",
+      "alreadyOrdered": "Los repositorios ya están en el orden correcto",
+      "error": "Sincronización fallida. Por favor, inténtalo de nuevo",
+      "noSecret": "Configuración de sincronización no encontrada"
+    },
     "pinnedRepos": {
       "title": "Repos a mantener arriba",
       "changeLimit": "Cambiar límite",
@@ -175,7 +183,11 @@
         "6": "Cada 6 horas (recomendado)",
         "8": "Cada 8 horas",
         "12": "Cada 12 horas",
-        "24": "Cada 24 horas"
+        "24": "Cada 24 horas",
+        "48": "Cada 2 días",
+        "168": "Cada 7 días",
+        "360": "Cada 15 días",
+        "720": "Cada 30 días"
       }
     },
     "commitStrategy": {

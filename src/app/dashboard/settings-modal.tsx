@@ -127,6 +127,10 @@ export function SettingsModal({ settings, totalRepos, onClose, onChange }: Setti
               <option value={8}>{t('settings.syncFrequency.options.8')}</option>
               <option value={12}>{t('settings.syncFrequency.options.12')}</option>
               <option value={24}>{t('settings.syncFrequency.options.24')}</option>
+              <option value={48}>{t('settings.syncFrequency.options.48')}</option>
+              <option value={168}>{t('settings.syncFrequency.options.168')}</option>
+              <option value={360}>{t('settings.syncFrequency.options.360')}</option>
+              <option value={720}>{t('settings.syncFrequency.options.720')}</option>
             </select>
             <p className="text-xs text-muted-foreground mt-1">
               {t('settings.syncFrequency.hint')}

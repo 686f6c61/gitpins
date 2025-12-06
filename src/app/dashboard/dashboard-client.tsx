@@ -39,7 +39,6 @@ import { ThemeToggle } from '@/components/theme-toggle'
 import { LanguageToggle } from '@/components/language-toggle'
 import { SortableRepoItem } from './sortable-repo-item'
 import { SettingsModal } from './settings-modal'
-import { CleanupSection } from '@/components/cleanup-section'
 import { Footer } from '@/components/footer'
 import { useTranslation } from '@/i18n'
 import type { Repo, RepoOrderSettings } from '@/types'
@@ -85,6 +84,8 @@ export function DashboardClient({ user }: DashboardClientProps) {
   const [showDisclaimer, setShowDisclaimer] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [syncing, setSyncing] = useState(false)
+  const [syncMessage, setSyncMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -133,6 +134,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
         syncFrequency: 6,
         autoEnabled: true,
         commitStrategy: 'revert',
+        autoCleanup: false,
         configRepoName: 'gitpins-config',
         configRepoCreated: false,
       }
@@ -169,9 +171,10 @@ export function DashboardClient({ user }: DashboardClientProps) {
     // Mover de pool a top
     if (!isActiveInTop && isOverInTop) {
       const maxTop = settings?.topN || 10
+
+      // Si ya está lleno, auto-incrementar el límite
       if (pinnedRepos.length >= maxTop) {
-        // Ya está lleno, no añadir más
-        return
+        setSettings(prev => prev ? { ...prev, topN: maxTop + 1 } : null)
       }
 
       if (overFullName === 'top-zone') {
@@ -214,14 +217,13 @@ export function DashboardClient({ user }: DashboardClientProps) {
   async function saveOrder() {
     setSaving(true)
     try {
-      // Construir el orden completo: pinneados primero, luego el resto
-      const fullOrder = [...pinnedRepos, ...poolRepos.map(r => r.fullName)]
-
+      // Solo guardar los repos pinneados
+      // El resto permanecerá en su orden natural de GitHub
       const response = await fetch('/api/repos/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          reposOrder: fullOrder,
+          reposOrder: pinnedRepos,
           topN: pinnedRepos.length,
           ...settings,
         }),
@@ -283,6 +285,47 @@ export function DashboardClient({ user }: DashboardClientProps) {
       console.error('Error creating config repo:', error)
     } finally {
       setCreatingConfig(false)
+    }
+  }
+
+  async function handleSyncNow() {
+    if (!settings?.syncSecret) {
+      setSyncMessage({ type: 'error', text: t('dashboard.syncNow.noSecret') })
+      return
+    }
+
+    setSyncing(true)
+    setSyncMessage(null)
+
+    try {
+      const response = await fetch(`/api/sync/${settings.syncSecret}`, {
+        method: 'POST',
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        if (data.skipped) {
+          setSyncMessage({ type: 'info', text: t('dashboard.syncNow.alreadyOrdered') })
+        } else {
+          setSyncMessage({
+            type: 'success',
+            text: t('dashboard.syncNow.success', {
+              synced: data.synced || 0,
+              failed: data.failed || 0
+            })
+          })
+        }
+      } else {
+        setSyncMessage({ type: 'error', text: data.error || t('dashboard.syncNow.error') })
+      }
+    } catch (error) {
+      console.error('Sync error:', error)
+      setSyncMessage({ type: 'error', text: t('dashboard.syncNow.error') })
+    } finally {
+      setSyncing(false)
+      // Limpiar mensaje después de 5 segundos
+      setTimeout(() => setSyncMessage(null), 5000)
     }
   }
 
@@ -387,18 +430,51 @@ export function DashboardClient({ user }: DashboardClientProps) {
             )}
 
             {settings?.configRepoCreated && (
-              <div className="mb-6 flex items-center gap-2 text-sm text-success">
-                <CheckIcon className="w-4 h-4" />
-                <span>{t('dashboard.syncActive')}</span>
-                <a
-                  href={`https://github.com/${user.username}/${settings.configRepoName}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-foreground underline ml-2"
-                >
-                  {t('dashboard.viewRepo')}
-                </a>
-              </div>
+              <>
+                {/* Sync Status */}
+                <div className="mb-6 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckIcon className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">{t('dashboard.syncActive')}</span>
+                    <a
+                      href={`https://github.com/${user.username}/${settings.configRepoName}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-muted-foreground hover:text-foreground underline"
+                    >
+                      {t('dashboard.viewRepo')}
+                    </a>
+                  </div>
+                  <button
+                    onClick={handleSyncNow}
+                    disabled={syncing}
+                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {syncing ? (
+                      <>
+                        <LoaderIcon className="w-4 h-4" />
+                        <span>{t('dashboard.syncNow.syncing')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <RefreshIcon className="w-4 h-4" />
+                        <span>{t('dashboard.syncNow.button')}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Sync Message */}
+                {syncMessage && (
+                  <div className={`mb-6 p-3 rounded-lg border text-sm ${
+                    syncMessage.type === 'success' ? 'bg-muted/50 border-border text-foreground' :
+                    syncMessage.type === 'error' ? 'bg-muted/50 border-border text-foreground' :
+                    'bg-muted/50 border-border text-muted-foreground'
+                  }`}>
+                    {syncMessage.text}
+                  </div>
+                )}
+              </>
             )}
 
             <DndContext
@@ -507,13 +583,6 @@ export function DashboardClient({ user }: DashboardClientProps) {
                 ) : null}
               </DragOverlay>
             </DndContext>
-
-            {/* Cleanup Section - Only show if user has configured repos */}
-            {settings && settings.configRepoCreated && (
-              <div className="mt-8">
-                <CleanupSection language={locale} />
-              </div>
-            )}
           </>
         )}
       </main>

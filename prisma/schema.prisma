@@ -46,7 +46,7 @@ model RepoOrder {
   includePrivate Boolean @default(true)
 
   // Configuracion de sync
-  syncFrequency Int      @default(6)
+  syncFrequency Int      @default(168)
   autoEnabled   Boolean  @default(true)
 
   // Estrategia de commits: "branch" o "revert"

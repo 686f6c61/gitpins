@@ -198,7 +198,7 @@ export async function POST(
     }
     // ========== FIN VERIFICACIÓN DE ORDEN ==========
 
-    const results: { repo: string; status: string; error?: string }[] = []
+    const results: { repo: string; status: string; error?: string; cleaned?: boolean }[] = []
 
     // Procesar repos en orden inverso (el último queda más reciente)
     for (let i = reposToSync.length - 1; i >= 0; i--) {
@@ -332,9 +332,29 @@ export async function POST(
           })
         }
 
-        results.push({ repo: repoFullName, status: 'success' })
+        // ========== LIMPIEZA INMEDIATA POST-COMMIT ==========
+        // Limpiar los commits de GitPins que acabamos de crear
+        // Esto mantiene el repo ordenado (timestamp actualizado) pero limpio (sin commits)
+        let cleaned = false
+        try {
+          // Esperar 2 segundos para que GitHub procese los commits
+          await new Promise((resolve) => setTimeout(resolve, 2000))
 
-        // Esperar 1 segundo entre repos para no saturar la API
+          const { cleanupRepoCommitsAutomatic } = await import('../../repos/cleanup-helper')
+          const cleanupResult = await cleanupRepoCommitsAutomatic(octokit, owner, repo)
+
+          if (cleanupResult.status === 'success') {
+            cleaned = true
+          }
+        } catch (cleanupError) {
+          // Si falla la limpieza, no es crítico - el repo quedó ordenado
+          console.error(`Cleanup failed for ${repoFullName}:`, cleanupError)
+        }
+        // ========== FIN LIMPIEZA INMEDIATA ==========
+
+        results.push({ repo: repoFullName, status: 'success', cleaned })
+
+        // Esperar 1 segundo adicional entre repos para no saturar la API
         await new Promise((resolve) => setTimeout(resolve, 1000))
 
       } catch (error) {

@@ -13,6 +13,7 @@
 
 import { useTranslation } from '@/i18n'
 import { GitHubIcon } from './icons'
+import packageJson from '../../package.json'
 
 /** GitHub repository URL for the GitPins project */
 const GITHUB_REPO_URL = 'https://github.com/686f6c61/gitpins'
@@ -49,6 +50,8 @@ export function Footer() {
         >
           {t('footer.legal')}
         </a>
+        <span className="hidden sm:inline">·</span>
+        <span className="text-xs">v{packageJson.version}</span>
       </div>
     </footer>
   )
