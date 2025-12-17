@@ -48,11 +48,25 @@ export function CleanupSection({ language }: CleanupSectionProps) {
       const data = await response.json()
 
       if (!response.ok) {
+        // Si hay error de autenticación, redirigir a logout
+        if (response.status === 401) {
+          console.error('Authentication error:', data.error)
+          if (data.needsReinstall) {
+            // Redirigir a la página de instalación si necesita reinstalar la app
+            window.location.href = '/install'
+          } else {
+            // Redirigir a logout si el token expiró
+            window.location.href = '/api/auth/logout'
+          }
+          return
+        }
         throw new Error(data.error || 'Failed to fetch commits')
       }
 
       // Solo mostrar repos que tienen commits GitPins
-      const reposWithGitPins = data.repos.filter((r: RepoCommitInfo) => r.gitpinsCommits > 0)
+      const reposWithGitPins = Array.isArray(data.repos)
+        ? data.repos.filter((r: RepoCommitInfo) => r.gitpinsCommits > 0)
+        : []
       setRepos(reposWithGitPins)
 
     } catch (err) {

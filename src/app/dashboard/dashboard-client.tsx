@@ -85,6 +85,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
   const [syncMessage, setSyncMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null)
+  const [authError, setAuthError] = useState(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -99,9 +100,11 @@ export function DashboardClient({ user }: DashboardClientProps) {
 
   // Repos filtrados por privacidad
   const filteredRepos = useMemo(() => {
-    if (!settings) return repos
-    if (settings.includePrivate) return repos
-    return repos.filter(r => !r.isPrivate)
+    // Protección: asegurar que repos siempre sea un array válido
+    const validRepos = Array.isArray(repos) ? repos : []
+    if (!settings) return validRepos
+    if (settings.includePrivate) return validRepos
+    return validRepos.filter(r => !r.isPrivate)
   }, [repos, settings?.includePrivate])
 
   // Repos en la zona top (pinneados) y en el pool
@@ -122,10 +125,28 @@ export function DashboardClient({ user }: DashboardClientProps) {
 
   async function fetchRepos() {
     setLoading(true)
+    setAuthError(false)
     try {
       const response = await fetch('/api/repos')
       const data = await response.json()
-      setRepos(data.repos)
+
+      // Si hay error de autenticación, mostrar mensaje y redirigir
+      if (!response.ok) {
+        if (response.status === 401) {
+          console.error('Authentication error:', data.error)
+          setAuthError(true)
+          setLoading(false)
+          // Esperar 2 segundos antes de redirigir para que el usuario vea el mensaje
+          setTimeout(() => {
+            window.location.href = '/api/auth/logout'
+          }, 2000)
+          return
+        }
+        throw new Error(data.error || 'Failed to fetch repos')
+      }
+
+      // Asegurarse de que repos sea un array
+      setRepos(Array.isArray(data.repos) ? data.repos : [])
 
       const loadedSettings = data.settings || {
         topN: 10,
@@ -143,6 +164,8 @@ export function DashboardClient({ user }: DashboardClientProps) {
       }
     } catch (error) {
       console.error('Error fetching repos:', error)
+      // En caso de error, asegurar que repos sea un array vacío
+      setRepos([])
     } finally {
       setLoading(false)
     }
@@ -339,7 +362,26 @@ export function DashboardClient({ user }: DashboardClientProps) {
 
       {/* Main content */}
       <main className="max-w-5xl mx-auto px-4 py-8">
-        {loading ? (
+        {authError ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <Card className="max-w-md p-8 text-center">
+              <div className="mb-4">
+                <svg className="w-16 h-16 mx-auto text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-semibold mb-2">
+                {locale === 'es' ? 'Sesión expirada' : 'Session Expired'}
+              </h2>
+              <p className="text-muted-foreground mb-4">
+                {locale === 'es'
+                  ? 'Tu autenticación con GitHub ha expirado o la aplicación fue desinstalada. Serás redirigido al inicio para volver a iniciar sesión.'
+                  : 'Your GitHub authentication has expired or the app was uninstalled. You will be redirected to login again.'}
+              </p>
+              <LoaderIcon className="w-6 h-6 mx-auto text-muted-foreground" />
+            </Card>
+          </div>
+        ) : loading ? (
           <div className="flex items-center justify-center py-20">
             <LoaderIcon className="w-8 h-8 text-muted-foreground" />
           </div>

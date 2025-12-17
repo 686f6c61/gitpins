@@ -139,7 +139,27 @@ export async function POST(
     }
 
     // Crear cliente con token de la GitHub App
-    const octokit = createAppOctokit(user.installationId)
+    let octokit
+    try {
+      octokit = createAppOctokit(user.installationId)
+    } catch (error: any) {
+      console.error('Failed to create GitHub App client:', error)
+      await prisma.syncLog.create({
+        data: {
+          userId: user.id,
+          action: 'auto_sync',
+          status: 'error',
+          details: JSON.stringify({
+            error: 'GitHub App authentication failed',
+            message: 'The GitHub App may have been uninstalled'
+          }),
+          reposAffected: '[]',
+        },
+      })
+      return NextResponse.json({
+        error: 'GitHub App authentication failed. Please reinstall the app.',
+      }, { status: 401 })
+    }
 
     // Obtener lista de repos a ordenar
     let reposOrderParsed: string[] = []

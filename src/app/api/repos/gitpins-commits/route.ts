@@ -56,7 +56,18 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const octokit = createAppOctokit(user.installationId)
+    let octokit
+    try {
+      octokit = createAppOctokit(user.installationId)
+    } catch (error: any) {
+      console.error('Failed to create GitHub App client:', error)
+      return addSecurityHeaders(
+        NextResponse.json({
+          error: 'GitHub App authentication failed. Please reinstall the app.',
+          needsReinstall: true
+        }, { status: 401 })
+      )
+    }
 
     // Obtener lista de repos configurados
     let reposOrder: string[] = []

@@ -53,7 +53,23 @@ export async function GET(request: NextRequest) {
     const accessToken = decrypt(user.accessToken)
 
     // Obtener repos de GitHub
-    const repos = await getUserRepos(accessToken)
+    let repos
+    try {
+      repos = await getUserRepos(accessToken)
+    } catch (error: any) {
+      // Detectar errores de autenticación de GitHub (401/403)
+      if (error.status === 401 || error.status === 403) {
+        console.error('GitHub token invalid or expired:', error.message)
+        // Opcionalmente podríamos limpiar el token inválido de la DB aquí
+        return addSecurityHeaders(
+          NextResponse.json({
+            error: 'GitHub authentication expired. Please log out and log in again.',
+            needsReauth: true
+          }, { status: 401 })
+        )
+      }
+      throw error
+    }
 
     // Obtener orden guardado del usuario
     const repoOrder = await prisma.repoOrder.findUnique({
