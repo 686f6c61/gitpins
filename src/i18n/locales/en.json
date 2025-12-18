@@ -106,6 +106,26 @@
       "subtitle": "It's free. Only takes 2 minutes to set up.",
       "button": "Connect with GitHub"
     },
+    "comingSoon": {
+      "title": "New Features",
+      "subtitle": "In development",
+      "filters": {
+        "title": "Advanced Filters",
+        "desc": "Filter your repos by language, stars, date and more"
+      },
+      "history": {
+        "title": "Change History",
+        "desc": "Review and restore previous repo orders"
+      },
+      "schedule": {
+        "title": "Scheduled Sync",
+        "desc": "Choose exactly when to sync: daily, weekly, specific time"
+      },
+      "organizations": {
+        "title": "GitHub Organizations",
+        "desc": "Also order your organization repos"
+      }
+    },
     "disclaimer": {
       "title": "Before you continue",
       "text": "GitPins is an open source project that makes empty commits to your repositories to maintain the order you configure. These commits are immediately reverted and do not modify your code.",
@@ -160,6 +180,20 @@
     "allRepos": {
       "title": "All repositories",
       "dragHint": "Drag up to pin"
+    },
+    "filters": {
+      "title": "Filters",
+      "search": "Search repository...",
+      "language": "Language",
+      "allLanguages": "All",
+      "owner": "Owner",
+      "allOwners": "All",
+      "personal": "Personal",
+      "organizations": "Organizations",
+      "minStars": "Min stars",
+      "clear": "Clear filters",
+      "noResults": "No repositories found with these filters",
+      "results": "{count} repository(ies) found"
     }
   },
   "settings": {
@@ -189,6 +223,23 @@
         "360": "Every 15 days",
         "720": "Every 30 days"
       }
+    },
+    "schedule": {
+      "title": "Advanced scheduling",
+      "preferredHour": "Preferred hour",
+      "anyHour": "Any hour",
+      "preferredDays": "Preferred days",
+      "allDays": "All days",
+      "days": {
+        "0": "Sun",
+        "1": "Mon",
+        "2": "Tue",
+        "3": "Wed",
+        "4": "Thu",
+        "5": "Fri",
+        "6": "Sat"
+      },
+      "hint": "Optional: restrict when sync can run"
     },
     "commitStrategy": {
       "label": "Commit strategy",
@@ -381,7 +432,7 @@
   "legal": {
     "title": "Legal & Disclaimer",
     "subtitle": "Important information about using GitPins",
-    "lastUpdated": "Last updated: December 2024",
+    "lastUpdated": "Last updated: December 2025",
     "disclaimer": {
       "title": "Disclaimer",
       "p1": "GitPins is an open source project provided \"AS IS\" and \"AS AVAILABLE\", without warranties of any kind, whether express or implied, including, but not limited to, the implied warranties of merchantability, fitness for a particular purpose, and non-infringement.",
@@ -542,6 +593,20 @@
       "unbanningUser": "Error unbanning user",
       "deletingUser": "Error deleting user"
     }
+  },
+  "orderHistory": {
+    "title": "Change History",
+    "empty": "No change history yet",
+    "restore": "Restore",
+    "restoring": "Restoring...",
+    "restored": "Order restored successfully",
+    "current": "Current",
+    "manual": "Manual",
+    "auto": "Automatic",
+    "restoreAction": "Restored",
+    "repos": "{count} repo(s)",
+    "confirmRestore": "Restore this order?",
+    "showHistory": "View history"
   },
   "syncLogs": {
     "title": "Sync Activity",

@@ -154,7 +154,18 @@ export async function cleanupRepoCommitsAutomatic(
       force: true,
     })
 
-    // 7. Success
+    // 7. Eliminar branch de backup (ya no es necesario)
+    try {
+      await octokit.rest.git.deleteRef({
+        owner,
+        repo,
+        ref: `heads/${backupBranchName}`,
+      })
+    } catch {
+      // Si falla eliminar el backup, no es crítico
+    }
+
+    // 8. Success
     return {
       status: 'success',
       method: 'rewrite',

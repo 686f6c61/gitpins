@@ -70,7 +70,7 @@ export async function GET() {
       select: { createdAt: true }
     })
 
-    allUsers.forEach(user => {
+    allUsers.forEach((user: { createdAt: Date }) => {
       const key = user.createdAt.toISOString().split('T')[0]
       if (usersByDay[key] !== undefined) {
         usersByDay[key]++
@@ -91,7 +91,7 @@ export async function GET() {
       select: { createdAt: true }
     })
 
-    allSyncs.forEach(sync => {
+    allSyncs.forEach((sync: { createdAt: Date }) => {
       const key = sync.createdAt.toISOString().split('T')[0]
       if (syncsByDay[key] !== undefined) {
         syncsByDay[key]++

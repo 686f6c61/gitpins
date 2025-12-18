@@ -24,6 +24,8 @@ export interface Repo {
   updatedAt: string
   isPrivate: boolean
   url: string
+  owner: string
+  isOrg: boolean
 }
 
 /**
@@ -36,6 +38,8 @@ export interface RepoOrderSettings {
   syncFrequency: number
   autoEnabled: boolean
   commitStrategy: 'branch' | 'revert'
+  preferredHour?: number | null // 0-23, null = cualquier hora
+  preferredDays?: number[] // 0=Dom, 1=Lun, ..., 6=Sab
   syncSecret?: string
 }
 
