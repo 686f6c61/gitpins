@@ -141,6 +141,29 @@ export async function POST(
       return NextResponse.json({ message: 'Sync disabled' }, { status: 200 })
     }
 
+    // ========== LOCK: Evitar syncs concurrentes ==========
+    // Si hay un sync en los últimos 10 minutos, saltar
+    const TEN_MINUTES = 10 * 60 * 1000
+    if (repoOrder.lastSyncAt) {
+      const timeSinceLastSync = Date.now() - repoOrder.lastSyncAt.getTime()
+      if (timeSinceLastSync < TEN_MINUTES) {
+        return NextResponse.json({
+          success: true,
+          message: 'Sync already in progress or completed recently. Skipping.',
+          skipped: true,
+          lastSyncAt: repoOrder.lastSyncAt.toISOString(),
+          waitMinutes: Math.ceil((TEN_MINUTES - timeSinceLastSync) / 60000),
+        })
+      }
+    }
+
+    // Marcar inicio de sync
+    await prisma.repoOrder.update({
+      where: { id: repoOrder.id },
+      data: { lastSyncAt: new Date() },
+    })
+    // ========== FIN LOCK ==========
+
     // Crear cliente con token de la GitHub App
     let octokit
     try {
@@ -221,7 +244,7 @@ export async function POST(
     }
     // ========== FIN VERIFICACIÓN DE ORDEN ==========
 
-    const results: { repo: string; status: string; error?: string; cleaned?: boolean }[] = []
+    const results: { repo: string; status: string; error?: string; cleaned?: boolean; owner?: string; repoName?: string }[] = []
     const detailedLogs: string[] = []
 
     // Procesar repos en orden inverso (el último queda más reciente)
@@ -373,34 +396,8 @@ export async function POST(
           })
         }
 
-        // ========== LIMPIEZA INMEDIATA POST-COMMIT ==========
-        // Limpiar los commits de GitPins que acabamos de crear
-        // Esto mantiene el repo ordenado (timestamp actualizado) pero limpio (sin commits)
-        let cleaned = false
-        try {
-          detailedLogs.push(`  - Cleaning GitPins commits...`)
-
-          // Esperar 2 segundos para que GitHub procese los commits
-          await new Promise((resolve) => setTimeout(resolve, 2000))
-
-          const { cleanupRepoCommitsAutomatic } = await import('../../repos/cleanup-helper')
-          const cleanupResult = await cleanupRepoCommitsAutomatic(octokit, owner, repo)
-
-          if (cleanupResult.status === 'success') {
-            cleaned = true
-            detailedLogs.push(`  - Cleaned ${cleanupResult.removedCommits || 0} commit(s)`)
-          } else {
-            detailedLogs.push(`  - Cleanup skipped`)
-          }
-        } catch (cleanupError) {
-          // Si falla la limpieza, no es crítico - el repo quedó ordenado
-          console.error(`Cleanup failed for ${repoFullName}:`, cleanupError)
-          detailedLogs.push(`  - Cleanup failed (repo still ordered)`)
-        }
-        // ========== FIN LIMPIEZA INMEDIATA ==========
-
         detailedLogs.push(`[${position}/${total}] ${repoFullName} - SUCCESS`)
-        results.push({ repo: repoFullName, status: 'success', cleaned })
+        results.push({ repo: repoFullName, status: 'success', owner, repoName: repo })
 
         // Esperar 1 segundo adicional entre repos para no saturar la API
         await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -415,6 +412,47 @@ export async function POST(
       }
     }
 
+    // ========== FASE DE CLEANUP (después de todos los commits) ==========
+    // Limpiar commits de GitPins de todos los repos exitosos
+    // Se hace en el mismo orden (inverso) para mantener el orden final
+    detailedLogs.push('')
+    detailedLogs.push('=== CLEANUP PHASE ===')
+
+    // Esperar 3 segundos para que GitHub procese todos los commits
+    await new Promise((resolve) => setTimeout(resolve, 3000))
+
+    const successfulRepos = results.filter(r => r.status === 'success' && r.owner && r.repoName)
+    let cleanedCount = 0
+
+    for (const result of successfulRepos) {
+      try {
+        detailedLogs.push(`Cleaning ${result.repo}...`)
+
+        const { cleanupRepoCommitsAutomatic } = await import('../../repos/cleanup-helper')
+        const cleanupResult = await cleanupRepoCommitsAutomatic(
+          octokit,
+          result.owner as string,
+          result.repoName as string
+        )
+
+        if (cleanupResult.status === 'success' && cleanupResult.removedCommits && cleanupResult.removedCommits > 0) {
+          result.cleaned = true
+          cleanedCount++
+          detailedLogs.push(`  ✓ Cleaned ${cleanupResult.removedCommits} commit(s)`)
+        } else {
+          detailedLogs.push(`  - No commits to clean`)
+        }
+
+        // Pequeña pausa entre cleanups
+        await new Promise((resolve) => setTimeout(resolve, 500))
+      } catch (cleanupError) {
+        detailedLogs.push(`  ✗ Cleanup failed: ${cleanupError instanceof Error ? cleanupError.message : 'Unknown error'}`)
+      }
+    }
+
+    detailedLogs.push(`=== CLEANUP COMPLETE: ${cleanedCount}/${successfulRepos.length} repos cleaned ===`)
+    // ========== FIN FASE DE CLEANUP ==========
+
     // Registrar en log con detalles completos
     await prisma.syncLog.create({
       data: {
@@ -428,7 +466,7 @@ export async function POST(
             total: results.length,
             successful: results.filter(r => r.status === 'success').length,
             failed: results.filter(r => r.status === 'error').length,
-            cleaned: results.filter(r => r.cleaned).length,
+            cleaned: cleanedCount,
           }
         }),
         reposAffected: JSON.stringify(reposToSync),
