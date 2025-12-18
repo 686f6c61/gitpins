@@ -19,6 +19,9 @@ import { createAppOctokit } from '@/lib/github-app'
 import { checkRateLimit, rateLimits } from '@/lib/rate-limit'
 import type { Octokit } from 'octokit'
 
+// Configuración de timeout para Vercel Pro (800s máximo permitido)
+export const maxDuration = 800
+
 /**
  * Obtiene el orden actual de los repositorios desde GitHub API.
  * Los repositorios se retornan ordenados por 'updated_at' descendente.
