@@ -60,6 +60,9 @@ model RepoOrder {
   // Secret para el endpoint de sync (UUID)
   syncSecret String?
 
+  // Lock para evitar syncs concurrentes
+  lastSyncAt    DateTime?  // Última vez que se inició un sync
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
