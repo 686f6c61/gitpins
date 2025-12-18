@@ -106,6 +106,26 @@
       "subtitle": "Es gratis. Solo toma 2 minutos configurarlo.",
       "button": "Conectar con GitHub"
     },
+    "comingSoon": {
+      "title": "Nuevas funcionalidades",
+      "subtitle": "En desarrollo",
+      "filters": {
+        "title": "Filtros avanzados",
+        "desc": "Filtra tus repos por lenguaje, estrellas, fecha y más"
+      },
+      "history": {
+        "title": "Histórico de cambios",
+        "desc": "Revisa y restaura órdenes anteriores de tus repos"
+      },
+      "schedule": {
+        "title": "Programación horaria",
+        "desc": "Elige exactamente cuándo sincronizar: diario, semanal, hora específica"
+      },
+      "organizations": {
+        "title": "GitHub Organizations",
+        "desc": "Ordena también los repos de tus organizaciones"
+      }
+    },
     "disclaimer": {
       "title": "Antes de continuar",
       "text": "GitPins es un proyecto open source que realiza commits vacíos en tus repositorios para mantener el orden que configures. Estos commits son revertidos inmediatamente y no modifican tu código.",
@@ -160,6 +180,20 @@
     "allRepos": {
       "title": "Todos los repositorios",
       "dragHint": "Arrastra hacia arriba para fijar"
+    },
+    "filters": {
+      "title": "Filtros",
+      "search": "Buscar repositorio...",
+      "language": "Lenguaje",
+      "allLanguages": "Todos",
+      "owner": "Propietario",
+      "allOwners": "Todos",
+      "personal": "Personal",
+      "organizations": "Organizaciones",
+      "minStars": "Estrellas mínimas",
+      "clear": "Limpiar filtros",
+      "noResults": "No se encontraron repositorios con estos filtros",
+      "results": "{count} repositorio(s) encontrado(s)"
     }
   },
   "settings": {
@@ -189,6 +223,23 @@
         "360": "Cada 15 días",
         "720": "Cada 30 días"
       }
+    },
+    "schedule": {
+      "title": "Programación avanzada",
+      "preferredHour": "Hora preferida",
+      "anyHour": "Cualquier hora",
+      "preferredDays": "Días preferidos",
+      "allDays": "Todos los días",
+      "days": {
+        "0": "Dom",
+        "1": "Lun",
+        "2": "Mar",
+        "3": "Mié",
+        "4": "Jue",
+        "5": "Vie",
+        "6": "Sáb"
+      },
+      "hint": "Opcional: restringe cuándo puede ejecutarse la sincronización"
     },
     "commitStrategy": {
       "label": "Estrategia de commits",
@@ -381,7 +432,7 @@
   "legal": {
     "title": "Legal y Descargo de Responsabilidad",
     "subtitle": "Información importante sobre el uso de GitPins",
-    "lastUpdated": "Última actualización: Diciembre 2024",
+    "lastUpdated": "Última actualización: Diciembre 2025",
     "disclaimer": {
       "title": "Descargo de Responsabilidad",
       "p1": "GitPins es un proyecto de código abierto proporcionado \"TAL CUAL\" y \"SEGÚN DISPONIBILIDAD\", sin garantías de ningún tipo, ya sean expresas o implícitas, incluyendo, pero no limitándose a, las garantías implícitas de comerciabilidad, idoneidad para un propósito particular y no infracción.",
@@ -542,6 +593,20 @@
       "unbanningUser": "Error al desbanear usuario",
       "deletingUser": "Error al eliminar usuario"
     }
+  },
+  "orderHistory": {
+    "title": "Histórico de cambios",
+    "empty": "No hay historial de cambios aún",
+    "restore": "Restaurar",
+    "restoring": "Restaurando...",
+    "restored": "Orden restaurado correctamente",
+    "current": "Actual",
+    "manual": "Manual",
+    "auto": "Automático",
+    "restoreAction": "Restaurado",
+    "repos": "{count} repo(s)",
+    "confirmRestore": "¿Restaurar este orden?",
+    "showHistory": "Ver historial"
   },
   "syncLogs": {
     "title": "Actividad de Sincronización",

@@ -49,7 +49,7 @@ export async function GET() {
       }
     })
 
-    const formattedUsers = users.map(user => ({
+    const formattedUsers = users.map((user: typeof users[number]) => ({
       id: user.id,
       githubId: user.githubId,
       username: user.username,

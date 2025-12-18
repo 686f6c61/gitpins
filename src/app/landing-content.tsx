@@ -14,7 +14,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui'
-import { GitHubIcon, PinIcon, CheckIcon, XIcon, AlertTriangleIcon, BriefcaseIcon, UserIcon, BuildingIcon, CodeIcon } from '@/components/icons'
+import { GitHubIcon, PinIcon, CheckIcon, XIcon, AlertTriangleIcon, BriefcaseIcon, UserIcon, BuildingIcon, CodeIcon, FilterIcon, HistoryIcon, CalendarIcon } from '@/components/icons'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { LanguageToggle } from '@/components/language-toggle'
 import { Footer } from '@/components/footer'
@@ -158,6 +158,48 @@ export function LandingContent() {
               </div>
               <p className="text-muted-foreground text-sm">
                 {t('landing.features.cleanCommits.desc')}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Coming Soon */}
+      <section className="py-20 border-y border-border">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-2">
+            {t('landing.comingSoon.title')}
+          </h2>
+          <p className="text-muted-foreground text-center mb-12">
+            {t('landing.comingSoon.subtitle')}
+          </p>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="p-6 border border-border rounded-xl">
+              <FilterIcon className="w-6 h-6 mb-3 text-muted-foreground" />
+              <h3 className="font-semibold mb-2">{t('landing.comingSoon.filters.title')}</h3>
+              <p className="text-muted-foreground text-sm">
+                {t('landing.comingSoon.filters.desc')}
+              </p>
+            </div>
+            <div className="p-6 border border-border rounded-xl">
+              <HistoryIcon className="w-6 h-6 mb-3 text-muted-foreground" />
+              <h3 className="font-semibold mb-2">{t('landing.comingSoon.history.title')}</h3>
+              <p className="text-muted-foreground text-sm">
+                {t('landing.comingSoon.history.desc')}
+              </p>
+            </div>
+            <div className="p-6 border border-border rounded-xl">
+              <CalendarIcon className="w-6 h-6 mb-3 text-muted-foreground" />
+              <h3 className="font-semibold mb-2">{t('landing.comingSoon.schedule.title')}</h3>
+              <p className="text-muted-foreground text-sm">
+                {t('landing.comingSoon.schedule.desc')}
+              </p>
+            </div>
+            <div className="p-6 border border-border rounded-xl">
+              <BuildingIcon className="w-6 h-6 mb-3 text-muted-foreground" />
+              <h3 className="font-semibold mb-2">{t('landing.comingSoon.organizations.title')}</h3>
+              <p className="text-muted-foreground text-sm">
+                {t('landing.comingSoon.organizations.desc')}
               </p>
             </div>
           </div>

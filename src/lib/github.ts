@@ -212,6 +212,33 @@ export async function ensureValidToken(userId: string): Promise<{
   }
 }
 
+// Obtener organizaciones del usuario
+export async function getUserOrgs(accessToken: string): Promise<Array<{
+  login: string
+  avatarUrl: string
+}>> {
+  const octokit = createUserOctokit(accessToken)
+  const orgs: Array<{ login: string; avatarUrl: string }> = []
+
+  try {
+    for await (const response of octokit.paginate.iterator(
+      octokit.rest.orgs.listForAuthenticatedUser,
+      { per_page: 100 }
+    )) {
+      for (const org of response.data) {
+        orgs.push({
+          login: org.login,
+          avatarUrl: org.avatar_url,
+        })
+      }
+    }
+  } catch {
+    // Si no tiene permiso para ver orgs, devolver array vacío
+  }
+
+  return orgs
+}
+
 // Obtener repos del usuario
 export async function getUserRepos(accessToken: string) {
   const octokit = createUserOctokit(accessToken)
@@ -227,6 +254,8 @@ export async function getUserRepos(accessToken: string) {
     updatedAt: string
     isPrivate: boolean
     url: string
+    owner: string
+    isOrg: boolean
   }> = []
 
   // Obtener todos los repos (paginado)
@@ -246,6 +275,8 @@ export async function getUserRepos(accessToken: string) {
         updatedAt: repo.updated_at || '',
         isPrivate: repo.private,
         url: repo.html_url,
+        owner: repo.owner.login,
+        isOrg: repo.owner.type === 'Organization',
       })
     }
   }

@@ -107,6 +107,17 @@ export async function GET(request: NextRequest) {
       })
     }
 
+    // Parse preferredDays from JSON
+    let preferredDays: number[] = []
+    if (repoOrder?.preferredDays) {
+      try {
+        const parsed = JSON.parse(repoOrder.preferredDays)
+        preferredDays = Array.isArray(parsed) ? parsed : []
+      } catch {
+        preferredDays = []
+      }
+    }
+
     return addSecurityHeaders(
       NextResponse.json({
         repos,
@@ -118,6 +129,8 @@ export async function GET(request: NextRequest) {
               syncFrequency: repoOrder.syncFrequency,
               autoEnabled: repoOrder.autoEnabled,
               commitStrategy: repoOrder.commitStrategy,
+              preferredHour: repoOrder.preferredHour,
+              preferredDays: preferredDays,
               syncSecret: repoOrder.syncSecret,
             }
           : null,

@@ -80,8 +80,21 @@ export async function POST(request: NextRequest) {
     const validStrategies = ['branch', 'revert']
     const validCommitStrategy = validStrategies.includes(commitStrategy) ? commitStrategy : 'revert'
 
+    // Validate preferredHour (0-23 or null)
+    const preferredHour = body.preferredHour
+    const validPreferredHour = (typeof preferredHour === 'number' && preferredHour >= 0 && preferredHour <= 23)
+      ? preferredHour
+      : null
+
+    // Validate preferredDays (array of 0-6)
+    const preferredDays = body.preferredDays
+    const validPreferredDays = Array.isArray(preferredDays)
+      ? preferredDays.filter((d: any) => typeof d === 'number' && d >= 0 && d <= 6)
+      : []
+
     // Crear o actualizar orden
     const reposOrderJson = JSON.stringify(reposOrder)
+    const preferredDaysJson = JSON.stringify(validPreferredDays)
     const repoOrderResult = await prisma.repoOrder.upsert({
       where: { userId: session.userId },
       update: {
@@ -91,6 +104,8 @@ export async function POST(request: NextRequest) {
         syncFrequency: validSyncFrequency,
         autoEnabled: autoEnabled ?? true,
         commitStrategy: validCommitStrategy,
+        preferredHour: validPreferredHour,
+        preferredDays: preferredDaysJson,
       },
       create: {
         userId: session.userId,
@@ -100,8 +115,33 @@ export async function POST(request: NextRequest) {
         syncFrequency: validSyncFrequency,
         autoEnabled: autoEnabled ?? true,
         commitStrategy: validCommitStrategy,
+        preferredHour: validPreferredHour,
+        preferredDays: preferredDaysJson,
       },
     })
+
+    // Guardar snapshot del historial
+    await prisma.orderSnapshot.create({
+      data: {
+        userId: session.userId,
+        reposOrder: reposOrderJson,
+        topN: validTopN,
+        changeType: 'manual',
+      },
+    })
+
+    // Limpiar snapshots antiguos (mantener solo los últimos 20)
+    const oldSnapshots = await prisma.orderSnapshot.findMany({
+      where: { userId: session.userId },
+      orderBy: { createdAt: 'desc' },
+      skip: 20,
+      select: { id: true },
+    })
+    if (oldSnapshots.length > 0) {
+      await prisma.orderSnapshot.deleteMany({
+        where: { id: { in: oldSnapshots.map((s: { id: string }) => s.id) } },
+      })
+    }
 
     // Registrar en log
     await prisma.syncLog.create({

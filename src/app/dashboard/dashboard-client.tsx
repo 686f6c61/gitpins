@@ -39,8 +39,10 @@ import { ThemeToggle } from '@/components/theme-toggle'
 import { LanguageToggle } from '@/components/language-toggle'
 import { SortableRepoItem } from './sortable-repo-item'
 import { SettingsModal } from './settings-modal'
+import { RepoFilters, applyFilters, type FilterState } from './repo-filters'
 import { Footer } from '@/components/footer'
 import { SyncActivityLog } from '@/components/sync-activity-log'
+import { OrderHistory } from '@/components/order-history'
 import { useTranslation } from '@/i18n'
 import type { Repo, RepoOrderSettings } from '@/types'
 
@@ -86,6 +88,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
   const [syncing, setSyncing] = useState(false)
   const [syncMessage, setSyncMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null)
   const [authError, setAuthError] = useState(false)
+  const [filters, setFilters] = useState<FilterState>({ search: '', language: '', owner: '', minStars: 0 })
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -115,8 +118,9 @@ export function DashboardClient({ user }: DashboardClientProps) {
   }, [pinnedRepos, filteredRepos])
 
   const poolRepos = useMemo(() => {
-    return filteredRepos.filter(r => !pinnedRepos.includes(r.fullName))
-  }, [filteredRepos, pinnedRepos])
+    const unpinned = filteredRepos.filter(r => !pinnedRepos.includes(r.fullName))
+    return applyFilters(unpinned, filters)
+  }, [filteredRepos, pinnedRepos, filters])
 
   const activeRepo = useMemo(() => {
     if (!activeId) return null
@@ -524,29 +528,49 @@ export function DashboardClient({ user }: DashboardClientProps) {
                   </span>
                 </div>
 
+                {/* Filters */}
+                <RepoFilters
+                  repos={filteredRepos.filter(r => !pinnedRepos.includes(r.fullName))}
+                  filters={filters}
+                  onFiltersChange={setFilters}
+                />
+
                 <DroppableZone id="pool-zone" className="rounded-xl transition-all">
                   <Card className="p-0 overflow-hidden">
-                    <SortableContext
-                      items={poolRepos.map((r) => r.fullName)}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      <div className="divide-y divide-border">
-                        {poolRepos.map((repo, index) => (
-                          <SortableRepoItem
-                            key={repo.fullName}
-                            repo={repo}
-                            index={index}
-                            isTop={false}
-                          />
-                        ))}
+                    {poolRepos.length === 0 ? (
+                      <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
+                        {t('dashboard.filters.noResults')}
                       </div>
-                    </SortableContext>
+                    ) : (
+                      <SortableContext
+                        items={poolRepos.map((r) => r.fullName)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <div className="divide-y divide-border">
+                          {poolRepos.map((repo, index) => (
+                            <SortableRepoItem
+                              key={repo.fullName}
+                              repo={repo}
+                              index={index}
+                              isTop={false}
+                            />
+                          ))}
+                        </div>
+                      </SortableContext>
+                    )}
                   </Card>
                 </DroppableZone>
               </div>
 
-              {/* Sync Activity Log */}
-              <div className="mt-8">
+              {/* Order History & Sync Activity Log */}
+              <div className="mt-8 space-y-4">
+                <OrderHistory
+                  onRestore={(repos, topN) => {
+                    setPinnedRepos(repos)
+                    setSettings(prev => prev ? { ...prev, topN } : null)
+                    setHasChanges(false)
+                  }}
+                />
                 <SyncActivityLog />
               </div>
 
