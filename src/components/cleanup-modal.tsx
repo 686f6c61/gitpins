@@ -23,7 +23,7 @@ export function CleanupModal({ repo, gitpinsCommits, onClose }: CleanupModalProp
   const [copied, setCopied] = useState(false)
   const [language, setLanguage] = useState<'en' | 'es'>('en')
 
-  const [owner, repoName] = repo.split('/')
+  const repoName = repo.split('/')[1]
 
   const cleanupScript = `#!/bin/bash
 # GitPins Cleanup Script for ${repo}

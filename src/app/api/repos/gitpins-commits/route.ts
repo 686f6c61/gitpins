@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     let octokit
     try {
       octokit = createAppOctokit(user.installationId)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to create GitHub App client:', error)
       return addSecurityHeaders(
         NextResponse.json({

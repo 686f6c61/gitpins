@@ -11,6 +11,7 @@
 
 'use client'
 
+import Link from 'next/link'
 import { Button } from '@/components/ui'
 import { PinIcon, GitHubIcon, CheckIcon, XIcon, AlertTriangleIcon, ShieldIcon } from '@/components/icons'
 import { ThemeToggle } from '@/components/theme-toggle'
@@ -26,10 +27,10 @@ export function LegalContent() {
       {/* Header */}
       <header className="border-b border-border">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <PinIcon className="w-6 h-6" />
             <span className="text-xl font-bold">GitPins</span>
-          </a>
+          </Link>
           <div className="flex items-center gap-3">
             <LanguageToggle />
             <ThemeToggle />
@@ -260,11 +261,11 @@ export function LegalContent() {
           <div className="bg-muted/50 border border-border rounded-xl p-6 text-center">
             <h2 className="text-xl font-bold mb-3">{t('legal.acceptance.title')}</h2>
             <p className="text-muted-foreground mb-6">{t('legal.acceptance.p1')}</p>
-            <a href="/">
+            <Link href="/">
               <Button>
                 {t('legal.backToHome')}
               </Button>
-            </a>
+            </Link>
           </div>
         </section>
       </main>

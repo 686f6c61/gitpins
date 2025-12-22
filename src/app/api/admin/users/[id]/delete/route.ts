@@ -58,7 +58,17 @@ export async function DELETE(
       )
     }
 
-    // Delete user (cascade will delete repoOrder and syncLogs)
+    // Log admin action BEFORE deleting (to maintain FK reference)
+    await prisma.adminLog.create({
+      data: {
+        adminId: session.userId,
+        targetUserId: id,
+        action: 'DELETE',
+        details: `Deleted user: ${user.username} (GitHub ID: ${user.githubId})`,
+      }
+    })
+
+    // Delete user (cascade will delete repoOrder, syncLogs, userToken)
     await prisma.user.delete({
       where: { id }
     })

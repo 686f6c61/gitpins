@@ -47,15 +47,6 @@ export async function GET() {
     })
     const totalSyncs = await prisma.syncLog.count()
 
-    // Users registered per day (last 30 days)
-    const usersPerDay = await prisma.user.groupBy({
-      by: ['createdAt'],
-      where: {
-        createdAt: { gte: thirtyDaysAgo }
-      },
-      _count: true,
-    })
-
     // Process users per day into daily counts
     const usersByDay: Record<string, number> = {}
     for (let i = 29; i >= 0; i--) {

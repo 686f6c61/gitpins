@@ -12,7 +12,7 @@
 
 'use client'
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback } from 'react'
 import es from './locales/es.json'
 import en from './locales/en.json'
 
@@ -61,23 +61,22 @@ function getNestedValue(obj: Record<string, unknown>, path: string): string {
  * Provides translation function and locale switching to all children.
  */
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('es')
-
-  useEffect(() => {
-    // Cargar idioma guardado o detectar del navegador
-    const savedLocale = localStorage.getItem('locale') as Locale | null
-    if (savedLocale && (savedLocale === 'es' || savedLocale === 'en')) {
-      setLocaleState(savedLocale)
-    } else {
+  // Usar lazy initialization para evitar llamar setState en useEffect
+  const [locale, setLocaleState] = useState<Locale>(() => {
+    if (typeof window !== 'undefined') {
+      const savedLocale = localStorage.getItem('locale') as Locale | null
+      if (savedLocale && (savedLocale === 'es' || savedLocale === 'en')) {
+        return savedLocale
+      }
       // Detectar idioma del navegador
       const browserLang = navigator.language.toLowerCase()
       if (browserLang.startsWith('es')) {
-        setLocaleState('es')
-      } else {
-        setLocaleState('en')
+        return 'es'
       }
+      return 'en'
     }
-  }, [])
+    return 'es'
+  })
 
   const setLocale = useCallback((newLocale: Locale) => {
     setLocaleState(newLocale)

@@ -32,16 +32,15 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
  * Handles localStorage persistence and system preference detection.
  */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('system')
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light')
-
-  useEffect(() => {
-    // Cargar tema guardado
-    const savedTheme = localStorage.getItem('theme') as Theme | null
-    if (savedTheme) {
-      setTheme(savedTheme)
+  // Usar lazy initialization para evitar llamar setState en useEffect
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('theme') as Theme | null
+      if (savedTheme) return savedTheme
     }
-  }, [])
+    return 'system'
+  })
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light')
 
   useEffect(() => {
     const root = document.documentElement

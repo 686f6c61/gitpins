@@ -15,6 +15,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import Link from 'next/link'
 import {
   DndContext,
   closestCenter,
@@ -108,7 +109,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
     if (!settings) return validRepos
     if (settings.includePrivate) return validRepos
     return validRepos.filter(r => !r.isPrivate)
-  }, [repos, settings?.includePrivate])
+  }, [repos, settings])
 
   // Repos en la zona top (pinneados) y en el pool
   const topRepos = useMemo(() => {
@@ -326,19 +327,19 @@ export function DashboardClient({ user }: DashboardClientProps) {
       {/* Header */}
       <header className="bg-background border-b border-border sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <a href="/" className="text-xl font-bold flex items-center gap-2">
+          <Link href="/" className="text-xl font-bold flex items-center gap-2">
               <PinIcon className="w-5 h-5" />
               GitPins
-            </a>
+            </Link>
 
           <div className="flex items-center gap-3">
             <LanguageToggle />
             <ThemeToggle />
-            <a href="/how-it-works">
+            <Link href="/how-it-works">
               <Button variant="ghost" size="sm">
                 <HelpCircleIcon className="w-4 h-4" />
               </Button>
-            </a>
+            </Link>
             <Button variant="ghost" size="sm" onClick={() => setShowSettings(true)}>
               <SettingsIcon className="w-4 h-4" />
             </Button>
@@ -347,6 +348,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
             </Button>
             <div className="flex items-center gap-2 pl-3 border-l border-border">
               {user.avatarUrl && (
+                /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   src={user.avatarUrl}
                   alt={user.username}

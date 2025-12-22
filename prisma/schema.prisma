@@ -14,9 +14,11 @@ model User {
   email          String?
   avatarUrl      String?
   installationId Int?     @unique
+  // Campos legacy (se eliminarán después de migración)
   accessToken    String?
   refreshToken   String?
   tokenExpiresAt DateTime?
+  // Fin campos legacy
   isAdmin        Boolean  @default(false)
   isBanned       Boolean  @default(false)
   bannedAt       DateTime?
@@ -25,9 +27,13 @@ model User {
   updatedAt      DateTime @updatedAt
   lastLoginAt    DateTime @default(now())
 
-  repoOrder RepoOrder?
-  syncLogs  SyncLog[]
+  // Relaciones
+  token          UserToken?
+  repoOrder      RepoOrder?
+  syncLogs       SyncLog[]
   orderSnapshots OrderSnapshot[]
+  adminActions   AdminLog[] @relation("AdminActions")
+  targetedBy     AdminLog[] @relation("TargetedUser")
 
   @@map("users")
 }
@@ -103,4 +109,33 @@ model OrderSnapshot {
 
   @@index([userId, createdAt])
   @@map("order_snapshots")
+}
+
+model UserToken {
+  id           String    @id @default(cuid())
+  userId       String    @unique
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken  String
+  refreshToken String?
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("user_tokens")
+}
+
+model AdminLog {
+  id           String   @id @default(cuid())
+  adminId      String
+  admin        User     @relation("AdminActions", fields: [adminId], references: [id], onDelete: Cascade)
+  targetUserId String
+  targetUser   User     @relation("TargetedUser", fields: [targetUserId], references: [id], onDelete: Cascade)
+  action       String   // BAN, UNBAN, DELETE, WARN
+  reason       String?
+  details      String?
+  createdAt    DateTime @default(now())
+
+  @@index([adminId, createdAt])
+  @@index([targetUserId, createdAt])
+  @@map("admin_logs")
 }

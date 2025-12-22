@@ -320,7 +320,7 @@ export function SettingsModal({ settings, totalRepos, onClose, onChange }: Setti
                 </p>
                 <div className="bg-muted rounded-lg p-3 font-mono text-xs space-y-1">
                   <div className="text-muted-foreground">{t('strategyInfo.revert.step1')}</div>
-                  <div>git commit --allow-empty -m "gitpins: bump"</div>
+                  <div>git commit --allow-empty -m &quot;gitpins: bump&quot;</div>
                   <div className="text-muted-foreground mt-2">{t('strategyInfo.revert.step2')}</div>
                   <div>git revert HEAD --no-edit</div>
                   <div className="text-muted-foreground mt-2">{t('strategyInfo.revert.step3')}</div>
@@ -342,7 +342,7 @@ export function SettingsModal({ settings, totalRepos, onClose, onChange }: Setti
                   <div className="text-muted-foreground">{t('strategyInfo.branch.step1')}</div>
                   <div>git checkout -b gitpins-temp</div>
                   <div className="text-muted-foreground mt-2">{t('strategyInfo.branch.step2')}</div>
-                  <div>git commit --allow-empty -m "gitpins: sync"</div>
+                  <div>git commit --allow-empty -m &quot;gitpins: sync&quot;</div>
                   <div className="text-muted-foreground mt-2">{t('strategyInfo.branch.step3')}</div>
                   <div>git checkout main && git merge gitpins-temp</div>
                   <div>git branch -d gitpins-temp && git push</div>

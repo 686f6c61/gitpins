@@ -31,7 +31,7 @@ export default async function DashboardPage() {
   // Verificar si el usuario existe en DB
   let user = await prisma.user.findUnique({
     where: { id: session.userId },
-    include: { repoOrder: true },
+    include: { repoOrder: true, token: true },
   })
 
   // Si el usuario no existe en DB, redirigir a login
@@ -41,9 +41,9 @@ export default async function DashboardPage() {
   }
 
   // Si no tiene installationId en DB, intentar obtenerlo de GitHub
-  if (!user.installationId && user.accessToken) {
+  if (!user.installationId && user.token?.accessToken) {
     try {
-      const accessToken = decrypt(user.accessToken)
+      const accessToken = decrypt(user.token.accessToken)
       const installationId = await getUserInstallation(accessToken)
 
       if (installationId) {
@@ -51,7 +51,7 @@ export default async function DashboardPage() {
         user = await prisma.user.update({
           where: { id: session.userId },
           data: { installationId },
-          include: { repoOrder: true },
+          include: { repoOrder: true, token: true },
         })
       } else {
         // No tiene instalación, redirigir a instalar

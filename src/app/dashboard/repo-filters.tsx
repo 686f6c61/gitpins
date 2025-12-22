@@ -12,7 +12,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { FilterIcon, XIcon, SearchIcon } from '@/components/icons'
+import { XIcon, SearchIcon } from '@/components/icons'
 import { useTranslation } from '@/i18n'
 import type { Repo } from '@/types'
 

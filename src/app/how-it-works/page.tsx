@@ -16,6 +16,7 @@
 
 'use client'
 
+import Link from 'next/link'
 import { Button, Card } from '@/components/ui'
 import {
   GitHubIcon,
@@ -41,13 +42,13 @@ export default function HowItWorksPage() {
       {/* Header */}
       <header className="bg-background border-b border-border">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <a href="/" className="text-xl font-bold">GitPins</a>
+          <Link href="/" className="text-xl font-bold">GitPins</Link>
           <div className="flex items-center gap-4">
             <LanguageToggle />
             <ThemeToggle />
-            <a href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
+            <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
               {t('nav.dashboard')}
-            </a>
+            </Link>
             <a href="/api/auth/login">
               <Button size="sm">{t('nav.login')}</Button>
             </a>
@@ -157,7 +158,7 @@ export default function HowItWorksPage() {
               </p>
               <div className="text-xs bg-muted p-3 rounded-lg font-mono">
                 <div className="text-muted-foreground">{t('howItWorksPage.strategies.revert.comment')}</div>
-                <div>git commit --allow-empty -m "gitpins: bump"</div>
+                <div>git commit --allow-empty -m &quot;gitpins: bump&quot;</div>
                 <div>git revert HEAD --no-edit</div>
                 <div>git push</div>
               </div>
@@ -174,7 +175,7 @@ export default function HowItWorksPage() {
               <div className="text-xs bg-muted p-3 rounded-lg font-mono">
                 <div className="text-muted-foreground">{t('howItWorksPage.strategies.branch.comment')}</div>
                 <div>git checkout -b gitpins-temp</div>
-                <div>git commit --allow-empty -m "gitpins: bump"</div>
+                <div>git commit --allow-empty -m &quot;gitpins: bump&quot;</div>
                 <div>git checkout main && git merge gitpins-temp</div>
                 <div>git branch -d gitpins-temp && git push</div>
               </div>

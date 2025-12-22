@@ -84,16 +84,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/banned`)
     }
 
-    // Crear o actualizar usuario en la base de datos
+    // Crear o actualizar usuario en la base de datos (sin tokens - van a UserToken)
     const user = await prisma.user.upsert({
       where: { githubId: githubUser.id },
       update: {
         username: githubUser.username,
         email: githubUser.email,
         avatarUrl: githubUser.avatarUrl,
-        accessToken: encryptedToken,
-        refreshToken: encryptedRefreshToken,
-        tokenExpiresAt,
         installationId,
         lastLoginAt: new Date(),
         isAdmin,
@@ -103,11 +100,24 @@ export async function GET(request: NextRequest) {
         username: githubUser.username,
         email: githubUser.email,
         avatarUrl: githubUser.avatarUrl,
-        accessToken: encryptedToken,
-        refreshToken: encryptedRefreshToken,
-        tokenExpiresAt,
         installationId,
         isAdmin,
+      },
+    })
+
+    // Crear o actualizar token en tabla separada (UserToken)
+    await prisma.userToken.upsert({
+      where: { userId: user.id },
+      update: {
+        accessToken: encryptedToken,
+        refreshToken: encryptedRefreshToken,
+        expiresAt: tokenExpiresAt,
+      },
+      create: {
+        userId: user.id,
+        accessToken: encryptedToken,
+        refreshToken: encryptedRefreshToken,
+        expiresAt: tokenExpiresAt,
       },
     })
 
