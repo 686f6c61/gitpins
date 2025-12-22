@@ -28,7 +28,7 @@ interface OrderHistoryProps {
   onRestore?: (repos: string[], topN: number) => void
 }
 
-function formatTimeAgo(dateString: string, t: (key: string, params?: Record<string, any>) => string): string {
+function formatTimeAgo(dateString: string, t: (key: string, params?: Record<string, string | number>) => string): string {
   const date = new Date(dateString)
   const now = new Date()
   const diffMs = now.getTime() - date.getTime()

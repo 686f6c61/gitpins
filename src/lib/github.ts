@@ -146,63 +146,60 @@ export async function ensureValidToken(userId: string): Promise<{
   const { prisma } = await import('./prisma')
   const { decrypt, encrypt } = await import('./crypto')
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      accessToken: true,
-      refreshToken: true,
-      tokenExpiresAt: true,
-    },
+  // Get token from UserToken table instead of User
+  const userToken = await prisma.userToken.findUnique({
+    where: { userId },
   })
 
-  if (!user?.accessToken) {
+  if (!userToken?.accessToken) {
     throw new Error('User has no access token')
   }
 
   // If no expiration date is set, token doesn't expire (old GitHub OAuth behavior)
-  if (!user.tokenExpiresAt) {
+  if (!userToken.expiresAt) {
     return {
-      accessToken: decrypt(user.accessToken),
+      accessToken: decrypt(userToken.accessToken),
       wasRefreshed: false,
     }
   }
 
   // Check if token is expired or will expire in the next 5 minutes
-  const expiresIn = user.tokenExpiresAt.getTime() - Date.now()
+  const expiresIn = userToken.expiresAt.getTime() - Date.now()
   const fiveMinutes = 5 * 60 * 1000
 
   if (expiresIn > fiveMinutes) {
     // Token is still valid
     return {
-      accessToken: decrypt(user.accessToken),
+      accessToken: decrypt(userToken.accessToken),
       wasRefreshed: false,
     }
   }
 
   // Token is expired or about to expire, refresh it
-  if (!user.refreshToken) {
+  if (!userToken.refreshToken) {
     throw new Error('Token expired and no refresh token available')
   }
 
-  const decryptedRefreshToken = decrypt(user.refreshToken)
+  const decryptedRefreshToken = decrypt(userToken.refreshToken)
   const newTokenData = await refreshAccessToken(decryptedRefreshToken)
 
   // Encrypt and save the new tokens
   const encryptedToken = encrypt(newTokenData.access_token)
   const encryptedRefreshToken = newTokenData.refresh_token
     ? encrypt(newTokenData.refresh_token)
-    : user.refreshToken // Keep old refresh token if new one not provided
+    : userToken.refreshToken // Keep old refresh token if new one not provided
 
-  const tokenExpiresAt = newTokenData.expires_in
+  const expiresAt = newTokenData.expires_in
     ? new Date(Date.now() + newTokenData.expires_in * 1000)
     : null
 
-  await prisma.user.update({
-    where: { id: userId },
+  // Update token in UserToken table
+  await prisma.userToken.update({
+    where: { userId },
     data: {
       accessToken: encryptedToken,
       refreshToken: encryptedRefreshToken,
-      tokenExpiresAt,
+      expiresAt,
     },
   })
 

@@ -168,7 +168,7 @@ export async function POST(
     let octokit
     try {
       octokit = createAppOctokit(user.installationId)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to create GitHub App client:', error)
       await prisma.syncLog.create({
         data: {

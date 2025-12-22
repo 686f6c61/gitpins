@@ -12,7 +12,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
-import { getUserRepos, createUserOctokit } from '@/lib/github'
+import { getUserRepos } from '@/lib/github'
 import { prisma } from '@/lib/prisma'
 import { decrypt } from '@/lib/crypto'
 import { checkAPIRateLimit, addSecurityHeaders } from '@/lib/security'
@@ -38,28 +38,30 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Get user with encrypted token from database
+    // Get user with token from database
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
+      include: { token: true },
     })
 
-    if (!user || !user.accessToken) {
+    if (!user || !user.token?.accessToken) {
       return addSecurityHeaders(
         NextResponse.json({ error: 'Session expired' }, { status: 401 })
       )
     }
 
-    // Decrypt the access token
-    const accessToken = decrypt(user.accessToken)
+    // Decrypt the access token from UserToken
+    const accessToken = decrypt(user.token.accessToken)
 
     // Obtener repos de GitHub
     let repos
     try {
       repos = await getUserRepos(accessToken)
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Detectar errores de autenticación de GitHub (401/403)
-      if (error.status === 401 || error.status === 403) {
-        console.error('GitHub token invalid or expired:', error.message)
+      const githubError = error as { status?: number; message?: string }
+      if (githubError.status === 401 || githubError.status === 403) {
+        console.error('GitHub token invalid or expired:', githubError.message)
         // Opcionalmente podríamos limpiar el token inválido de la DB aquí
         return addSecurityHeaders(
           NextResponse.json({

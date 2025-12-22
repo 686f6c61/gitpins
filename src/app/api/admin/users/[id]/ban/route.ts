@@ -82,6 +82,16 @@ export async function POST(
       }
     })
 
+    // Log admin action
+    await prisma.adminLog.create({
+      data: {
+        adminId: session.userId,
+        targetUserId: id,
+        action: 'BAN',
+        reason: reason,
+      }
+    })
+
     return NextResponse.json({
       success: true,
       user: {

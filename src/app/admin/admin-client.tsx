@@ -303,6 +303,7 @@ export function AdminClient() {
                     <td className="py-3 px-2">
                       <div className="flex items-center gap-3">
                         {user.avatarUrl && (
+                          /* eslint-disable-next-line @next/next/no-img-element */
                           <img
                             src={user.avatarUrl}
                             alt={user.username}

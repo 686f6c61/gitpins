@@ -9,6 +9,7 @@
  */
 
 import { Metadata } from 'next'
+import Link from 'next/link'
 import { PinIcon, AlertTriangleIcon, GitHubIcon } from '@/components/icons'
 
 export const metadata: Metadata = {
@@ -59,12 +60,12 @@ export default function BannedPage() {
         </div>
 
         {/* Back to home */}
-        <a
+        <Link
           href="/"
           className="text-sm text-muted-foreground hover:text-foreground underline"
         >
           Back to home
-        </a>
+        </Link>
       </div>
     </div>
   )

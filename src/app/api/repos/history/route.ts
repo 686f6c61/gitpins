@@ -18,7 +18,8 @@ import { validateOrigin, checkAPIRateLimit, addSecurityHeaders } from '@/lib/sec
  * GET /api/repos/history
  * Returns the order history for the current user.
  */
-export async function GET(request: NextRequest) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function GET(_request: NextRequest) {
   const session = await getSession()
 
   if (!session) {

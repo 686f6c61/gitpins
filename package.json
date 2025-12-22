@@ -1,6 +1,6 @@
 {
   "name": "gitpins",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -46,7 +46,8 @@
     "tailwindcss": "^4",
     "ts-jest": "^29.4.6",
     "tsx": "^4.19.2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vercel": "^50.1.2"
   },
   "overrides": {
     "prisma": "7.1.0",

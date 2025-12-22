@@ -69,7 +69,7 @@ export async function cleanupRepoCommitsAutomatic(
         ref: `refs/heads/${backupBranchName}`,
         sha: commits[0].sha,
       })
-    } catch (e) {
+    } catch {
       // Si falla crear backup, no continuar
       return {
         status: 'error',
@@ -173,11 +173,11 @@ export async function cleanupRepoCommitsAutomatic(
       newHead: lastRecreatedSha,
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       status: 'error',
       method: 'none',
-      error: error.message || 'Unknown error',
+      error: error instanceof Error ? error.message : 'Unknown error',
     }
   }
 }

@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     // Validate preferredDays (array of 0-6)
     const preferredDays = body.preferredDays
     const validPreferredDays = Array.isArray(preferredDays)
-      ? preferredDays.filter((d: any) => typeof d === 'number' && d >= 0 && d <= 6)
+      ? preferredDays.filter((d: unknown) => typeof d === 'number' && d >= 0 && d <= 6)
       : []
 
     // Crear o actualizar orden
