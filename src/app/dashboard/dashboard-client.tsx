@@ -2,7 +2,7 @@
  * GitPins - Control the order of your GitHub repositories
  * @author 686f6c61
  * @repository https://github.com/686f6c61/gitpins
- * @created 2024
+ * @created 2025
  * @license MIT
  *
  * Dashboard Client Component
@@ -42,8 +42,7 @@ import { SortableRepoItem } from './sortable-repo-item'
 import { SettingsModal } from './settings-modal'
 import { RepoFilters, applyFilters, type FilterState } from './repo-filters'
 import { Footer } from '@/components/footer'
-import { SyncActivityLog } from '@/components/sync-activity-log'
-import { OrderHistory } from '@/components/order-history'
+import { ActivityHistory } from '@/components/activity-history'
 import { useTranslation } from '@/i18n'
 import type { Repo, RepoOrderSettings } from '@/types'
 
@@ -335,7 +334,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
           <div className="flex items-center gap-3">
             <LanguageToggle />
             <ThemeToggle />
-            <Link href="/how-it-works">
+            <Link href="/help">
               <Button variant="ghost" size="sm">
                 <HelpCircleIcon className="w-4 h-4" />
               </Button>
@@ -564,16 +563,15 @@ export function DashboardClient({ user }: DashboardClientProps) {
                 </DroppableZone>
               </div>
 
-              {/* Order History & Sync Activity Log */}
-              <div className="mt-8 space-y-4">
-                <OrderHistory
+              {/* Activity History */}
+              <div className="mt-8">
+                <ActivityHistory
                   onRestore={(repos, topN) => {
                     setPinnedRepos(repos)
                     setSettings(prev => prev ? { ...prev, topN } : null)
                     setHasChanges(false)
                   }}
                 />
-                <SyncActivityLog />
               </div>
 
               {/* Drag Overlay */}

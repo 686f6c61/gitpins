@@ -2,7 +2,7 @@
  * GitPins - Control the order of your GitHub repositories
  * @author 686f6c61
  * @repository https://github.com/686f6c61/gitpins
- * @created 2024
+ * @created 2025
  * @license MIT
  *
  * Settings Modal Component
@@ -137,78 +137,29 @@ export function SettingsModal({ settings, totalRepos, onClose, onChange }: Setti
             </p>
           </div>
 
-          {/* Advanced scheduling */}
-          <div className="space-y-4 p-4 bg-muted/30 rounded-lg border border-border">
-            <div className="text-sm font-medium">{t('settings.schedule.title')}</div>
-            <p className="text-xs text-muted-foreground">
-              {t('settings.schedule.hint')}
+          {/* Preferred hour */}
+          <div className="p-4 bg-muted/30 rounded-lg border border-border">
+            <div className="text-sm font-medium mb-2">{t('settings.schedule.title')}</div>
+            <label className="block text-xs text-muted-foreground mb-1">
+              {t('settings.schedule.preferredHour')}
+            </label>
+            <select
+              value={settings.preferredHour ?? ''}
+              onChange={(e) => onChange({
+                preferredHour: e.target.value === '' ? null : parseInt(e.target.value)
+              })}
+              className="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-foreground"
+            >
+              <option value="">{t('settings.schedule.anyHour')}</option>
+              {Array.from({ length: 24 }, (_, i) => (
+                <option key={i} value={i}>
+                  {i.toString().padStart(2, '0')}:00 UTC
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground mt-2">
+              {t('settings.schedule.utcNote')}
             </p>
-
-            {/* Preferred hour */}
-            <div>
-              <label className="block text-xs text-muted-foreground mb-1">
-                {t('settings.schedule.preferredHour')}
-              </label>
-              <select
-                value={settings.preferredHour ?? ''}
-                onChange={(e) => onChange({
-                  preferredHour: e.target.value === '' ? null : parseInt(e.target.value)
-                })}
-                className="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-foreground"
-              >
-                <option value="">{t('settings.schedule.anyHour')}</option>
-                {Array.from({ length: 24 }, (_, i) => (
-                  <option key={i} value={i}>
-                    {i.toString().padStart(2, '0')}:00
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Preferred days */}
-            <div>
-              <label className="block text-xs text-muted-foreground mb-2">
-                {t('settings.schedule.preferredDays')}
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {[0, 1, 2, 3, 4, 5, 6].map((day) => {
-                  const isSelected = settings.preferredDays?.includes(day) ?? false
-                  const allSelected = !settings.preferredDays || settings.preferredDays.length === 0
-                  return (
-                    <button
-                      key={day}
-                      type="button"
-                      onClick={() => {
-                        const currentDays = settings.preferredDays || []
-                        let newDays: number[]
-                        if (isSelected) {
-                          newDays = currentDays.filter(d => d !== day)
-                        } else {
-                          newDays = [...currentDays, day].sort()
-                        }
-                        // Si todos están seleccionados o ninguno, usar array vacío (= todos)
-                        if (newDays.length === 7 || newDays.length === 0) {
-                          newDays = []
-                        }
-                        onChange({ preferredDays: newDays })
-                      }}
-                      className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
-                        isSelected || allSelected
-                          ? 'bg-foreground text-background border-foreground'
-                          : 'bg-background border-border hover:bg-muted'
-                      }`}
-                    >
-                      {t(`settings.schedule.days.${day}`)}
-                    </button>
-                  )
-                })}
-              </div>
-              {(!settings.preferredDays || settings.preferredDays.length === 0) && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t('settings.schedule.allDays')}
-                </p>
-              )}
-            </div>
           </div>
 
           {/* Commit strategy */}

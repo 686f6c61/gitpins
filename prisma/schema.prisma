@@ -60,8 +60,7 @@ model RepoOrder {
   commitStrategy String  @default("revert")
 
   // Programación horaria avanzada
-  preferredHour  Int?    // Hora preferida del día (0-23), null = cualquier hora
-  preferredDays  String  @default("[]") // JSON array de días: [0,1,2,3,4,5,6] donde 0=Dom, 1=Lun...
+  preferredHour  Int?    // Hora preferida del día UTC (0-23), null = cualquier hora
 
   // Secret para el endpoint de sync (UUID)
   syncSecret String?
