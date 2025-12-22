@@ -141,9 +141,13 @@ export async function POST(
       return NextResponse.json({ message: 'Sync disabled' }, { status: 200 })
     }
 
+    // Verificar si es una ejecución forzada (manual desde dashboard)
+    const forceSync = request.nextUrl.searchParams.get('force') === 'true'
+
     // ========== VERIFICACIÓN DE HORA PREFERIDA ==========
     // Si el usuario ha configurado una hora preferida, solo sincronizar a esa hora
-    if (repoOrder.preferredHour !== null) {
+    // EXCEPTO si es una ejecución forzada manualmente
+    if (repoOrder.preferredHour !== null && !forceSync) {
       const currentHour = new Date().getUTCHours()
       if (currentHour !== repoOrder.preferredHour) {
         // Log del skip por hora
