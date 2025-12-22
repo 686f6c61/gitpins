@@ -2,7 +2,7 @@
  * GitPins - Control the order of your GitHub repositories
  * @author 686f6c61
  * @repository https://github.com/686f6c61/gitpins
- * @created 2024
+ * @created 2025
  * @license MIT
  *
  * Repos Order API Route
@@ -80,21 +80,14 @@ export async function POST(request: NextRequest) {
     const validStrategies = ['branch', 'revert']
     const validCommitStrategy = validStrategies.includes(commitStrategy) ? commitStrategy : 'revert'
 
-    // Validate preferredHour (0-23 or null)
+    // Validate preferredHour (0-23 UTC or null)
     const preferredHour = body.preferredHour
     const validPreferredHour = (typeof preferredHour === 'number' && preferredHour >= 0 && preferredHour <= 23)
       ? preferredHour
       : null
 
-    // Validate preferredDays (array of 0-6)
-    const preferredDays = body.preferredDays
-    const validPreferredDays = Array.isArray(preferredDays)
-      ? preferredDays.filter((d: unknown) => typeof d === 'number' && d >= 0 && d <= 6)
-      : []
-
     // Crear o actualizar orden
     const reposOrderJson = JSON.stringify(reposOrder)
-    const preferredDaysJson = JSON.stringify(validPreferredDays)
     const repoOrderResult = await prisma.repoOrder.upsert({
       where: { userId: session.userId },
       update: {
@@ -105,7 +98,6 @@ export async function POST(request: NextRequest) {
         autoEnabled: autoEnabled ?? true,
         commitStrategy: validCommitStrategy,
         preferredHour: validPreferredHour,
-        preferredDays: preferredDaysJson,
       },
       create: {
         userId: session.userId,
@@ -116,7 +108,6 @@ export async function POST(request: NextRequest) {
         autoEnabled: autoEnabled ?? true,
         commitStrategy: validCommitStrategy,
         preferredHour: validPreferredHour,
-        preferredDays: preferredDaysJson,
       },
     })
 

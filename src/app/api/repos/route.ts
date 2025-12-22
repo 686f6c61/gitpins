@@ -2,7 +2,7 @@
  * GitPins - Control the order of your GitHub repositories
  * @author 686f6c61
  * @repository https://github.com/686f6c61/gitpins
- * @created 2024
+ * @created 2025
  * @license MIT
  *
  * Repos API Route
@@ -109,17 +109,6 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Parse preferredDays from JSON
-    let preferredDays: number[] = []
-    if (repoOrder?.preferredDays) {
-      try {
-        const parsed = JSON.parse(repoOrder.preferredDays)
-        preferredDays = Array.isArray(parsed) ? parsed : []
-      } catch {
-        preferredDays = []
-      }
-    }
-
     return addSecurityHeaders(
       NextResponse.json({
         repos,
@@ -132,7 +121,6 @@ export async function GET(request: NextRequest) {
               autoEnabled: repoOrder.autoEnabled,
               commitStrategy: repoOrder.commitStrategy,
               preferredHour: repoOrder.preferredHour,
-              preferredDays: preferredDays,
               syncSecret: repoOrder.syncSecret,
             }
           : null,

@@ -2,7 +2,7 @@
  * GitPins - Control the order of your GitHub repositories
  * @author 686f6c61
  * @repository https://github.com/686f6c61/gitpins
- * @created 2024
+ * @created 2025
  * @license MIT
  *
  * Type Definitions
@@ -38,8 +38,7 @@ export interface RepoOrderSettings {
   syncFrequency: number
   autoEnabled: boolean
   commitStrategy: 'branch' | 'revert'
-  preferredHour?: number | null // 0-23, null = cualquier hora
-  preferredDays?: number[] // 0=Dom, 1=Lun, ..., 6=Sab
+  preferredHour?: number | null // 0-23 UTC, null = cualquier hora
   syncSecret?: string
 }
 

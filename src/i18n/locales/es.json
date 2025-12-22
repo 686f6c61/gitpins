@@ -5,7 +5,8 @@
     "connect": "Conectar GitHub",
     "login": "Iniciar sesión",
     "logout": "Cerrar sesión",
-    "backToDashboard": "Volver al dashboard"
+    "backToDashboard": "Volver al dashboard",
+    "help": "Ayuda"
   },
   "footer": {
     "copyright": "© {year} GitPins.",
@@ -34,6 +35,10 @@
       "step3": {
         "title": "Automático",
         "desc": "Un GitHub Action mantiene tu orden. Configura una vez, funciona siempre"
+      },
+      "step4": {
+        "title": "Sin rastro",
+        "desc": "Los commits se revierten automáticamente. Tu historial queda intacto"
       }
     },
     "faq": {
@@ -107,8 +112,8 @@
       "button": "Conectar con GitHub"
     },
     "comingSoon": {
-      "title": "Nuevas funcionalidades",
-      "subtitle": "En desarrollo",
+      "title": "Funcionalidades v0.3.5",
+      "subtitle": "",
       "filters": {
         "title": "Filtros avanzados",
         "desc": "Filtra tus repos por lenguaje, estrellas, fecha y más"
@@ -226,20 +231,9 @@
     },
     "schedule": {
       "title": "Programación avanzada",
-      "preferredHour": "Hora preferida",
+      "preferredHour": "Hora preferida de sincronización",
       "anyHour": "Cualquier hora",
-      "preferredDays": "Días preferidos",
-      "allDays": "Todos los días",
-      "days": {
-        "0": "Dom",
-        "1": "Lun",
-        "2": "Mar",
-        "3": "Mié",
-        "4": "Jue",
-        "5": "Vie",
-        "6": "Sáb"
-      },
-      "hint": "Opcional: restringe cuándo puede ejecutarse la sincronización"
+      "utcNote": "La hora está en UTC (hora del servidor). La sincronización solo se ejecutará a esta hora."
     },
     "commitStrategy": {
       "label": "Estrategia de commits",
@@ -622,6 +616,176 @@
       "autoSync": "Sincronización Automática",
       "autoSyncSkipped": "Sincronización Omitida",
       "manualSync": "Sincronización Manual"
+    }
+  },
+  "activity": {
+    "title": "Historial de Actividad",
+    "empty": "No hay actividad aún",
+    "refresh": "Actualizar",
+    "exportCSV": "Exportar CSV",
+    "exportJSON": "Exportar JSON",
+    "loadMore": "Ver más ({remaining} restantes)",
+    "justNow": "Ahora mismo",
+    "minutesAgo": "Hace {count} minuto(s)",
+    "hoursAgo": "Hace {count} hora(s)",
+    "daysAgo": "Hace {count} día(s)",
+    "current": "Actual",
+    "restore": "Restaurar",
+    "restored": "Orden restaurado correctamente",
+    "restoreError": "Error al restaurar el orden",
+    "showDetails": "Ver detalles",
+    "hideDetails": "Ocultar",
+    "actions": {
+      "manual": "Manual",
+      "auto": "Automático",
+      "restore": "Restauración",
+      "autoSync": "Sync Auto",
+      "autoSyncSkipped": "Omitido",
+      "manualSync": "Sync Manual",
+      "manualOrder": "Orden Manual",
+      "restoreOrder": "Restauración"
+    }
+  },
+  "help": {
+    "hero": {
+      "title": "Centro de Ayuda",
+      "subtitle": "Todo lo que necesitas saber para ordenar tus repositorios en GitHub"
+    },
+    "toc": {
+      "quickstart": "Empezar",
+      "github-app": "GitHub App",
+      "ordering": "Ordenar repos",
+      "sync": "Sincronización",
+      "strategies": "Estrategias",
+      "history": "Historial",
+      "troubleshooting": "Problemas"
+    },
+    "quickstart": {
+      "title": "Empezar",
+      "step1": {
+        "title": "Instalar App",
+        "desc": "Conecta tu cuenta de GitHub instalando la GitPins App"
+      },
+      "step2": {
+        "title": "Arrastrar repos",
+        "desc": "Arrastra los repositorios que quieres mostrar primero"
+      },
+      "step3": {
+        "title": "Guardar",
+        "desc": "Pulsa guardar para activar la sincronización automática"
+      },
+      "step4": {
+        "title": "Listo",
+        "desc": "El GitHub Action mantiene tu orden automáticamente"
+      }
+    },
+    "githubApp": {
+      "title": "Conectar GitHub App",
+      "intro": "GitPins usa una GitHub App para interactuar con tus repositorios. Es más seguro que OAuth porque los permisos son granulares y puedes revocarlos en cualquier momento.",
+      "permissionsTitle": "Permisos solicitados",
+      "permission": "Permiso",
+      "why": "Para qué se usa",
+      "perm1": "Crear commits vacíos para actualizar la fecha de último commit",
+      "perm2": "Leer la lista de tus repositorios (nombre, estrellas, lenguaje)",
+      "canDo": "Lo que SÍ puede hacer",
+      "can1": "Leer metadatos de tus repos (nombre, descripción, estrellas)",
+      "can2": "Crear commits vacíos (sin modificar archivos)",
+      "can3": "Crear y borrar branches temporales",
+      "can4": "Crear el repositorio gitpins-config",
+      "cannotDo": "Lo que NO puede hacer",
+      "cannot1": "Borrar repositorios",
+      "cannot2": "Leer, modificar o eliminar tu código",
+      "cannot3": "Acceder a secrets o variables de entorno",
+      "cannot4": "Cambiar configuración de repos o permisos",
+      "verify": "Puedes verificar y revocar permisos en cualquier momento desde"
+    },
+    "ordering": {
+      "title": "Ordenar repositorios",
+      "intro": "El dashboard tiene dos zonas: la zona de repos pinneados (arriba) y el pool de todos tus repos (abajo). Arrastra repos entre las zonas para ordenarlos.",
+      "demoTitle": "Demo interactivo",
+      "demoDesc": "Haz clic en un repo del pool para añadirlo a la zona pinneada. Usa la X para quitarlo.",
+      "saveTitle": "Qué ocurre al guardar",
+      "save1": "Tu orden se guarda en la base de datos",
+      "save2": "Se crea un snapshot en el historial (para poder restaurar)",
+      "save3": "Se activa el GitHub Action en tu repo gitpins-config",
+      "save4": "En la próxima ejecución, el Action ordenará tus repos"
+    },
+    "demo": {
+      "pinnedZone": "Repos pinneados",
+      "allRepos": "Todos los repos",
+      "dragHere": "Haz clic en repos para añadirlos"
+    },
+    "sync": {
+      "title": "Configurar sincronización",
+      "intro": "La sincronización mantiene tus repos en el orden que configuraste. Un GitHub Action se ejecuta periódicamente y reordena si es necesario.",
+      "frequencyTitle": "Frecuencia",
+      "frequencyDesc": "Con qué frecuencia el Action verifica y reordena tus repos.",
+      "freq1": "Muy frecuente, más consumo de Actions",
+      "freq6": "Recomendado - buen balance",
+      "freq24": "Menos frecuente, mínimo consumo",
+      "hourTitle": "Hora preferida (UTC)",
+      "hourDesc": "Opcionalmente, elige una hora específica para la sincronización.",
+      "hourExample": "Ejemplo:",
+      "hourNote": "Si configuras 14:00 UTC, el sync solo se ejecutará a esa hora",
+      "actionTitle": "Cómo funciona el GitHub Action",
+      "actionDesc": "Cuando guardas tu orden, se crea un workflow en tu repositorio gitpins-config que se ejecuta según la frecuencia configurada.",
+      "actionCron": "Ejecuta cada 6 horas"
+    },
+    "strategies": {
+      "title": "Estrategias de commit",
+      "intro": "Para actualizar la fecha de último commit de un repo, GitPins necesita crear un commit. Hay dos estrategias disponibles:",
+      "revertTitle": "Commit + Revert",
+      "recommended": "Recomendada",
+      "revertPro1": "Historial completamente limpio",
+      "revertPro2": "Limpieza automática de commits",
+      "branchTitle": "Branch temporal",
+      "branchPro1": "Funciona en todos los casos",
+      "branchCon1": "Deja merge commits en el historial"
+    },
+    "history": {
+      "title": "Historial y exportación",
+      "intro": "GitPins registra toda la actividad: cambios de orden, sincronizaciones automáticas y restauraciones. Puedes exportar los datos o restaurar órdenes anteriores.",
+      "loggedTitle": "Qué se registra",
+      "logged1": "Cambios manuales de orden",
+      "logged2": "Sincronizaciones automáticas",
+      "logged3": "Sincronizaciones omitidas",
+      "logged4": "Restauraciones de orden",
+      "exportTitle": "Exportar datos",
+      "exportDesc": "Descarga tu historial de actividad en dos formatos:",
+      "csv": "Para Excel/hojas de cálculo",
+      "json": "Para análisis o backup",
+      "restoreTitle": "Restaurar orden",
+      "restoreDesc": "Puedes volver a cualquier orden anterior haciendo clic en Restaurar.",
+      "restoreNote": "Se crea un nuevo snapshot al restaurar, así que siempre puedes deshacer."
+    },
+    "troubleshooting": {
+      "title": "Solución de problemas",
+      "q1": {
+        "q": "No veo mis repositorios",
+        "a": "Verifica que la GitHub App tiene acceso a los repos que quieres ordenar. Ve a github.com/settings/installations, busca GitPins y asegúrate de que tiene acceso a los repositorios correctos."
+      },
+      "q2": {
+        "q": "La sincronización no funciona",
+        "a": "Verifica que: 1) La sincronización automática está activada en Settings, 2) Si configuraste una hora preferida, el sync solo se ejecuta a esa hora UTC, 3) Revisa los logs del Action en tu repo gitpins-config."
+      },
+      "q3": {
+        "q": "Quiero pausar la sincronización",
+        "a": "Ve a Settings en el dashboard y desactiva la opción de sincronización automática. Tu configuración se mantiene guardada."
+      },
+      "q4": {
+        "q": "Quiero desinstalar GitPins",
+        "a": "1) Borra el repo gitpins-config de tu cuenta, 2) Ve a github.com/settings/installations y desinstala la app GitPins. Tus repositorios quedarán intactos."
+      },
+      "q5": {
+        "q": "Los commits de GitPins aparecen en mi historial",
+        "a": "Con la estrategia Commit + Revert (recomendada), los commits se limpian automáticamente. Si ves commits residuales, puedes usar la función de limpieza manual desde el dashboard."
+      }
+    },
+    "cta": {
+      "title": "¿Tienes más preguntas?",
+      "subtitle": "Consulta el dashboard o abre un issue en GitHub",
+      "dashboard": "Ir al Dashboard",
+      "reportIssue": "Reportar problema"
     }
   }
 }

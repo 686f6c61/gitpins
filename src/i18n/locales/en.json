@@ -5,7 +5,8 @@
     "connect": "Connect GitHub",
     "login": "Sign in",
     "logout": "Sign out",
-    "backToDashboard": "Back to dashboard"
+    "backToDashboard": "Back to dashboard",
+    "help": "Help"
   },
   "footer": {
     "copyright": "© {year} GitPins.",
@@ -34,6 +35,10 @@
       "step3": {
         "title": "Automatic",
         "desc": "A GitHub Action maintains your order. Configure once, works forever"
+      },
+      "step4": {
+        "title": "No trace",
+        "desc": "Commits are reverted automatically. Your history stays intact"
       }
     },
     "faq": {
@@ -107,8 +112,8 @@
       "button": "Connect with GitHub"
     },
     "comingSoon": {
-      "title": "New Features",
-      "subtitle": "In development",
+      "title": "Features v0.3.5",
+      "subtitle": "",
       "filters": {
         "title": "Advanced Filters",
         "desc": "Filter your repos by language, stars, date and more"
@@ -226,20 +231,9 @@
     },
     "schedule": {
       "title": "Advanced scheduling",
-      "preferredHour": "Preferred hour",
+      "preferredHour": "Preferred sync hour",
       "anyHour": "Any hour",
-      "preferredDays": "Preferred days",
-      "allDays": "All days",
-      "days": {
-        "0": "Sun",
-        "1": "Mon",
-        "2": "Tue",
-        "3": "Wed",
-        "4": "Thu",
-        "5": "Fri",
-        "6": "Sat"
-      },
-      "hint": "Optional: restrict when sync can run"
+      "utcNote": "Time is in UTC (server time). Sync will only run at this hour."
     },
     "commitStrategy": {
       "label": "Commit strategy",
@@ -622,6 +616,176 @@
       "autoSync": "Automatic Sync",
       "autoSyncSkipped": "Sync Skipped",
       "manualSync": "Manual Sync"
+    }
+  },
+  "activity": {
+    "title": "Activity History",
+    "empty": "No activity yet",
+    "refresh": "Refresh",
+    "exportCSV": "Export CSV",
+    "exportJSON": "Export JSON",
+    "loadMore": "Load more ({remaining} remaining)",
+    "justNow": "Just now",
+    "minutesAgo": "{count} minute(s) ago",
+    "hoursAgo": "{count} hour(s) ago",
+    "daysAgo": "{count} day(s) ago",
+    "current": "Current",
+    "restore": "Restore",
+    "restored": "Order restored successfully",
+    "restoreError": "Error restoring order",
+    "showDetails": "Show details",
+    "hideDetails": "Hide",
+    "actions": {
+      "manual": "Manual",
+      "auto": "Automatic",
+      "restore": "Restored",
+      "autoSync": "Auto Sync",
+      "autoSyncSkipped": "Skipped",
+      "manualSync": "Manual Sync",
+      "manualOrder": "Manual Order",
+      "restoreOrder": "Restored"
+    }
+  },
+  "help": {
+    "hero": {
+      "title": "Help Center",
+      "subtitle": "Everything you need to know to order your GitHub repositories"
+    },
+    "toc": {
+      "quickstart": "Quick Start",
+      "github-app": "GitHub App",
+      "ordering": "Order repos",
+      "sync": "Sync",
+      "strategies": "Strategies",
+      "history": "History",
+      "troubleshooting": "Troubleshooting"
+    },
+    "quickstart": {
+      "title": "Quick Start",
+      "step1": {
+        "title": "Install App",
+        "desc": "Connect your GitHub account by installing the GitPins App"
+      },
+      "step2": {
+        "title": "Drag repos",
+        "desc": "Drag the repositories you want to show first"
+      },
+      "step3": {
+        "title": "Save",
+        "desc": "Press save to activate automatic sync"
+      },
+      "step4": {
+        "title": "Done",
+        "desc": "The GitHub Action maintains your order automatically"
+      }
+    },
+    "githubApp": {
+      "title": "Connect GitHub App",
+      "intro": "GitPins uses a GitHub App to interact with your repositories. It's safer than OAuth because permissions are granular and you can revoke them at any time.",
+      "permissionsTitle": "Requested permissions",
+      "permission": "Permission",
+      "why": "What it's used for",
+      "perm1": "Create empty commits to update the last commit date",
+      "perm2": "Read your repository list (name, stars, language)",
+      "canDo": "What it CAN do",
+      "can1": "Read repo metadata (name, description, stars)",
+      "can2": "Create empty commits (without modifying files)",
+      "can3": "Create and delete temporary branches",
+      "can4": "Create the gitpins-config repository",
+      "cannotDo": "What it CANNOT do",
+      "cannot1": "Delete repositories",
+      "cannot2": "Read, modify, or delete your code",
+      "cannot3": "Access secrets or environment variables",
+      "cannot4": "Change repo settings or permissions",
+      "verify": "You can verify and revoke permissions at any time from"
+    },
+    "ordering": {
+      "title": "Order repositories",
+      "intro": "The dashboard has two zones: the pinned repos zone (top) and the pool of all your repos (bottom). Drag repos between zones to order them.",
+      "demoTitle": "Interactive demo",
+      "demoDesc": "Click on a repo from the pool to add it to the pinned zone. Use the X to remove it.",
+      "saveTitle": "What happens when you save",
+      "save1": "Your order is saved to the database",
+      "save2": "A snapshot is created in history (so you can restore)",
+      "save3": "The GitHub Action is activated in your gitpins-config repo",
+      "save4": "On the next run, the Action will order your repos"
+    },
+    "demo": {
+      "pinnedZone": "Pinned repos",
+      "allRepos": "All repos",
+      "dragHere": "Click on repos to add them"
+    },
+    "sync": {
+      "title": "Configure sync",
+      "intro": "Sync maintains your repos in the order you configured. A GitHub Action runs periodically and reorders if necessary.",
+      "frequencyTitle": "Frequency",
+      "frequencyDesc": "How often the Action checks and reorders your repos.",
+      "freq1": "Very frequent, more Actions usage",
+      "freq6": "Recommended - good balance",
+      "freq24": "Less frequent, minimal usage",
+      "hourTitle": "Preferred hour (UTC)",
+      "hourDesc": "Optionally, choose a specific hour for sync.",
+      "hourExample": "Example:",
+      "hourNote": "If you set 14:00 UTC, sync will only run at that hour",
+      "actionTitle": "How the GitHub Action works",
+      "actionDesc": "When you save your order, a workflow is created in your gitpins-config repository that runs according to the configured frequency.",
+      "actionCron": "Runs every 6 hours"
+    },
+    "strategies": {
+      "title": "Commit strategies",
+      "intro": "To update the last commit date of a repo, GitPins needs to create a commit. There are two available strategies:",
+      "revertTitle": "Commit + Revert",
+      "recommended": "Recommended",
+      "revertPro1": "Completely clean history",
+      "revertPro2": "Automatic commit cleanup",
+      "branchTitle": "Temporary branch",
+      "branchPro1": "Works in all cases",
+      "branchCon1": "Leaves merge commits in history"
+    },
+    "history": {
+      "title": "History and export",
+      "intro": "GitPins logs all activity: order changes, automatic syncs, and restores. You can export data or restore previous orders.",
+      "loggedTitle": "What gets logged",
+      "logged1": "Manual order changes",
+      "logged2": "Automatic syncs",
+      "logged3": "Skipped syncs",
+      "logged4": "Order restorations",
+      "exportTitle": "Export data",
+      "exportDesc": "Download your activity history in two formats:",
+      "csv": "For Excel/spreadsheets",
+      "json": "For analysis or backup",
+      "restoreTitle": "Restore order",
+      "restoreDesc": "You can go back to any previous order by clicking Restore.",
+      "restoreNote": "A new snapshot is created when restoring, so you can always undo."
+    },
+    "troubleshooting": {
+      "title": "Troubleshooting",
+      "q1": {
+        "q": "I don't see my repositories",
+        "a": "Verify that the GitHub App has access to the repos you want to order. Go to github.com/settings/installations, find GitPins and make sure it has access to the correct repositories."
+      },
+      "q2": {
+        "q": "Sync isn't working",
+        "a": "Verify that: 1) Automatic sync is enabled in Settings, 2) If you set a preferred hour, sync only runs at that UTC hour, 3) Check the Action logs in your gitpins-config repo."
+      },
+      "q3": {
+        "q": "I want to pause sync",
+        "a": "Go to Settings in the dashboard and disable the automatic sync option. Your configuration is kept saved."
+      },
+      "q4": {
+        "q": "I want to uninstall GitPins",
+        "a": "1) Delete the gitpins-config repo from your account, 2) Go to github.com/settings/installations and uninstall the GitPins app. Your repositories will remain intact."
+      },
+      "q5": {
+        "q": "GitPins commits appear in my history",
+        "a": "With the Commit + Revert strategy (recommended), commits are automatically cleaned up. If you see residual commits, you can use the manual cleanup function from the dashboard."
+      }
+    },
+    "cta": {
+      "title": "Have more questions?",
+      "subtitle": "Check the dashboard or open an issue on GitHub",
+      "dashboard": "Go to Dashboard",
+      "reportIssue": "Report issue"
     }
   }
 }

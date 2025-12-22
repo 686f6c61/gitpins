@@ -2,7 +2,7 @@
  * GitPins - Control the order of your GitHub repositories
  * @author 686f6c61
  * @repository https://github.com/686f6c61/gitpins
- * @created 2024
+ * @created 2025
  * @license MIT
  *
  * Landing Content Component
@@ -13,6 +13,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui'
 import { GitHubIcon, PinIcon, CheckIcon, XIcon, AlertTriangleIcon, BriefcaseIcon, UserIcon, BuildingIcon, CodeIcon, FilterIcon, HistoryIcon, CalendarIcon } from '@/components/icons'
 import { ThemeToggle } from '@/components/theme-toggle'
@@ -48,6 +49,9 @@ export function LandingContent() {
             <span className="text-xl font-bold">GitPins</span>
           </div>
           <div className="flex items-center gap-3">
+            <Link href="/help" className="text-sm text-muted-foreground hover:text-foreground">
+              {t('nav.help')}
+            </Link>
             <LanguageToggle />
             <ThemeToggle />
             <Button onClick={handleOrderClick}>
@@ -85,7 +89,7 @@ export function LandingContent() {
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-12">
             {t('landing.howItWorks.title')}
           </h2>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="text-center">
               <div className="w-12 h-12 bg-foreground text-background rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">
                 1
@@ -111,6 +115,15 @@ export function LandingContent() {
               <h3 className="font-semibold mb-2">{t('landing.howItWorks.step3.title')}</h3>
               <p className="text-muted-foreground text-sm">
                 {t('landing.howItWorks.step3.desc')}
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-12 h-12 bg-foreground text-background rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">
+                4
+              </div>
+              <h3 className="font-semibold mb-2">{t('landing.howItWorks.step4.title')}</h3>
+              <p className="text-muted-foreground text-sm">
+                {t('landing.howItWorks.step4.desc')}
               </p>
             </div>
           </div>
@@ -167,12 +180,9 @@ export function LandingContent() {
       {/* Coming Soon */}
       <section className="py-20 border-y border-border">
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-2">
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-12">
             {t('landing.comingSoon.title')}
           </h2>
-          <p className="text-muted-foreground text-center mb-12">
-            {t('landing.comingSoon.subtitle')}
-          </p>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="p-6 border border-border rounded-xl">
               <FilterIcon className="w-6 h-6 mb-3 text-muted-foreground" />

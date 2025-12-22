@@ -2,7 +2,7 @@
  * GitPins - Control the order of your GitHub repositories
  * @author 686f6c61
  * @repository https://github.com/686f6c61/gitpins
- * @created 2024
+ * @created 2025
  * @license MIT
  *
  * Sync API Route
@@ -140,6 +140,37 @@ export async function POST(
     if (!repoOrder.autoEnabled) {
       return NextResponse.json({ message: 'Sync disabled' }, { status: 200 })
     }
+
+    // ========== VERIFICACIÓN DE HORA PREFERIDA ==========
+    // Si el usuario ha configurado una hora preferida, solo sincronizar a esa hora
+    if (repoOrder.preferredHour !== null) {
+      const currentHour = new Date().getUTCHours()
+      if (currentHour !== repoOrder.preferredHour) {
+        // Log del skip por hora
+        await prisma.syncLog.create({
+          data: {
+            userId: user.id,
+            action: 'auto_sync_skipped',
+            status: 'success',
+            details: JSON.stringify({
+              reason: 'Outside preferred hour window',
+              currentHourUTC: currentHour,
+              preferredHourUTC: repoOrder.preferredHour,
+            }),
+            reposAffected: '[]',
+          },
+        })
+
+        return NextResponse.json({
+          success: true,
+          message: `Skipped: Current hour (${currentHour} UTC) doesn't match preferred hour (${repoOrder.preferredHour} UTC)`,
+          skipped: true,
+          currentHour,
+          preferredHour: repoOrder.preferredHour,
+        })
+      }
+    }
+    // ========== FIN VERIFICACIÓN DE HORA PREFERIDA ==========
 
     // ========== LOCK: Evitar syncs concurrentes ==========
     // Si hay un sync en los últimos 10 minutos, saltar
