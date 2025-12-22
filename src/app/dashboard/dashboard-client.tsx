@@ -287,7 +287,8 @@ export function DashboardClient({ user }: DashboardClientProps) {
     setSyncMessage(null)
 
     try {
-      const response = await fetch(`/api/sync/${settings.syncSecret}`, {
+      // force=true para ejecutar inmediatamente ignorando preferredHour
+      const response = await fetch(`/api/sync/${settings.syncSecret}?force=true`, {
         method: 'POST',
       })
 
