@@ -199,6 +199,12 @@
       "clear": "Clear filters",
       "noResults": "No repositories found with these filters",
       "results": "{count} repository(ies) found"
+    },
+    "filter": {
+      "all": "All",
+      "public": "Public",
+      "private": "Private",
+      "noVisible": "No repositories of this type"
     }
   },
   "settings": {

@@ -89,6 +89,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
   const [syncMessage, setSyncMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null)
   const [authError, setAuthError] = useState(false)
   const [filters, setFilters] = useState<FilterState>({ search: '', language: '', owner: '', minStars: 0 })
+  const [visibilityFilter, setVisibilityFilter] = useState<'all' | 'public' | 'private'>('all')
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -121,6 +122,21 @@ export function DashboardClient({ user }: DashboardClientProps) {
     const unpinned = filteredRepos.filter(r => !pinnedRepos.includes(r.fullName))
     return applyFilters(unpinned, filters)
   }, [filteredRepos, pinnedRepos, filters])
+
+  // Aplicar filtro de visibilidad (todos/publicos/privados) para visualizacion
+  const applyVisibilityFilter = (repoList: Repo[]) => {
+    if (visibilityFilter === 'all') return repoList
+    if (visibilityFilter === 'public') return repoList.filter(r => !r.isPrivate)
+    return repoList.filter(r => r.isPrivate)
+  }
+
+  const displayedTopRepos = useMemo(() => {
+    return applyVisibilityFilter(topRepos)
+  }, [topRepos, visibilityFilter])
+
+  const displayedPoolRepos = useMemo(() => {
+    return applyVisibilityFilter(poolRepos)
+  }, [poolRepos, visibilityFilter])
 
   const activeRepo = useMemo(() => {
     if (!activeId) return null
@@ -204,7 +220,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
         // Soltar en la zona vacía - añadir al final
         setPinnedRepos(prev => [...prev, activeFullName])
       } else {
-        // Soltar sobre un repo específico - insertar en esa posición
+        // Soltar sobre un repo específico - insertar en esa posición (en lista completa)
         const overIndex = pinnedRepos.indexOf(overFullName)
         setPinnedRepos(prev => {
           const newPinned = [...prev]
@@ -225,9 +241,39 @@ export function DashboardClient({ user }: DashboardClientProps) {
 
     // Reordenar dentro del top
     if (isActiveInTop && isOverInTop && activeFullName !== overFullName && overFullName !== 'top-zone') {
-      const oldIndex = pinnedRepos.indexOf(activeFullName)
-      const newIndex = pinnedRepos.indexOf(overFullName)
-      setPinnedRepos(prev => arrayMove(prev, oldIndex, newIndex))
+      // Cuando hay filtro de visibilidad, calcular posicion correcta en lista completa
+      if (visibilityFilter !== 'all') {
+        // Encontrar la posicion en la lista visible
+        const visibleItems = displayedTopRepos.map(r => r.fullName)
+        const visibleOldIndex = visibleItems.indexOf(activeFullName)
+        const visibleNewIndex = visibleItems.indexOf(overFullName)
+
+        // Reconstruir la lista completa manteniendo los items ocultos en su posicion relativa
+        setPinnedRepos(prev => {
+          const newPinned = [...prev]
+          // Quitar el item activo
+          const actualOldIndex = newPinned.indexOf(activeFullName)
+          newPinned.splice(actualOldIndex, 1)
+
+          // Calcular donde insertarlo basandose en la posicion del target
+          const actualTargetIndex = newPinned.indexOf(overFullName)
+
+          // Si movemos hacia abajo en la vista, insertar despues del target
+          // Si movemos hacia arriba, insertar antes del target
+          if (visibleOldIndex < visibleNewIndex) {
+            newPinned.splice(actualTargetIndex + 1, 0, activeFullName)
+          } else {
+            newPinned.splice(actualTargetIndex, 0, activeFullName)
+          }
+
+          return newPinned
+        })
+      } else {
+        // Sin filtro, comportamiento normal
+        const oldIndex = pinnedRepos.indexOf(activeFullName)
+        const newIndex = pinnedRepos.indexOf(overFullName)
+        setPinnedRepos(prev => arrayMove(prev, oldIndex, newIndex))
+      }
       setHasChanges(true)
     }
   }
@@ -415,22 +461,53 @@ export function DashboardClient({ user }: DashboardClientProps) {
               </div>
             )}
 
-            {/* Sync Control */}
+            {/* Sync Control & Visibility Filter */}
             {settings && pinnedRepos.length > 0 && (
               <>
-                <div className="mb-6 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm">
-                    <CheckIcon className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">{t('dashboard.syncActive')}</span>
+                <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  {/* Visibility Filter */}
+                  <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
+                    <button
+                      onClick={() => setVisibilityFilter('all')}
+                      className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                        visibilityFilter === 'all'
+                          ? 'bg-background text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {t('dashboard.filter.all')}
+                    </button>
+                    <button
+                      onClick={() => setVisibilityFilter('public')}
+                      className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                        visibilityFilter === 'public'
+                          ? 'bg-background text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {t('dashboard.filter.public')}
+                    </button>
+                    <button
+                      onClick={() => setVisibilityFilter('private')}
+                      className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                        visibilityFilter === 'private'
+                          ? 'bg-background text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {t('dashboard.filter.private')}
+                    </button>
                   </div>
+
+                  {/* Sync Button */}
                   <button
                     onClick={handleSyncNow}
                     disabled={syncing}
-                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-foreground text-background rounded-lg hover:bg-foreground/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {syncing ? (
                       <>
-                        <LoaderIcon className="w-4 h-4" />
+                        <LoaderIcon className="w-4 h-4 animate-spin" />
                         <span>{t('dashboard.syncNow.syncing')}</span>
                       </>
                     ) : (
@@ -491,13 +568,17 @@ export function DashboardClient({ user }: DashboardClientProps) {
                           <p className="text-xs mt-1">{t('dashboard.pinnedRepos.emptyDesc', { max: maxPinned })}</p>
                         </div>
                       </div>
+                    ) : displayedTopRepos.length === 0 ? (
+                      <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
+                        {t('dashboard.filter.noVisible')}
+                      </div>
                     ) : (
                       <SortableContext
-                        items={topRepos.map((r) => r.fullName)}
+                        items={displayedTopRepos.map((r) => r.fullName)}
                         strategy={verticalListSortingStrategy}
                       >
                         <div className="divide-y divide-border">
-                          {topRepos.map((repo, index) => (
+                          {displayedTopRepos.map((repo, index) => (
                             <SortableRepoItem
                               key={repo.fullName}
                               repo={repo}
@@ -523,7 +604,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold text-muted-foreground">
-                    {t('dashboard.allRepos.title')} ({poolRepos.length})
+                    {t('dashboard.allRepos.title')} ({displayedPoolRepos.length})
                   </h2>
                   <span className="text-xs text-muted-foreground">
                     {t('dashboard.allRepos.dragHint')}
@@ -539,17 +620,17 @@ export function DashboardClient({ user }: DashboardClientProps) {
 
                 <DroppableZone id="pool-zone" className="rounded-xl transition-all">
                   <Card className="p-0 overflow-hidden">
-                    {poolRepos.length === 0 ? (
+                    {displayedPoolRepos.length === 0 ? (
                       <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
-                        {t('dashboard.filters.noResults')}
+                        {visibilityFilter !== 'all' ? t('dashboard.filter.noVisible') : t('dashboard.filters.noResults')}
                       </div>
                     ) : (
                       <SortableContext
-                        items={poolRepos.map((r) => r.fullName)}
+                        items={displayedPoolRepos.map((r) => r.fullName)}
                         strategy={verticalListSortingStrategy}
                       >
                         <div className="divide-y divide-border">
-                          {poolRepos.map((repo, index) => (
+                          {displayedPoolRepos.map((repo, index) => (
                             <SortableRepoItem
                               key={repo.fullName}
                               repo={repo}

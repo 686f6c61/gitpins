@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { verifyAdmin, forbiddenResponse, unauthorizedResponse, checkAdminRateLimit } from '@/lib/admin'
+import { verifyAdmin, forbiddenResponse, unauthorizedResponse, checkAdminRateLimit, verifyCSRF, csrfFailedResponse } from '@/lib/admin'
 import { getSession } from '@/lib/session'
 
 export async function POST(
@@ -28,6 +28,12 @@ export async function POST(
 
     if (!isAdmin) {
       return forbiddenResponse()
+    }
+
+    // CSRF verification for destructive action
+    const csrfValid = await verifyCSRF(request)
+    if (!csrfValid) {
+      return csrfFailedResponse()
     }
 
     // Rate limiting for admin

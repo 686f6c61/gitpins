@@ -122,11 +122,11 @@ export async function GET(request: NextRequest) {
     })
 
     // Crear sesión (sin el accessToken - ya no lo guardamos en la cookie)
+    // isAdmin no se guarda en JWT - se verifica server-side contra ADMIN_GITHUB_ID
     await createSession({
       userId: user.id,
       githubId: user.githubId,
       username: user.username,
-      isAdmin: user.isAdmin,
     })
 
     // Redirigir al dashboard si tiene instalación, si no a instalar

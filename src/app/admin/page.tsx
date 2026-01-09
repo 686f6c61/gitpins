@@ -10,6 +10,7 @@
 
 import { redirect } from 'next/navigation'
 import { verifyAdmin } from '@/lib/admin'
+import { generateCSRFToken } from '@/lib/session'
 import { PinIcon } from '@/components/icons'
 import { AdminClient } from './admin-client'
 
@@ -19,6 +20,9 @@ export default async function AdminPage() {
   if (!isAdmin) {
     redirect('/')
   }
+
+  // Generate CSRF token for destructive actions
+  const csrfToken = await generateCSRFToken()
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -39,7 +43,7 @@ export default async function AdminPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
-        <AdminClient />
+        <AdminClient csrfToken={csrfToken} />
       </main>
     </div>
   )
