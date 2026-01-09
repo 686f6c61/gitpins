@@ -199,6 +199,12 @@
       "clear": "Limpiar filtros",
       "noResults": "No se encontraron repositorios con estos filtros",
       "results": "{count} repositorio(s) encontrado(s)"
+    },
+    "filter": {
+      "all": "Todos",
+      "public": "Publicos",
+      "private": "Privados",
+      "noVisible": "No hay repositorios de este tipo"
     }
   },
   "settings": {

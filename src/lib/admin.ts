@@ -9,14 +9,13 @@
  * Centralized security functions for admin access control.
  */
 
-import { getSession } from './session'
+import { getSession, verifyCSRFToken } from './session'
 import { checkRateLimit, rateLimits } from './rate-limit'
 
 interface Session {
   userId: string
   githubId: number
   username: string
-  isAdmin: boolean
 }
 
 /**
@@ -113,4 +112,28 @@ export function checkAdminRateLimit(adminId: string): { allowed: boolean; respon
     return { allowed: false, response: rateLimitResponse(result.resetTime) }
   }
   return { allowed: true }
+}
+
+/**
+ * Creates a 403 CSRF validation failed response.
+ */
+export function csrfFailedResponse(): Response {
+  return new Response(
+    JSON.stringify({ error: 'Forbidden', message: 'CSRF validation failed' }),
+    { status: 403, headers: { 'Content-Type': 'application/json' } }
+  )
+}
+
+/**
+ * Verifies CSRF token from request header.
+ * Token should be sent in 'X-CSRF-Token' header.
+ * @param request - NextRequest object
+ * @returns true if CSRF token is valid
+ */
+export async function verifyCSRF(request: Request): Promise<boolean> {
+  const csrfToken = request.headers.get('X-CSRF-Token')
+  if (!csrfToken) {
+    return false
+  }
+  return verifyCSRFToken(csrfToken)
 }

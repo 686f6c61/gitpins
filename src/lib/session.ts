@@ -21,19 +21,18 @@ const CSRF_COOKIE = 'gitpins_csrf'          // CSRF token for form submissions
 /**
  * Session data stored in the JWT token.
  * Note: accessToken is NOT stored here for security - it's encrypted in the database.
+ * Note: isAdmin is NOT stored - admin verification is done server-side against ADMIN_GITHUB_ID.
  */
 export interface Session {
   userId: string
   githubId: number
   username: string
-  isAdmin: boolean
 }
 
 interface JWTPayload {
   userId: string
   githubId: number
   username: string
-  isAdmin: boolean
   iat: number
   exp: number
 }
@@ -54,7 +53,6 @@ async function encodeSession(session: Session): Promise<string> {
     userId: session.userId,
     githubId: session.githubId,
     username: session.username,
-    isAdmin: session.isAdmin,
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
@@ -76,7 +74,6 @@ async function decodeSession(token: string): Promise<Session | null> {
       userId: jwtPayload.userId,
       githubId: jwtPayload.githubId,
       username: jwtPayload.username,
-      isAdmin: jwtPayload.isAdmin,
     }
   } catch {
     return null

@@ -48,7 +48,11 @@ interface Stats {
   }
 }
 
-export function AdminClient() {
+interface AdminClientProps {
+  csrfToken: string
+}
+
+export function AdminClient({ csrfToken }: AdminClientProps) {
   const [users, setUsers] = useState<User[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -93,7 +97,10 @@ export function AdminClient() {
       setActionLoading(userId)
       const res = await fetch(`/api/admin/users/${userId}/ban`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
+        },
         body: JSON.stringify({ reason })
       })
 
@@ -114,7 +121,10 @@ export function AdminClient() {
     try {
       setActionLoading(userId)
       const res = await fetch(`/api/admin/users/${userId}/unban`, {
-        method: 'POST'
+        method: 'POST',
+        headers: {
+          'X-CSRF-Token': csrfToken,
+        },
       })
 
       if (!res.ok) throw new Error('Failed to unban user')
@@ -136,7 +146,10 @@ export function AdminClient() {
     try {
       setActionLoading(userId)
       const res = await fetch(`/api/admin/users/${userId}/delete`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'X-CSRF-Token': csrfToken,
+        },
       })
 
       if (!res.ok) throw new Error('Failed to delete user')
