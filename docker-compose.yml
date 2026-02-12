@@ -5,13 +5,14 @@ services:
     environment:
       POSTGRES_USER: gitpins
       POSTGRES_PASSWORD: gitpins
-      POSTGRES_DB: postgres
+      # Create the DB used by the app on first boot (fresh volume).
+      POSTGRES_DB: gitpins_local_clone
     ports:
       - "5432:5432"
     volumes:
       - gitpins_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U gitpins -d postgres"]
+      test: ["CMD-SHELL", "pg_isready -U gitpins -d gitpins_local_clone"]
       interval: 5s
       timeout: 5s
       retries: 20
