@@ -44,7 +44,7 @@
 
 GitHub sorts repositories by "last updated" date. This means your most important projects can get buried when you make a small fix to an old repo or create a new experimental project.
 
-**GitPins solves this** by "touching" your chosen repositories (empty commit on a short-lived ref) in a controlled sequence, so GitHub's recency-based order matches your preferred top list.
+**GitPins solves this** by "touching" your chosen repositories (create/delete of a short-lived tag ref) in a controlled sequence, so GitHub's recency-based order matches your preferred top list.
 
 ## Features
 
@@ -63,7 +63,7 @@ GitHub sorts repositories by "last updated" date. This means your most important
 ## How It Works
 
 1. **Connect with GitHub (OAuth)** - we create an app session cookie (JWT)
-2. **Install the GitHub App** - required so GitPins can create empty commits in selected repos
+2. **Install the GitHub App** - required so GitPins can create/delete temporary refs in selected repos
 3. **Arrange your repos** - save your desired top list and settings
 4. **Sync**
    - Manual: click "Sync now" in the dashboard
@@ -71,15 +71,15 @@ GitHub sorts repositories by "last updated" date. This means your most important
 
 ### Technical Details
 
-GitPins updates the "last updated" timestamp by creating an empty commit (same tree as HEAD), attaching it to a temporary branch, and deleting that branch immediately.
+GitPins updates the "last updated" timestamp by creating a temporary tag ref that points to `HEAD`, then deleting that tag immediately.
 
 This keeps your default branch history clean (no `[GitPins]` commits in `main/master`).
 
 Conceptually:
 ```bash
-git commit --allow-empty -m "[GitPins] Touch: 9/45"
-git push origin HEAD:refs/heads/gitpins-touch-<id>
-git push origin :refs/heads/gitpins-touch-<id>
+git rev-parse HEAD
+git push origin HEAD:refs/tags/gitpins-touch-<id>
+git push origin :refs/tags/gitpins-touch-<id>
 ```
 
 See `docs/ORDERING.md` for the detailed algorithm, including the minimal-prefix optimization and what "single-pass" means in practice.
@@ -88,13 +88,13 @@ See `docs/ORDERING.md` for the detailed algorithm, including the minimal-prefix 
 
 GitPins is designed with security in mind:
 
-- **Minimal GitHub App Permissions** - only what is needed for empty commits
+- **Minimal GitHub App Permissions** - only what is needed for temporary ref updates
 - **No File Changes** - GitPins creates commits that point to the existing tree
 - **Encrypted Tokens** - Access tokens are encrypted with AES-256-GCM
 - **Open Source** - full code transparency
 
 ### What GitPins CAN do:
-- Create empty commits and create/delete temporary refs in repos you installed the app on
+- Create/delete temporary refs in repos you installed the app on
 - Read repository metadata (name, stars, etc.) via the GitHub API
 - Optionally rewrite history to remove GitPins commits (cleanup feature; explicit confirmation)
 
@@ -176,7 +176,7 @@ Configure these permissions in your GitHub App settings:
 **Repository Permissions:**
 | Permission | Access Level | Purpose |
 |------------|--------------|---------|
-| **Contents** | Read and write | Create empty commits / update refs |
+| **Contents** | Read and write | Create and delete temporary refs |
 | **Metadata** | Read-only | Read repository list and info |
 
 **Account Permissions:**

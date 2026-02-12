@@ -10,7 +10,7 @@
  * - Validates the sync secret
  * - Applies rate limiting (10 requests/hour per secret)
  * - "Touches" repositories to update repo "last updated" timestamps
- * - Uses a single strategy: create+delete a temporary ref (no default-branch history noise)
+ * - Uses a single strategy: create+delete a temporary tag ref (no branches, no default-branch history noise)
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -139,7 +139,7 @@ function getReposToTouch(
 
 /**
  * POST /api/sync/[secret]
- * Syncs repository order by creating empty commits.
+ * Syncs repository order by creating and deleting temporary tag refs.
  * Called by GitHub Action on schedule.
  */
 export async function POST(
@@ -450,46 +450,31 @@ export async function POST(
 
         const sha = refData.object.sha
 
-        // Obtener el tree del commit actual
-        const { data: commitData } = await octokit.rest.git.getCommit({
-          owner,
-          repo,
-          commit_sha: sha,
-        })
-
-        // Fixed strategy: Create+delete a temporary ref (no default-branch history noise).
-        // We still create an empty commit (same tree as HEAD) but we only attach it to a short-lived branch.
-        // This should update the repository "pushed_at/updated_at" without polluting main/master history.
-        detailedLogs.push(`  - Touching via temporary ref for target position ${desiredPosition}/${reposToSync.length}...`)
+        // Fixed strategy: create+delete a temporary tag ref (no branches, no default-branch history noise).
+        // We point the temporary tag to the current HEAD commit SHA and delete it immediately.
+        // This should update repository recency signals without creating GitPins commits.
+        detailedLogs.push(`  - Touching via temporary tag ref for target position ${desiredPosition}/${reposToSync.length}...`)
 
         const tempRefSuffix = `${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`
-        const tempBranch = `gitpins-touch-${tempRefSuffix}-${desiredPosition}`
-
-        const { data: touchCommit } = await octokit.rest.git.createCommit({
-          owner,
-          repo,
-          message: `[GitPins] Touch: ${desiredPosition}/${reposToSync.length}`,
-          tree: commitData.tree.sha,
-          parents: [sha],
-        })
+        const tempTag = `gitpins-touch-${tempRefSuffix}-${desiredPosition}`
 
         await octokit.rest.git.createRef({
           owner,
           repo,
-          ref: `refs/heads/${tempBranch}`,
-          sha: touchCommit.sha,
+          ref: `refs/tags/${tempTag}`,
+          sha,
         })
 
         try {
           await octokit.rest.git.deleteRef({
             owner,
             repo,
-            ref: `heads/${tempBranch}`,
+            ref: `tags/${tempTag}`,
           })
         } catch (error) {
-          // Non-fatal: leaving a temp branch is noisy but safer than failing the entire run.
-          detailedLogs.push(`  - Warning: failed to delete temporary ref ${tempBranch}`)
-          console.error('Failed to delete temp ref:', { owner, repo, tempBranch, error })
+          // Non-fatal: leaving a temp tag is noisy but safer than failing the entire run.
+          detailedLogs.push(`  - Warning: failed to delete temporary tag ${tempTag}`)
+          console.error('Failed to delete temp tag:', { owner, repo, tempTag, error })
         }
 
         detailedLogs.push(`[${position}/${total}] ${repoFullName} - SUCCESS`)

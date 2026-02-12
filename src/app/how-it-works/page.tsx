@@ -158,9 +158,9 @@ export default function HowItWorksPage() {
               </p>
               <div className="text-xs bg-muted p-3 rounded-lg font-mono">
                 <div className="text-muted-foreground">{t('howItWorksPage.strategies.revert.comment')}</div>
-                <div>git commit --allow-empty -m &quot;[GitPins] Touch: 9/45&quot;</div>
-                <div>git push origin HEAD:refs/heads/gitpins-touch-abc123</div>
-                <div>git push origin :refs/heads/gitpins-touch-abc123</div>
+                <div>git rev-parse HEAD</div>
+                <div>git push origin HEAD:refs/tags/gitpins-touch-abc123</div>
+                <div>git push origin :refs/tags/gitpins-touch-abc123</div>
               </div>
             </Card>
           </div>

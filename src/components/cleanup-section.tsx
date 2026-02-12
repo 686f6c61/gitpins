@@ -98,7 +98,7 @@ export function CleanupSection({ language }: CleanupSectionProps) {
 
   const content = language === 'en' ? {
     title: '🧹 Clean Up GitPins Commits',
-    description: 'GitPins creates empty commits to maintain repository order. Once your repos are ordered, you can safely remove these commits to keep your history clean.',
+    description: 'If you still have old GitPins commits from previous versions, you can remove them safely after your repos are already ordered.',
     warning: '⚠️ Warning: This will rewrite git history. Only use if you understand the implications.',
     noCommits: '✨ Great! You have no GitPins commits to clean up.',
     loading: 'Loading repositories...',
@@ -112,7 +112,7 @@ export function CleanupSection({ language }: CleanupSectionProps) {
     cleanupSelected: (count: number) => `Clean Up ${count} Selected`,
   } : {
     title: '🧹 Limpiar Commits de GitPins',
-    description: 'GitPins crea commits vacíos para mantener el orden de los repositorios. Una vez ordenados, puedes eliminar estos commits de forma segura para mantener limpio tu historial.',
+    description: 'Si aún tienes commits antiguos de GitPins de versiones previas, puedes eliminarlos de forma segura cuando tus repos ya estén ordenados.',
     warning: '⚠️ Advertencia: Esto reescribirá el historial de git. Solo úsalo si entiendes las implicaciones.',
     noCommits: '✨ ¡Genial! No tienes commits de GitPins para limpiar.',
     loading: 'Cargando repositorios...',

@@ -134,9 +134,9 @@ jobs:
 export function generateReadme(username: string): string {
   return `# GitPins Config
 
-> **EN:** GitPins keeps your most important repositories always visible at the top of your GitHub profile, regardless of when they were last updated. It works by using a GitHub Action that periodically updates the "last updated" timestamp through empty commits.
+> **EN:** GitPins keeps your most important repositories always visible at the top of your GitHub profile, regardless of when they were last updated. It works by using a GitHub Action that periodically updates repository recency through temporary ref touches.
 >
-> **ES:** GitPins mantiene tus repositorios más importantes siempre visibles en tu perfil de GitHub, sin importar cuándo fue su última actualización. Funciona mediante un GitHub Action que actualiza periódicamente la fecha de "última actualización" con commits vacíos.
+> **ES:** GitPins mantiene tus repositorios más importantes siempre visibles en tu perfil de GitHub, sin importar cuándo fue su última actualización. Funciona mediante un GitHub Action que actualiza periódicamente la recencia del repositorio usando refs temporales.
 
 ---
 

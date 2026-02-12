@@ -58,7 +58,7 @@ If you run `npm run dev` directly (not Docker) and use `http://localhost:3000`, 
 
 Required permissions (minimal for current code paths):
 1. Repository permissions:
-1. Contents: Read & write (to create empty commits).
+1. Contents: Read & write (to create/delete temporary refs).
 2. Metadata: Read-only (to list and inspect repos).
 2. Account permissions:
 1. Email addresses: Read-only (optional, for email display).
@@ -132,4 +132,3 @@ docker compose exec app npm run lint
 2. DB schema not matching:
 1. Ensure `docker compose up -d` was run after pulling schema changes.
 2. For a full reset: stop containers and remove the DB volume (destructive).
-

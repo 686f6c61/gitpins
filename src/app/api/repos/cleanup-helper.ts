@@ -72,14 +72,14 @@ export async function cleanupRepoCommitsAutomatic(
       }
     }
 
-    // 4. Crear backup branch apuntando al commit actual
-    const backupBranchName = `gitpins-backup-${Date.now()}`
+    // 4. Crear backup tag apuntando al commit actual
+    const backupTagName = `gitpins-backup-${Date.now()}`
 
     try {
       await octokit.rest.git.createRef({
         owner,
         repo,
-        ref: `refs/heads/${backupBranchName}`,
+        ref: `refs/tags/${backupTagName}`,
         sha: commits[0].sha,
       })
     } catch {
@@ -87,7 +87,7 @@ export async function cleanupRepoCommitsAutomatic(
       return {
         status: 'error',
         method: 'none',
-        error: 'Failed to create backup branch'
+        error: 'Failed to create backup tag'
       }
     }
 
@@ -167,12 +167,12 @@ export async function cleanupRepoCommitsAutomatic(
       force: true,
     })
 
-    // 7. Eliminar branch de backup (ya no es necesario)
+    // 7. Eliminar tag de backup (ya no es necesario)
     try {
       await octokit.rest.git.deleteRef({
         owner,
         repo,
-        ref: `heads/${backupBranchName}`,
+        ref: `tags/${backupTagName}`,
       })
     } catch {
       // Si falla eliminar el backup, no es crítico

@@ -45,7 +45,7 @@
       "title": "Preguntas frecuentes",
       "q1": {
         "question": "¿Modifica mi código?",
-        "answer": "No. Crea commits vacíos y refs temporales sin modificar archivos versionados. El historial del branch principal queda intacto."
+        "answer": "No. Crea y borra refs temporales sin modificar archivos versionados. El historial del branch principal queda intacto."
       },
       "q2": {
         "question": "¿Cuánto cuesta?",
@@ -61,7 +61,7 @@
       },
       "q5": {
         "question": "¿Es seguro para mis repositorios?",
-        "answer": "Sí. GitPins solo tiene permisos para crear commits vacíos. No puede borrar repositorios, modificar tu código ni acceder a información sensible."
+        "answer": "Sí. GitPins solo tiene permisos para crear y borrar refs temporales. No puede borrar repositorios, modificar tu código ni acceder a información sensible."
       },
       "q6": {
         "question": "¿Qué pasa si desinstalo GitPins?",
@@ -133,7 +133,7 @@
     },
     "disclaimer": {
       "title": "Antes de continuar",
-      "text": "GitPins es un proyecto open source que crea commits vacíos y refs temporales para mantener el orden que configures. Esto no modifica tus archivos versionados.",
+      "text": "GitPins es un proyecto open source que crea y borra refs temporales para mantener el orden que configures. Esto no modifica tus archivos versionados.",
       "text2": "Al continuar, aceptas que usas este servicio bajo tu propia responsabilidad. El código es open source y está a tu disposición para revisarlo, mejorarlo o ejecutarlo en tu propia infraestructura.",
       "accept": "Acepto y continuar",
       "cancel": "Cancelar",
@@ -157,7 +157,7 @@
     "disclaimerPopup": {
       "title": "Descargo de responsabilidad",
       "text": "Al crear el repositorio de configuración, aceptas que:",
-      "item1": "GitPins realizará commits vacíos en tus repositorios seleccionados",
+      "item1": "GitPins creará refs temporales en tus repositorios seleccionados",
       "item2": "GitPins usa refs temporales y no modifica tus archivos versionados",
       "item3": "El servicio se proporciona sin garantías de ningún tipo",
       "item4": "Eres responsable de revisar y entender cómo funciona el sistema",
@@ -307,7 +307,7 @@
       "label": "Estrategia de commits",
       "revert": {
         "title": "Toque con ref temporal",
-        "desc": "Crea un commit vacío en una rama temporal y borra la rama inmediatamente."
+        "desc": "Crea una tag ref temporal apuntando a HEAD y la borra inmediatamente."
       },
       "branch": {
         "title": "Flujo legacy por branch",
@@ -368,13 +368,13 @@
   },
   "strategyInfo": {
     "title": "Estrategias de commits",
-    "intro": "Para mantener tus repos arriba, GitPins actualiza la recencia con un commit vacío que conserva el mismo tree SHA. Ese commit se apunta a una ref temporal y la ref se elimina al instante.",
+    "intro": "Para mantener tus repos arriba, GitPins actualiza la recencia creando una tag ref temporal que apunta a HEAD y eliminándola al instante.",
     "revert": {
       "title": "Toque con ref temporal",
-      "desc": "Crea un commit vacío (mismo tree que HEAD), lo publica en una rama temporal y borra esa rama. El historial del branch principal queda limpio.",
-      "step1": "# Paso 1: Commit vacío (mismo tree)",
-      "step2": "# Paso 2: Push de ref temporal",
-      "step3": "# Paso 3: Borrar ref temporal",
+      "desc": "Crea una tag ref temporal que apunta a HEAD y la elimina al instante. El historial del branch principal queda limpio.",
+      "step1": "# Paso 1: Resolver SHA de HEAD",
+      "step2": "# Paso 2: Push de tag ref temporal",
+      "step3": "# Paso 3: Borrar tag ref temporal",
       "pro": "+ Sin ruido de commits en main/master",
       "con": "~ Depende del comportamiento de recencia de GitHub"
     },
@@ -400,7 +400,7 @@
     "solution": {
       "title": "La solución",
       "p1": "GitPins utiliza un mecanismo simple pero efectivo: <strong>actualizar la fecha de último commit</strong> de tus repositorios en el orden que tú elijas.",
-      "p2": "Esto se hace con commits vacíos apuntados a refs temporales. No se modifican archivos versionados y el historial del branch principal queda limpio."
+      "p2": "Esto se hace con tag refs temporales que se crean y borran al instante. No se modifican archivos versionados y el historial del branch principal queda limpio."
     },
     "steps": {
       "title": "Proceso paso a paso",
@@ -410,7 +410,7 @@
       },
       "step2": {
         "title": "Instalas la GitHub App",
-        "desc": "Instala la GitHub App en los repositorios que quieres que GitPins gestione. Esto permite crear commits vacíos y refs temporales (sin cambios de archivos) cuando se ejecuta el sync."
+        "desc": "Instala la GitHub App en los repositorios que quieres que GitPins gestione. Esto permite crear/borrar refs temporales (sin cambios de archivos) cuando se ejecuta el sync."
       },
       "step3": {
         "title": "Sincronización programada (opcional)",
@@ -426,12 +426,12 @@
       "intro": "GitPins usa una unica estrategia predecible para mantener el historial auditable:",
       "revert": {
         "title": "Toque con ref temporal",
-        "desc": "Creamos un commit vacío (mismo tree que HEAD), apuntamos una rama temporal a ese commit y borramos la rama al instante. La recencia cambia sin ensuciar el historial del branch principal.",
+        "desc": "Creamos una tag ref temporal que apunta a HEAD y la borramos al instante. La recencia cambia sin ensuciar el historial del branch principal.",
         "comment": "# Lo que hace el Action:"
       },
       "branch": {
         "title": "Branch temporal",
-        "desc": "Creamos un branch temporal, hacemos el commit, merge a main, y borramos el branch. Más limpio pero ligeramente más complejo.",
+        "desc": "Estrategia obsoleta, mantenida solo como referencia histórica. GitPins no la usa.",
         "comment": "# Lo que hace el Action:"
       }
     },
@@ -443,8 +443,8 @@
         "step1": "Llama a tu instancia de GitPins (/api/sync) con tu sync secret por usuario",
         "step2": "Para cada repositorio (en orden inverso para que el primero quede más reciente):",
         "step2a": "Detecta el branch principal (main/master)",
-        "step2b": "Crea un commit vacío usando la GitHub API",
-        "step2c": "Crea y borra una rama temporal para ese commit",
+        "step2b": "Resuelve el SHA actual de HEAD",
+        "step2c": "Crea y borra una tag ref temporal para ese SHA",
         "step3": "Espera 1 segundo entre repos para no saturar la API",
         "step4": "Reporta el resultado en los logs del Action"
       },
@@ -458,14 +458,14 @@
       "canDo": {
         "title": "Lo que SÍ podemos hacer:",
         "item1": "Leer la lista de tus repositorios (metadata)",
-        "item2": "Crear commits vacíos (sin modificar archivos)",
+        "item2": "Crear y borrar refs temporales (sin modificar archivos)",
         "item3": "Crear y borrar refs temporales para aplicar el orden",
         "item4": "Opcionalmente reescribir historial para limpieza (solo cuando ejecutas limpieza explícitamente)"
       },
       "cannotDo": {
         "title": "Lo que NO podemos hacer:",
         "item1": "<strong>JAMÁS borrar repositorios</strong> - No tenemos ese permiso",
-        "item2": "Modificar tus archivos versionados (GitPins usa commits vacíos que apuntan al mismo tree)",
+        "item2": "Modificar tus archivos versionados",
         "item3": "Acceder a tus secrets o variables de entorno",
         "item4": "Cambiar configuración de tus repos (settings)",
         "item5": "Acceder a Issues, PRs, Wikis o Discussions",
@@ -494,7 +494,7 @@
       "title": "Preguntas frecuentes",
       "affectsCode": {
         "q": "¿Afecta esto a mi código?",
-        "a": "No. Los commits vacíos no modifican archivos versionados y las refs temporales se eliminan automáticamente."
+        "a": "No. Las refs temporales no modifican archivos versionados y se eliminan automáticamente."
       },
       "actionsMinutes": {
         "q": "¿Cuántos minutos de Actions consume?",
@@ -556,14 +556,14 @@
     },
     "howItWorks": {
       "title": "Cómo Funciona GitPins - Transparencia Total",
-      "intro": "GitPins modifica las fechas de actualización de tus repositorios mediante commits vacíos. Es importante que entiendas exactamente qué hace:",
+      "intro": "GitPins modifica la recencia de tus repositorios mediante refs temporales. Es importante que entiendas exactamente qué hace:",
       "step1": {
-        "title": "Commits Vacíos",
-        "desc": "GitPins crea commits que no contienen cambios en el código. Estos commits solo actualizan la fecha de \"último commit\" del repositorio."
+        "title": "Tag Ref Temporal",
+        "desc": "GitPins crea una tag ref temporal que apunta al commit HEAD actual."
       },
       "step2": {
         "title": "Toque con Ref Temporal",
-        "desc": "El commit vacío se apunta a una ref de rama temporal y se elimina al instante. Esto actualiza la recencia sin añadir commits al branch principal."
+        "desc": "La tag ref temporal se elimina al instante. Esto actualiza la recencia sin añadir commits al branch principal."
       },
       "step3": {
         "title": "GitHub Actions",
@@ -583,7 +583,7 @@
       },
       "risk3": {
         "title": "Permisos",
-        "desc": "La GitHub App requiere permisos de escritura en tus repositorios para crear commits. Revisa los permisos cuidadosamente."
+        "desc": "La GitHub App requiere permisos de escritura en tus repositorios para crear/borrar refs temporales. Revisa los permisos cuidadosamente."
       },
       "risk4": {
         "title": "Minutos de Actions",
@@ -595,12 +595,12 @@
       "p1": "Es importante aclarar que GitPins <strong>NO tiene permisos para borrar repositorios</strong>. La GitHub App solicita únicamente los permisos mínimos necesarios:",
       "canDo": "Lo que GitPins SÍ puede hacer:",
       "canDo1": "Leer la lista de tus repositorios (metadatos)",
-      "canDo2": "Crear commits vacíos (sin modificar archivos)",
+      "canDo2": "Crear y borrar refs temporales (sin modificar archivos)",
       "canDo3": "Crear y borrar refs temporales para aplicar el orden",
       "canDo4": "Proveer un endpoint de sync que un scheduler (como GitHub Actions) puede llamar",
       "cannotDo": "Lo que GitPins NO puede hacer:",
       "cannotDo1": "Borrar repositorios - No tenemos ese permiso",
-      "cannotDo2": "Modificar tus archivos versionados (GitPins usa commits vacíos que apuntan al mismo tree)",
+      "cannotDo2": "Modificar tus archivos versionados",
       "cannotDo3": "Acceder a secrets o variables de entorno",
       "cannotDo4": "Cambiar la configuración de tus repositorios",
       "cannotDo5": "Acceder a Issues, Pull Requests o Wikis",
@@ -628,7 +628,7 @@
     },
     "yourResponsibility": {
       "title": "Tu Responsabilidad",
-      "p1": "Al usar GitPins, aceptas que has leído y entendido cómo funciona el servicio. Entiendes que se crearán commits vacíos en tus repositorios como parte del proceso de ordenación.",
+      "p1": "Al usar GitPins, aceptas que has leído y entendido cómo funciona el servicio. Entiendes que se crearán y borrarán refs temporales en tus repositorios como parte del proceso de ordenación.",
       "p2": "Aceptas los riesgos potenciales descritos en esta página y eres responsable de monitorear el uso de minutos de GitHub Actions en tu cuenta.",
       "p3": "Puedes desactivar el servicio en cualquier momento desactivando o borrando cualquier workflow programado que hayas configurado, sin ninguna penalización."
     },
@@ -825,16 +825,16 @@
       "permissionsTitle": "Permisos solicitados",
       "permission": "Permiso",
       "why": "Para qué se usa",
-      "perm1": "Crear commits vacíos para actualizar la fecha de último commit",
+      "perm1": "Crear y borrar refs temporales para actualizar la recencia del repositorio",
       "perm2": "Leer la lista de tus repositorios (nombre, estrellas, lenguaje)",
       "canDo": "Lo que SÍ puede hacer",
       "can1": "Leer metadatos de tus repos (nombre, descripción, estrellas)",
-      "can2": "Crear commits vacíos (sin modificar archivos)",
+      "can2": "Crear y borrar refs temporales (sin modificar archivos)",
       "can3": "Crear y borrar refs temporales para aplicar el orden",
       "can4": "Opcionalmente reescribir historial para limpieza (solo cuando ejecutas limpieza explícitamente)",
       "cannotDo": "Lo que NO puede hacer",
       "cannot1": "Borrar repositorios",
-      "cannot2": "Modificar tus archivos versionados (GitPins usa commits vacíos que apuntan al mismo tree)",
+      "cannot2": "Modificar tus archivos versionados",
       "cannot3": "Acceder a secrets o variables de entorno",
       "cannot4": "Cambiar configuración de repos o permisos",
       "verify": "Puedes verificar y revocar permisos en cualquier momento desde"
@@ -873,7 +873,7 @@
     },
     "strategies": {
       "title": "Estrategias de commit",
-      "intro": "Para actualizar la recencia de un repo, GitPins crea un commit vacío, apunta una rama temporal y borra esa rama inmediatamente.",
+      "intro": "Para actualizar la recencia de un repo, GitPins crea una tag ref temporal que apunta a HEAD y la borra inmediatamente.",
       "revertTitle": "Toque con ref temporal",
       "recommended": "Recomendada",
       "revertPro1": "Sin cambios de archivos",

@@ -9,10 +9,10 @@ GitPins helps a user keep a chosen set of repositories appearing "on top" by man
 GitPins:
 1. Lets users choose an ordered list of repositories (the desired "top").
 2. Persists that order in Postgres.
-3. Provides a sync endpoint that "touches" repositories (empty commit on a short-lived ref) so GitHub updates their recency.
+3. Provides a sync endpoint that "touches" repositories (temporary tag ref create+delete) so GitHub updates their recency.
 
 GitPins does not:
-1. Read or modify repository files beyond creating empty commits.
+1. Read or modify repository files.
 2. Delete repositories.
 
 ## High-Level Diagram
@@ -155,9 +155,9 @@ Algorithm:
 2. Compute the minimal prefix of desired repos that must become "newer" to achieve the exact desired top-N.
 3. Touch repos in reverse so the first desired repo ends up most recent.
 4. For each repo touched:
-   1. Create an empty commit (same tree as HEAD).
-   2. Create a temporary branch (ref) pointing to that commit.
-   3. Delete the temporary branch immediately.
+   1. Resolve the current HEAD SHA of the default branch.
+   2. Create a temporary tag ref pointing to that SHA.
+   3. Delete the temporary tag ref immediately.
 
 Logs:
 1. A detailed `sync_logs` entry is written with per-repo results and durations.

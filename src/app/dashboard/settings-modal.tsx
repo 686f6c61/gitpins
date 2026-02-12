@@ -498,11 +498,11 @@ export function SettingsModal({
                 </p>
                 <div className="bg-muted rounded-lg p-3 font-mono text-xs space-y-1">
                   <div className="text-muted-foreground">{t('strategyInfo.revert.step1')}</div>
-                  <div>git commit --allow-empty -m &quot;[GitPins] Touch: 9/45&quot;</div>
+                  <div>git rev-parse HEAD</div>
                   <div className="text-muted-foreground mt-2">{t('strategyInfo.revert.step2')}</div>
-                  <div>git push origin HEAD:refs/heads/gitpins-touch-abc123</div>
+                  <div>git push origin HEAD:refs/tags/gitpins-touch-abc123</div>
                   <div className="text-muted-foreground mt-2">{t('strategyInfo.revert.step3')}</div>
-                  <div>git push origin :refs/heads/gitpins-touch-abc123</div>
+                  <div>git push origin :refs/tags/gitpins-touch-abc123</div>
                 </div>
                 <div className="mt-3 flex gap-4 text-xs">
                   <span className="text-green-600">{t('strategyInfo.revert.pro')}</span>

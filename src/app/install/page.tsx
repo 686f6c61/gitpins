@@ -54,7 +54,7 @@ export default async function InstallPage() {
                 2
               </div>
               <p className="text-sm text-muted-foreground">
-                GitPins solo necesita permisos para hacer commits vacíos (sin cambios de archivos)
+                GitPins solo necesita permisos para crear y borrar refs temporales (sin cambios de archivos)
               </p>
             </div>
             <div className="flex items-start gap-3">
