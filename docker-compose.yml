@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: gitpins-db
+    environment:
+      POSTGRES_USER: gitpins
+      POSTGRES_PASSWORD: gitpins
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - gitpins_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gitpins -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: gitpins-app
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env.docker
+    environment:
+      DATABASE_URL: postgresql://gitpins:gitpins@db:5432/gitpins_local_clone
+      DIRECT_URL: postgresql://gitpins:gitpins@db:5432/gitpins_local_clone
+      NEXT_PUBLIC_APP_URL: http://localhost:3001
+      NODE_ENV: development
+    ports:
+      - "3001:3000"
+    volumes:
+      - .:/app
+      - gitpins_node_modules:/app/node_modules
+      - gitpins_next_cache:/app/.next
+    command: >
+      sh -c "npm ci && npx prisma db push --accept-data-loss && npm run dev -- --hostname 0.0.0.0 -p 3000"
+
+volumes:
+  gitpins_pgdata:
+  gitpins_node_modules:
+  gitpins_next_cache:

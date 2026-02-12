@@ -8,10 +8,16 @@
  * Cleanup Helper
  * Removes GitPins commits from repositories automatically using GitHub API.
  *
- * IMPORTANT: Due to GitHub API limitations, this uses a "soft cleanup" approach:
- * - Creates a new branch without GitPins commits
- * - Updates main to point to the cleaned branch
- * - This is safer and works in serverless environments
+ * IMPORTANT: This is a history rewrite.
+ * The implementation reconstructs commit history while skipping commits whose message contains "[GitPins]",
+ * then force-updates the repository's default branch ref to the new head.
+ *
+ * This can have serious impact:
+ * - Collaborators may need to re-clone or hard reset.
+ * - Forks will diverge.
+ * - Branch protection rules may block the force update.
+ *
+ * Only run this behind an explicit, high-friction confirmation UI.
  */
 
 import { createAppOctokit } from '@/lib/github-app'
@@ -31,6 +37,13 @@ export async function cleanupRepoCommitsAutomatic(
   newHead?: string
   error?: string
 }> {
+  if (process.env.GITPINS_DISABLE_GITHUB_MUTATIONS === 'true') {
+    return {
+      status: 'skipped',
+      method: 'disabled',
+      error: 'GitHub mutations are disabled in this environment',
+    }
+  }
 
   try {
     // 1. Obtener default branch

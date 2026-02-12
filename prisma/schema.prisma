@@ -14,11 +14,6 @@ model User {
   email          String?
   avatarUrl      String?
   installationId Int?     @unique
-  // Campos legacy (se eliminarán después de migración)
-  accessToken    String?
-  refreshToken   String?
-  tokenExpiresAt DateTime?
-  // Fin campos legacy
   isAdmin        Boolean  @default(false)
   isBanned       Boolean  @default(false)
   bannedAt       DateTime?
@@ -32,8 +27,11 @@ model User {
   repoOrder      RepoOrder?
   syncLogs       SyncLog[]
   orderSnapshots OrderSnapshot[]
+  adminAccounts  AdminAccount[]
   adminActions   AdminLog[] @relation("AdminActions")
   targetedBy     AdminLog[] @relation("TargetedUser")
+  privacyEvents  PrivacyEvent[]
+  dataExports    DataExportJob[]
 
   @@map("users")
 }
@@ -56,14 +54,14 @@ model RepoOrder {
   syncFrequency Int      @default(168)
   autoEnabled   Boolean  @default(true)
 
-  // Estrategia de commits: "branch" o "revert"
+  // Estrategia de commits (fixed): "revert"
   commitStrategy String  @default("revert")
 
   // Programación horaria avanzada
   preferredHour  Int?    // Hora preferida del día UTC (0-23), null = cualquier hora
 
   // Secret para el endpoint de sync (UUID)
-  syncSecret String?
+  syncSecret String? @unique
 
   // Lock para evitar syncs concurrentes
   lastSyncAt    DateTime?  // Última vez que se inició un sync
@@ -71,6 +69,7 @@ model RepoOrder {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  @@index([lastSyncAt])
   @@map("repo_orders")
 }
 
@@ -137,4 +136,74 @@ model AdminLog {
   @@index([adminId, createdAt])
   @@index([targetUserId, createdAt])
   @@map("admin_logs")
+}
+
+model AdminAccount {
+  id              String   @id @default(cuid())
+  githubId        Int      @unique
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  grantedByUserId String?
+  reason          String?
+  revokedAt       DateTime?
+  createdAt       DateTime @default(now())
+
+  @@index([revokedAt])
+  @@map("admin_accounts")
+}
+
+model PrivacyEvent {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  subjectHash String
+  eventType   String
+  details     String?
+  ipHash      String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([subjectHash, createdAt])
+  @@map("privacy_events")
+}
+
+model DataExportJob {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status       String   @default("ready") // ready | error
+  format       String   @default("json")
+  filename     String
+  payloadGzip  Bytes?
+  sha256       String?
+  sizeBytes    Int?
+  requestedAt  DateTime @default(now())
+  readyAt      DateTime?
+  expiresAt    DateTime
+  downloadedAt DateTime?
+  error        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId, requestedAt])
+  @@index([expiresAt])
+  @@map("data_export_jobs")
+}
+
+model AccountDeletionAudit {
+  id             String   @id @default(cuid())
+  subjectHash    String
+  usernameSnapshot String
+  githubIdSnapshot Int
+  status         String   @default("requested") // requested | executed | failed
+  requestedAt    DateTime @default(now())
+  executedAt     DateTime?
+  ipHash         String?
+  userAgent      String?
+  reason         String?
+  error          String?
+
+  @@index([subjectHash, requestedAt])
+  @@map("account_deletion_audits")
 }

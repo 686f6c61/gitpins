@@ -11,6 +11,7 @@
 
 import { getSession, verifyCSRFToken } from './session'
 import { checkRateLimit, rateLimits } from './rate-limit'
+import { prisma } from './prisma'
 
 interface Session {
   userId: string
@@ -20,23 +21,40 @@ interface Session {
 
 /**
  * Verifies if the current session belongs to an admin user.
- * Compares session githubId with ADMIN_GITHUB_ID from environment.
+ * Uses DB allowlist and temporary fallback to ADMIN_GITHUB_ID during migration.
  * @returns true if user is admin, false otherwise
  */
-export async function verifyAdmin(): Promise<boolean> {
-  const session = await getSession() as Session | null
+function parseAdminGithubId(): number | null {
+  const envValue = process.env.ADMIN_GITHUB_ID
+  if (!envValue) return null
+  const parsed = parseInt(envValue, 10)
+  return Number.isNaN(parsed) ? null : parsed
+}
+
+export async function verifyAdmin(sessionOverride?: Session | null): Promise<boolean> {
+  const session = (sessionOverride ?? await getSession()) as Session | null
 
   if (!session) {
     return false
   }
 
-  const adminGithubId = process.env.ADMIN_GITHUB_ID
+  try {
+    const adminAccount = await prisma.adminAccount.findUnique({
+      where: { githubId: session.githubId },
+      select: { revokedAt: true },
+    })
 
-  if (!adminGithubId) {
-    return false
+    if (adminAccount && adminAccount.revokedAt === null) {
+      return true
+    }
+  } catch (error) {
+    // Allow temporary fallback when migrations are not yet applied
+    console.error('Admin allowlist lookup warning:', error)
   }
 
-  return session.githubId === parseInt(adminGithubId, 10)
+  // Temporary fallback during migration to DB allowlist
+  const envAdminGithubId = parseAdminGithubId()
+  return envAdminGithubId !== null && session.githubId === envAdminGithubId
 }
 
 /**
@@ -50,13 +68,8 @@ export async function getAdminSession(): Promise<Session | null> {
     return null
   }
 
-  const adminGithubId = process.env.ADMIN_GITHUB_ID
-
-  if (!adminGithubId) {
-    return null
-  }
-
-  if (session.githubId !== parseInt(adminGithubId, 10)) {
+  const isAdmin = await verifyAdmin(session)
+  if (!isAdmin) {
     return null
   }
 

@@ -11,8 +11,35 @@
 
 'use client'
 
+import { useSyncExternalStore } from 'react'
 import { useTheme } from './theme-provider'
 import { SunIcon, MoonIcon, MonitorIcon } from './icons'
+
+let hasHydrated = false
+const hydrationListeners = new Set<() => void>()
+
+function getHydrationSnapshot() {
+  return hasHydrated
+}
+
+function subscribeHydration(callback: () => void) {
+  hydrationListeners.add(callback)
+
+  if (!hasHydrated) {
+    hasHydrated = true
+    const schedule = typeof queueMicrotask === 'function'
+      ? queueMicrotask
+      : (fn: () => void) => Promise.resolve().then(fn)
+
+    schedule(() => {
+      hydrationListeners.forEach((listener) => listener())
+    })
+  }
+
+  return () => {
+    hydrationListeners.delete(callback)
+  }
+}
 
 /**
  * Theme toggle button group.
@@ -20,13 +47,17 @@ import { SunIcon, MoonIcon, MonitorIcon } from './icons'
  */
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
+  const hydrated = useSyncExternalStore(subscribeHydration, getHydrationSnapshot, () => false)
+
+  // Keep first SSR/client render deterministic to avoid hydration mismatch.
+  const selectedTheme = hydrated ? theme : 'system'
 
   return (
     <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
       <button
         onClick={() => setTheme('light')}
         className={`p-1.5 rounded-md transition-colors ${
-          theme === 'light' ? 'bg-background shadow-sm' : 'hover:bg-background/50'
+          selectedTheme === 'light' ? 'bg-background shadow-sm' : 'hover:bg-background/50'
         }`}
         title="Modo claro"
       >
@@ -35,7 +66,7 @@ export function ThemeToggle() {
       <button
         onClick={() => setTheme('system')}
         className={`p-1.5 rounded-md transition-colors ${
-          theme === 'system' ? 'bg-background shadow-sm' : 'hover:bg-background/50'
+          selectedTheme === 'system' ? 'bg-background shadow-sm' : 'hover:bg-background/50'
         }`}
         title="Sistema"
       >
@@ -44,7 +75,7 @@ export function ThemeToggle() {
       <button
         onClick={() => setTheme('dark')}
         className={`p-1.5 rounded-md transition-colors ${
-          theme === 'dark' ? 'bg-background shadow-sm' : 'hover:bg-background/50'
+          selectedTheme === 'dark' ? 'bg-background shadow-sm' : 'hover:bg-background/50'
         }`}
         title="Modo oscuro"
       >

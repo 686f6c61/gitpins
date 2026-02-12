@@ -13,9 +13,8 @@
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
-import { getUserInstallation } from '@/lib/github'
+import { ensureValidToken, getUserInstallation } from '@/lib/github'
 import { DashboardClient } from './dashboard-client'
-import { decrypt } from '@/lib/crypto'
 
 /**
  * Dashboard page server component.
@@ -25,7 +24,7 @@ export default async function DashboardPage() {
   const session = await getSession()
 
   if (!session) {
-    redirect('/')
+    redirect('/api/auth/login?returnTo=/dashboard')
   }
 
   // Verificar si el usuario existe en DB
@@ -37,13 +36,13 @@ export default async function DashboardPage() {
   // Si el usuario no existe en DB, redirigir a login
   // (user should be created during OAuth callback)
   if (!user) {
-    redirect('/api/auth/login')
+    redirect('/api/auth/login?returnTo=/dashboard')
   }
 
   // Si no tiene installationId en DB, intentar obtenerlo de GitHub
   if (!user.installationId && user.token?.accessToken) {
     try {
-      const accessToken = decrypt(user.token.accessToken)
+      const { accessToken } = await ensureValidToken(session.userId)
       const installationId = await getUserInstallation(accessToken)
 
       if (installationId) {
@@ -59,7 +58,7 @@ export default async function DashboardPage() {
       }
     } catch {
       // Token error, redirect to login
-      redirect('/api/auth/login')
+      redirect('/api/auth/login?returnTo=/dashboard')
     }
   }
 

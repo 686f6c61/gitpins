@@ -9,7 +9,7 @@
  * Detailed explanation of how GitPins works, including:
  * - The problem it solves
  * - Step-by-step process
- * - Commit strategies (branch vs revert)
+ * - Commit strategy (revert)
  * - Security and permissions info
  * - Technical FAQ
  */
@@ -147,7 +147,7 @@ export default function HowItWorksPage() {
             {t('howItWorksPage.strategies.intro')}
           </p>
 
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="max-w-2xl">
             <Card>
               <div className="flex items-center gap-2 mb-3">
                 <RefreshIcon className="w-5 h-5" />
@@ -161,23 +161,6 @@ export default function HowItWorksPage() {
                 <div>git commit --allow-empty -m &quot;gitpins: bump&quot;</div>
                 <div>git revert HEAD --no-edit</div>
                 <div>git push</div>
-              </div>
-            </Card>
-
-            <Card>
-              <div className="flex items-center gap-2 mb-3">
-                <GitHubIcon className="w-5 h-5" />
-                <h3 className="font-medium">{t('howItWorksPage.strategies.branch.title')}</h3>
-              </div>
-              <p className="text-sm text-muted-foreground mb-4">
-                {t('howItWorksPage.strategies.branch.desc')}
-              </p>
-              <div className="text-xs bg-muted p-3 rounded-lg font-mono">
-                <div className="text-muted-foreground">{t('howItWorksPage.strategies.branch.comment')}</div>
-                <div>git checkout -b gitpins-temp</div>
-                <div>git commit --allow-empty -m &quot;gitpins: bump&quot;</div>
-                <div>git checkout main && git merge gitpins-temp</div>
-                <div>git branch -d gitpins-temp && git push</div>
               </div>
             </Card>
           </div>

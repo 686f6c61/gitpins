@@ -1,0 +1,11 @@
+.git
+.gitignore
+node_modules
+.next
+coverage
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env
+.env.*
+!.env.docker.example

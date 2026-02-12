@@ -20,18 +20,43 @@ const globalForPrisma = globalThis as unknown as {
 }
 
 /**
- * Create PostgreSQL adapter for Prisma Client.
- * This is required in Prisma 7.x for database connections.
+ * Creates a new Prisma client.
+ *
+ * Note: in Next.js dev + HMR, we keep a singleton in globalThis to avoid
+ * exhausting connections. When the Prisma client is regenerated (schema change),
+ * an old singleton can become "stale" and miss new model delegates. We detect
+ * that and recreate the client.
  */
-const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL,
-})
+function createPrismaClient(): PrismaClient {
+  const adapter = new PrismaPg({
+    connectionString: process.env.DATABASE_URL,
+  })
+  return new PrismaClient({ adapter })
+}
+
+function hasModelDelegate(client: unknown, model: string): boolean {
+  const delegate = (client as Record<string, unknown> | null)?.[model] as { findMany?: unknown } | undefined
+  return !!delegate && typeof delegate.findMany === 'function'
+}
 
 /**
  * Prisma client instance.
  * Uses singleton pattern: reuses existing instance or creates new one.
  */
-export const prisma = globalForPrisma.prisma ?? new PrismaClient({ adapter })
+let prisma = globalForPrisma.prisma ?? createPrismaClient()
+
+// If a previously cached client is stale (e.g. after prisma generate), recreate it.
+if (
+  process.env.NODE_ENV !== 'production' &&
+  (!hasModelDelegate(prisma, 'privacyEvent') ||
+    !hasModelDelegate(prisma, 'dataExportJob') ||
+    !hasModelDelegate(prisma, 'accountDeletionAudit'))
+) {
+  prisma.$disconnect().catch(() => {})
+  prisma = createPrismaClient()
+}
 
 // In development, store the client globally to prevent connection exhaustion
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+
+export { prisma }

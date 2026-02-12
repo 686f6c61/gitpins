@@ -10,34 +10,221 @@
  * - Number of repos to pin (topN)
  * - Include/exclude private repos
  * - Sync frequency
- * - Commit strategy (revert vs branch)
+ * - Fixed commit strategy (revert)
  * - Auto-sync toggle
  * - Config repo visibility
  */
 
 'use client'
 
-import { useState } from 'react'
-import { XIcon, InfoIcon } from '@/components/icons'
+import { useMemo, useState, useEffect } from 'react'
+import { XIcon } from '@/components/icons'
 import { Button } from '@/components/ui'
 import { useTranslation } from '@/i18n'
 import type { RepoOrderSettings } from '@/types'
 
 /** Props for the SettingsModal component */
 interface SettingsModalProps {
+  username: string
   settings: RepoOrderSettings
   totalRepos: number
   onClose: () => void
   onChange: (settings: Partial<RepoOrderSettings>) => void
+  onStartOnboarding: () => void
+  autoOpenDelete?: boolean
 }
 
 /**
  * Settings modal component.
  * Provides a full settings interface for customizing sync behavior.
  */
-export function SettingsModal({ settings, totalRepos, onClose, onChange }: SettingsModalProps) {
+export function SettingsModal({
+  username,
+  settings,
+  totalRepos,
+  onClose,
+  onChange,
+  onStartOnboarding,
+  autoOpenDelete = false,
+}: SettingsModalProps) {
   const { t } = useTranslation()
   const [showStrategyInfo, setShowStrategyInfo] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [privacyMessage, setPrivacyMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null)
+  const [csrfToken, setCsrfToken] = useState<string | null>(null)
+  const [sudoState, setSudoState] = useState<{ sudo: boolean; untilMs: number | null } | null>(null)
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(() => autoOpenDelete)
+  const [deleteUsernameConfirm, setDeleteUsernameConfirm] = useState('')
+  const [deletePhraseConfirm, setDeletePhraseConfirm] = useState('')
+  const [deleting, setDeleting] = useState(false)
+
+  const deleteReturnTo = useMemo(() => '/dashboard?openSettings=1&openDelete=1', [])
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const response = await fetch('/api/privacy/sudo', {
+          method: 'GET',
+          cache: 'no-store',
+        })
+        if (!response.ok) return
+        const data = await response.json()
+        const untilMs = typeof data.untilMs === 'number' ? data.untilMs : null
+        setSudoState({ sudo: !!data.sudo, untilMs })
+      } catch {
+        // non-fatal
+      }
+    })()
+  }, [])
+
+  async function ensureCsrfToken(): Promise<string | null> {
+    if (csrfToken) return csrfToken
+
+    try {
+      const response = await fetch('/api/auth/csrf', {
+        method: 'GET',
+        cache: 'no-store',
+      })
+
+      if (!response.ok) return null
+      const data = await response.json()
+      if (typeof data.csrfToken !== 'string' || !data.csrfToken) return null
+
+      setCsrfToken(data.csrfToken)
+      return data.csrfToken
+    } catch {
+      return null
+    }
+  }
+
+  function usernameMatches(): boolean {
+    const trimmed = deleteUsernameConfirm.trim()
+    const normalized = trimmed.startsWith('@') ? trimmed.slice(1) : trimmed
+    return normalized.toLowerCase() === username.toLowerCase()
+  }
+
+  function phraseMatches(): boolean {
+    return deletePhraseConfirm.trim().toUpperCase() === 'DELETE MY ACCOUNT'
+  }
+
+  async function handleExport() {
+    setPrivacyMessage(null)
+    setExporting(true)
+    try {
+      const token = await ensureCsrfToken()
+      if (!token) {
+        setPrivacyMessage({ type: 'error', text: t('settings.privacy.errors.csrf') })
+        return
+      }
+
+      const response = await fetch('/api/privacy/export', {
+        method: 'POST',
+        headers: {
+          'X-CSRF-Token': token,
+        },
+      })
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null) as { error?: string } | null
+        setPrivacyMessage({ type: 'error', text: data?.error || t('settings.privacy.errors.exportFailed') })
+        return
+      }
+
+      const data = await response.json().catch(() => null) as { jobId?: string; filename?: string } | null
+      if (!data?.jobId) {
+        setPrivacyMessage({ type: 'error', text: t('settings.privacy.errors.exportFailed') })
+        return
+      }
+
+      const downloadResponse = await fetch(`/api/privacy/export/${encodeURIComponent(data.jobId)}/download`, {
+        method: 'GET',
+        cache: 'no-store',
+      })
+
+      if (!downloadResponse.ok) {
+        const err = await downloadResponse.json().catch(() => null) as { error?: string } | null
+        setPrivacyMessage({ type: 'error', text: err?.error || t('settings.privacy.errors.exportFailed') })
+        return
+      }
+
+      const blob = await downloadResponse.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+
+      const disposition = downloadResponse.headers.get('content-disposition') || ''
+      const match = disposition.match(/filename=\"([^\"]+)\"/)
+      const fallbackDate = new Date().toISOString().slice(0, 10)
+      a.download = match?.[1] || data.filename || `gitpins-data-${username}-${fallbackDate}.json`
+      a.href = url
+      a.click()
+
+      URL.revokeObjectURL(url)
+      setPrivacyMessage({ type: 'success', text: t('settings.privacy.exportDone') })
+    } catch (error) {
+      console.error('Export error:', error)
+      setPrivacyMessage({ type: 'error', text: t('settings.privacy.errors.exportFailed') })
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  async function refreshSudoState() {
+    try {
+      const response = await fetch('/api/privacy/sudo', {
+        method: 'GET',
+        cache: 'no-store',
+      })
+      if (!response.ok) return
+      const data = await response.json()
+      const untilMs = typeof data.untilMs === 'number' ? data.untilMs : null
+      setSudoState({ sudo: !!data.sudo, untilMs })
+    } catch {
+      // non-fatal
+    }
+  }
+
+  async function handleDeleteAccount() {
+    setPrivacyMessage(null)
+    setDeleting(true)
+    try {
+      const token = await ensureCsrfToken()
+      if (!token) {
+        setPrivacyMessage({ type: 'error', text: t('settings.privacy.errors.csrf') })
+        return
+      }
+
+      const response = await fetch('/api/privacy/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': token,
+        },
+        body: JSON.stringify({
+          usernameConfirm: deleteUsernameConfirm,
+          phraseConfirm: deletePhraseConfirm,
+        }),
+      })
+
+      const data = await response.json().catch(() => null) as { error?: string; reason?: string } | null
+
+      if (!response.ok) {
+        if (response.status === 403 && data?.reason === 'reauth_required') {
+          await refreshSudoState()
+          setPrivacyMessage({ type: 'error', text: t('settings.privacy.errors.reauth') })
+          return
+        }
+        setPrivacyMessage({ type: 'error', text: data?.error || t('settings.privacy.errors.deleteFailed') })
+        return
+      }
+
+      window.location.href = '/?deleted=1'
+    } catch (error) {
+      console.error('Delete error:', error)
+      setPrivacyMessage({ type: 'error', text: t('settings.privacy.errors.deleteFailed') })
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -56,7 +243,7 @@ export function SettingsModal({ settings, totalRepos, onClose, onChange }: Setti
         {/* Content */}
         <div className="p-4 space-y-6">
           {/* Cuantos repos ordenar */}
-          <div>
+          <div data-onboarding="settings-topn">
             <label className="block text-sm font-medium mb-2">
               {t('settings.reposToKeep.label')}
             </label>
@@ -87,7 +274,7 @@ export function SettingsModal({ settings, totalRepos, onClose, onChange }: Setti
           </div>
 
           {/* Incluir privados */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between" data-onboarding="settings-private">
             <div>
               <div className="font-medium text-sm">{t('settings.includePrivate.label')}</div>
               <div className="text-xs text-muted-foreground">
@@ -111,7 +298,7 @@ export function SettingsModal({ settings, totalRepos, onClose, onChange }: Setti
           <hr className="border-border" />
 
           {/* Sync frequency */}
-          <div>
+          <div data-onboarding="settings-frequency">
             <label className="block text-sm font-medium mb-2">
               {t('settings.syncFrequency.label')}
             </label>
@@ -138,7 +325,7 @@ export function SettingsModal({ settings, totalRepos, onClose, onChange }: Setti
           </div>
 
           {/* Preferred hour */}
-          <div className="p-4 bg-muted/30 rounded-lg border border-border">
+          <div className="p-4 bg-muted/30 rounded-lg border border-border" data-onboarding="settings-schedule">
             <div className="text-sm font-medium mb-2">{t('settings.schedule.title')}</div>
             <label className="block text-xs text-muted-foreground mb-1">
               {t('settings.schedule.preferredHour')}
@@ -162,58 +349,28 @@ export function SettingsModal({ settings, totalRepos, onClose, onChange }: Setti
             </p>
           </div>
 
-          {/* Commit strategy */}
+          {/* Commit strategy (fixed) */}
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <label className="block text-sm font-medium">
-                {t('settings.commitStrategy.label')}
-              </label>
+            <div className="block text-sm font-medium mb-2">
+              {t('settings.commitStrategy.label')}
+            </div>
+            <div className="p-3 rounded-lg border border-border bg-muted/30">
+              <div className="font-medium text-sm">{t('settings.commitStrategy.revert.title')}</div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {t('settings.commitStrategy.revert.desc')}
+              </div>
               <button
                 type="button"
                 onClick={() => setShowStrategyInfo(true)}
-                className="text-muted-foreground hover:text-foreground"
+                className="mt-2 text-xs underline text-muted-foreground hover:text-foreground"
               >
-                <InfoIcon className="w-4 h-4" />
+                Learn more
               </button>
-            </div>
-            <div className="space-y-2">
-              <label className="flex items-start gap-3 p-3 rounded-lg border border-border cursor-pointer hover:bg-muted/50">
-                <input
-                  type="radio"
-                  name="commitStrategy"
-                  value="revert"
-                  checked={settings.commitStrategy === 'revert'}
-                  onChange={() => onChange({ commitStrategy: 'revert' })}
-                  className="mt-1"
-                />
-                <div>
-                  <div className="font-medium text-sm">{t('settings.commitStrategy.revert.title')}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {t('settings.commitStrategy.revert.desc')}
-                  </div>
-                </div>
-              </label>
-              <label className="flex items-start gap-3 p-3 rounded-lg border border-border cursor-pointer hover:bg-muted/50">
-                <input
-                  type="radio"
-                  name="commitStrategy"
-                  value="branch"
-                  checked={settings.commitStrategy === 'branch'}
-                  onChange={() => onChange({ commitStrategy: 'branch' })}
-                  className="mt-1"
-                />
-                <div>
-                  <div className="font-medium text-sm">{t('settings.commitStrategy.branch.title')}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {t('settings.commitStrategy.branch.desc')}
-                  </div>
-                </div>
-              </label>
             </div>
           </div>
 
           {/* Auto enabled */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between" data-onboarding="settings-auto">
             <div>
               <div className="font-medium text-sm">{t('settings.autoSync.label')}</div>
               <div className="text-xs text-muted-foreground">
@@ -232,6 +389,76 @@ export function SettingsModal({ settings, totalRepos, onClose, onChange }: Setti
                 }`}
               />
             </button>
+          </div>
+
+          <div className="p-4 bg-muted/30 rounded-lg border border-border">
+            <div className="text-sm font-medium mb-1">{t('settings.onboarding.title')}</div>
+            <p className="text-xs text-muted-foreground">
+              {t('settings.onboarding.desc')}
+            </p>
+            <Button
+              type="button"
+              variant="secondary"
+              className="mt-3 w-full"
+              onClick={onStartOnboarding}
+            >
+              {t('settings.onboarding.start')}
+            </Button>
+          </div>
+
+          <hr className="border-border" />
+
+          {/* Privacy & Data */}
+          <div className="p-4 rounded-lg border border-border bg-muted/20">
+            <div className="text-sm font-medium">{t('settings.privacy.title')}</div>
+            <p className="text-xs text-muted-foreground mt-1">{t('settings.privacy.desc')}</p>
+
+            {privacyMessage && (
+              <div className={`mt-3 rounded-lg border px-3 py-2 text-xs ${
+                privacyMessage.type === 'success'
+                  ? 'bg-muted/30 border-border text-foreground'
+                  : privacyMessage.type === 'info'
+                  ? 'bg-muted/30 border-border text-muted-foreground'
+                  : 'bg-muted/30 border-border text-foreground'
+              }`}>
+                {privacyMessage.text}
+              </div>
+            )}
+
+            <div className="mt-3 flex gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full"
+                onClick={handleExport}
+                disabled={exporting}
+              >
+                {exporting ? t('settings.privacy.exporting') : t('settings.privacy.export')}
+              </Button>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {t('settings.privacy.exportHint')}
+            </p>
+
+            <div className="mt-4 pt-4 border-t border-border">
+              <div className="text-sm font-medium">{t('settings.privacy.deleteTitle')}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {t('settings.privacy.deleteDesc')}
+              </p>
+              <Button
+                type="button"
+                variant="danger"
+                className="mt-3 w-full"
+                onClick={() => {
+                  setDeleteUsernameConfirm('')
+                  setDeletePhraseConfirm('')
+                  setShowDeleteModal(true)
+                  void refreshSudoState()
+                }}
+              >
+                {t('settings.privacy.deleteButton')}
+              </Button>
+            </div>
           </div>
 
         </div>
@@ -283,27 +510,6 @@ export function SettingsModal({ settings, totalRepos, onClose, onChange }: Setti
                 </div>
               </div>
 
-              {/* Branch Strategy */}
-              <div className="border border-border rounded-lg p-4">
-                <h4 className="font-semibold mb-2">{t('strategyInfo.branch.title')}</h4>
-                <p className="text-sm text-muted-foreground mb-3">
-                  {t('strategyInfo.branch.desc')}
-                </p>
-                <div className="bg-muted rounded-lg p-3 font-mono text-xs space-y-1">
-                  <div className="text-muted-foreground">{t('strategyInfo.branch.step1')}</div>
-                  <div>git checkout -b gitpins-temp</div>
-                  <div className="text-muted-foreground mt-2">{t('strategyInfo.branch.step2')}</div>
-                  <div>git commit --allow-empty -m &quot;gitpins: sync&quot;</div>
-                  <div className="text-muted-foreground mt-2">{t('strategyInfo.branch.step3')}</div>
-                  <div>git checkout main && git merge gitpins-temp</div>
-                  <div>git branch -d gitpins-temp && git push</div>
-                </div>
-                <div className="mt-3 flex gap-4 text-xs">
-                  <span className="text-green-600">{t('strategyInfo.branch.pro')}</span>
-                  <span className="text-yellow-600">{t('strategyInfo.branch.con')}</span>
-                </div>
-              </div>
-
               <div className="bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground">
                 <strong>Nota:</strong> {t('strategyInfo.note')}
               </div>
@@ -312,6 +518,104 @@ export function SettingsModal({ settings, totalRepos, onClose, onChange }: Setti
             <div className="p-4 border-t border-border">
               <Button onClick={() => setShowStrategyInfo(false)} className="w-full">
                 {t('settings.understood')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4">
+          <div className="bg-background rounded-2xl w-full max-w-md border border-border max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-background">
+              <h3 className="text-lg font-semibold">{t('settings.privacy.deleteModal.title')}</h3>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="p-1 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground"
+              >
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              <div className="text-sm text-muted-foreground">
+                {t('settings.privacy.deleteModal.intro')}
+              </div>
+
+              <div className="p-3 rounded-lg border border-border bg-muted/20 text-xs text-muted-foreground space-y-1">
+                <div>{t('settings.privacy.deleteModal.item1')}</div>
+                <div>{t('settings.privacy.deleteModal.item2')}</div>
+                <div>{t('settings.privacy.deleteModal.item3')}</div>
+              </div>
+
+              {sudoState && !sudoState.sudo && (
+                <div className="p-3 rounded-lg border border-border bg-muted/20">
+                  <div className="text-sm font-medium">{t('settings.privacy.deleteModal.reauthTitle')}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t('settings.privacy.deleteModal.reauthDesc')}
+                  </p>
+                  <a
+                    href={`/api/auth/login?sudo=1&returnTo=${encodeURIComponent(deleteReturnTo)}`}
+                    className="block mt-3"
+                  >
+                    <Button type="button" className="w-full">
+                      {t('settings.privacy.deleteModal.reauthButton')}
+                    </Button>
+                  </a>
+                </div>
+              )}
+
+              {sudoState && sudoState.sudo && (
+                <>
+                  <div className="space-y-2">
+                    <label className="block text-xs font-medium">
+                      {t('settings.privacy.deleteModal.confirmUsernameLabel', { username })}
+                    </label>
+                    <input
+                      value={deleteUsernameConfirm}
+                      onChange={(e) => setDeleteUsernameConfirm(e.target.value)}
+                      placeholder={`@${username}`}
+                      className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-foreground"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-xs font-medium">
+                      {t('settings.privacy.deleteModal.confirmPhraseLabel')}
+                    </label>
+                    <input
+                      value={deletePhraseConfirm}
+                      onChange={(e) => setDeletePhraseConfirm(e.target.value)}
+                      placeholder="DELETE MY ACCOUNT"
+                      className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-foreground"
+                    />
+                    <div className="text-xs text-muted-foreground">
+                      {t('settings.privacy.deleteModal.confirmPhraseHint')}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {!sudoState && (
+                <div className="text-xs text-muted-foreground">
+                  {t('settings.privacy.deleteModal.loadingSudo')}
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-border sticky bottom-0 bg-background flex gap-2">
+              <Button type="button" variant="secondary" className="w-full" onClick={() => setShowDeleteModal(false)}>
+                {t('settings.privacy.deleteModal.cancel')}
+              </Button>
+              <Button
+                type="button"
+                variant="danger"
+                className="w-full"
+                onClick={handleDeleteAccount}
+                disabled={deleting || !sudoState?.sudo || !usernameMatches() || !phraseMatches()}
+              >
+                {deleting ? t('settings.privacy.deleting') : t('settings.privacy.deleteConfirm')}
               </Button>
             </div>
           </div>

@@ -21,7 +21,7 @@ export async function GET() {
       return unauthorizedResponse()
     }
 
-    const isAdmin = await verifyAdmin()
+    const isAdmin = await verifyAdmin(session)
 
     if (!isAdmin) {
       return forbiddenResponse()
@@ -45,6 +45,7 @@ export async function GET() {
     const bannedUsers = await prisma.user.count({
       where: { isBanned: true }
     })
+    const configRepos = await prisma.repoOrder.count()
     const totalSyncs = await prisma.syncLog.count()
 
     // Process users per day into daily counts
@@ -108,6 +109,7 @@ export async function GET() {
         users: totalUsers,
         activeUsers,
         bannedUsers,
+        configRepos,
         syncs: totalSyncs,
         syncsToday,
         syncsThisWeek,

@@ -12,16 +12,18 @@
 
 import { cookies } from 'next/headers'
 import { SignJWT, jwtVerify } from 'jose'
+import { clearSudoCookies } from './sudo'
 
 // Cookie names for different purposes
 const SESSION_COOKIE = 'gitpins_session'    // JWT session token
 const STATE_COOKIE = 'gitpins_oauth_state'  // OAuth state for CSRF protection
 const CSRF_COOKIE = 'gitpins_csrf'          // CSRF token for form submissions
+const RETURN_TO_COOKIE = 'gitpins_oauth_return_to'
 
 /**
  * Session data stored in the JWT token.
  * Note: accessToken is NOT stored here for security - it's encrypted in the database.
- * Note: isAdmin is NOT stored - admin verification is done server-side against ADMIN_GITHUB_ID.
+ * Note: isAdmin is NOT stored - admin verification is done server-side.
  */
 export interface Session {
   userId: string
@@ -111,10 +113,24 @@ export async function destroySession(): Promise<void> {
   const cookieStore = await cookies()
   cookieStore.delete(SESSION_COOKIE)
   cookieStore.delete(CSRF_COOKIE)
+  cookieStore.delete(STATE_COOKIE)
+  cookieStore.delete(RETURN_TO_COOKIE)
+  await clearSudoCookies()
+}
+
+function sanitizeReturnTo(returnTo: string | null | undefined): string | null {
+  if (!returnTo || typeof returnTo !== 'string') {
+    return null
+  }
+  // Only allow internal paths to prevent open redirects
+  if (!returnTo.startsWith('/') || returnTo.startsWith('//')) {
+    return null
+  }
+  return returnTo
 }
 
 // Generate OAuth state
-export async function generateOAuthState(): Promise<string> {
+export async function generateOAuthState(returnTo?: string): Promise<string> {
   const state = crypto.randomUUID()
   const cookieStore = await cookies()
 
@@ -125,6 +141,19 @@ export async function generateOAuthState(): Promise<string> {
     maxAge: 60 * 10, // 10 minutes
     path: '/',
   })
+
+  const safeReturnTo = sanitizeReturnTo(returnTo)
+  if (safeReturnTo) {
+    cookieStore.set(RETURN_TO_COOKIE, safeReturnTo, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 10, // 10 minutes
+      path: '/',
+    })
+  } else {
+    cookieStore.delete(RETURN_TO_COOKIE)
+  }
 
   return state
 }
@@ -140,6 +169,15 @@ export async function verifyOAuthState(state: string): Promise<boolean> {
 
   cookieStore.delete(STATE_COOKIE)
   return true
+}
+
+export async function consumeOAuthReturnTo(defaultPath: string = '/dashboard'): Promise<string> {
+  const cookieStore = await cookies()
+  const returnToCookie = cookieStore.get(RETURN_TO_COOKIE)
+  cookieStore.delete(RETURN_TO_COOKIE)
+
+  const safeReturnTo = sanitizeReturnTo(returnToCookie?.value || null)
+  return safeReturnTo || defaultPath
 }
 
 // CSRF Protection

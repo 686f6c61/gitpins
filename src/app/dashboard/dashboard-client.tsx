@@ -14,7 +14,7 @@
 
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import {
   DndContext,
@@ -35,11 +35,12 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { Button, Card } from '@/components/ui'
-import { LogOutIcon, RefreshIcon, SettingsIcon, LoaderIcon, CheckIcon, PinIcon, HelpCircleIcon } from '@/components/icons'
+import { LogOutIcon, RefreshIcon, SettingsIcon, LoaderIcon, PinIcon, HelpCircleIcon } from '@/components/icons'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { LanguageToggle } from '@/components/language-toggle'
 import { SortableRepoItem } from './sortable-repo-item'
 import { SettingsModal } from './settings-modal'
+import { OnboardingWizard } from './onboarding-wizard'
 import { RepoFilters, applyFilters, type FilterState } from './repo-filters'
 import { Footer } from '@/components/footer'
 import { ActivityHistory } from '@/components/activity-history'
@@ -88,8 +89,28 @@ export function DashboardClient({ user }: DashboardClientProps) {
   const [syncing, setSyncing] = useState(false)
   const [syncMessage, setSyncMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null)
   const [authError, setAuthError] = useState(false)
+  const [csrfToken, setCsrfToken] = useState<string | null>(null)
   const [filters, setFilters] = useState<FilterState>({ search: '', language: '', owner: '', minStars: 0 })
   const [visibilityFilter, setVisibilityFilter] = useState<'all' | 'public' | 'private'>('all')
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [onboardingChecked, setOnboardingChecked] = useState(false)
+  const [autoOpenDelete, setAutoOpenDelete] = useState(false)
+
+  const onboardingStorageKey = useMemo(
+    () => `gitpins:onboarding:v1:dashboard:${user.username}`,
+    [user.username]
+  )
+  const onboardingLocaleReady = useMemo(() => {
+    if (typeof window === 'undefined') return false
+
+    const savedLocale = localStorage.getItem('locale')
+    const expectedLocale =
+      savedLocale === 'es' || savedLocale === 'en'
+        ? savedLocale
+        : (navigator.language.toLowerCase().startsWith('en') ? 'en' : 'es')
+
+    return locale === expectedLocale
+  }, [locale])
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -100,7 +121,80 @@ export function DashboardClient({ user }: DashboardClientProps) {
 
   useEffect(() => {
     fetchRepos()
+    void (async () => {
+      try {
+        const response = await fetch('/api/auth/csrf', {
+          method: 'GET',
+          cache: 'no-store',
+        })
+        if (!response.ok) return
+        const data = await response.json()
+        if (typeof data.csrfToken === 'string' && data.csrfToken) {
+          setCsrfToken(data.csrfToken)
+        }
+      } catch {
+        // No-op: token can be requested again before sensitive actions.
+      }
+    })()
   }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const url = new URL(window.location.href)
+    const openSettings = url.searchParams.get('openSettings') === '1'
+    const openDelete = url.searchParams.get('openDelete') === '1'
+
+    if (openSettings || openDelete) {
+      setShowSettings(true)
+    }
+
+    if (openDelete) {
+      setAutoOpenDelete(true)
+    }
+
+    if (openSettings || openDelete) {
+      url.searchParams.delete('openSettings')
+      url.searchParams.delete('openDelete')
+      window.history.replaceState({}, '', url.pathname + url.search)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (loading || authError || onboardingChecked || !onboardingLocaleReady) return
+    if (typeof window === 'undefined') return
+
+    const completed = localStorage.getItem(onboardingStorageKey) === 'done'
+    if (!completed) {
+      setShowOnboarding(true)
+    }
+    setOnboardingChecked(true)
+  }, [loading, authError, onboardingChecked, onboardingStorageKey, onboardingLocaleReady])
+
+  async function ensureCsrfToken(): Promise<string | null> {
+    if (csrfToken) return csrfToken
+
+    try {
+      const response = await fetch('/api/auth/csrf', {
+        method: 'GET',
+        cache: 'no-store',
+      })
+
+      if (!response.ok) {
+        return null
+      }
+
+      const data = await response.json()
+      if (typeof data.csrfToken !== 'string' || !data.csrfToken) {
+        return null
+      }
+
+      setCsrfToken(data.csrfToken)
+      return data.csrfToken
+    } catch {
+      return null
+    }
+  }
 
   // Repos filtrados por privacidad
   const filteredRepos = useMemo(() => {
@@ -123,19 +217,16 @@ export function DashboardClient({ user }: DashboardClientProps) {
     return applyFilters(unpinned, filters)
   }, [filteredRepos, pinnedRepos, filters])
 
-  // Aplicar filtro de visibilidad (todos/publicos/privados) para visualizacion
-  const applyVisibilityFilter = (repoList: Repo[]) => {
-    if (visibilityFilter === 'all') return repoList
-    if (visibilityFilter === 'public') return repoList.filter(r => !r.isPrivate)
-    return repoList.filter(r => r.isPrivate)
-  }
-
   const displayedTopRepos = useMemo(() => {
-    return applyVisibilityFilter(topRepos)
+    if (visibilityFilter === 'all') return topRepos
+    if (visibilityFilter === 'public') return topRepos.filter(r => !r.isPrivate)
+    return topRepos.filter(r => r.isPrivate)
   }, [topRepos, visibilityFilter])
 
   const displayedPoolRepos = useMemo(() => {
-    return applyVisibilityFilter(poolRepos)
+    if (visibilityFilter === 'all') return poolRepos
+    if (visibilityFilter === 'public') return poolRepos.filter(r => !r.isPrivate)
+    return poolRepos.filter(r => r.isPrivate)
   }, [poolRepos, visibilityFilter])
 
   const activeRepo = useMemo(() => {
@@ -147,7 +238,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
     setLoading(true)
     setAuthError(false)
     try {
-      const response = await fetch('/api/repos')
+      const response = await fetch('/api/repos', { cache: 'no-store' })
       const data = await response.json()
 
       // Si hay error de autenticación, mostrar mensaje y redirigir
@@ -156,10 +247,9 @@ export function DashboardClient({ user }: DashboardClientProps) {
           console.error('Authentication error:', data.error)
           setAuthError(true)
           setLoading(false)
-          // Esperar 2 segundos antes de redirigir para que el usuario vea el mensaje
-          setTimeout(() => {
-            window.location.href = '/api/auth/logout'
-          }, 2000)
+          const reason = typeof data.reason === 'string' ? data.reason : 'session_expired'
+          const returnTo = encodeURIComponent('/dashboard')
+          window.location.href = `/api/auth/login?returnTo=${returnTo}&reason=${encodeURIComponent(reason)}`
           return
         }
         throw new Error(data.error || 'Failed to fetch repos')
@@ -174,6 +264,8 @@ export function DashboardClient({ user }: DashboardClientProps) {
         syncFrequency: 168,
         autoEnabled: true,
         commitStrategy: 'revert',
+        syncConfigured: false,
+        canManualSync: false,
       }
       setSettings(loadedSettings)
 
@@ -294,7 +386,11 @@ export function DashboardClient({ user }: DashboardClientProps) {
         body: JSON.stringify({
           reposOrder: pinnedRepos,
           topN: pinnedRepos.length,
-          ...settings,
+          includePrivate: settings?.includePrivate ?? true,
+          syncFrequency: settings?.syncFrequency ?? 168,
+          autoEnabled: settings?.autoEnabled ?? true,
+          commitStrategy: 'revert',
+          preferredHour: settings?.preferredHour ?? null,
         }),
       })
 
@@ -310,6 +406,43 @@ export function DashboardClient({ user }: DashboardClientProps) {
     }
   }
 
+  function markOnboardingAsDone() {
+    if (typeof window === 'undefined') return
+    localStorage.setItem(onboardingStorageKey, 'done')
+  }
+
+  function handleOnboardingComplete() {
+    markOnboardingAsDone()
+    setShowOnboarding(false)
+    setShowSettings(false)
+  }
+
+  function handleOnboardingSkip() {
+    markOnboardingAsDone()
+    setShowOnboarding(false)
+    setShowSettings(false)
+  }
+
+  function handleRestartOnboarding() {
+    setShowSettings(false)
+    setShowOnboarding(true)
+  }
+
+  function handleOpenSettings() {
+    setShowSettings(true)
+    if (showOnboarding && typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('gitpins:onboarding-settings-click'))
+    }
+  }
+
+  const openSettingsForOnboarding = useCallback(() => {
+    setShowSettings(true)
+  }, [])
+
+  const closeSettingsForOnboarding = useCallback(() => {
+    setShowSettings(false)
+  }, [])
+
   function handleSettingsChange(newSettings: Partial<RepoOrderSettings>) {
     setSettings((prev) => (prev ? { ...prev, ...newSettings } : null))
 
@@ -324,7 +457,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
   }
 
   async function handleSyncNow() {
-    if (!settings?.syncSecret) {
+    if (!settings?.canManualSync) {
       setSyncMessage({ type: 'error', text: t('dashboard.syncNow.noSecret') })
       return
     }
@@ -333,16 +466,49 @@ export function DashboardClient({ user }: DashboardClientProps) {
     setSyncMessage(null)
 
     try {
-      // force=true para ejecutar inmediatamente ignorando preferredHour
-      const response = await fetch(`/api/sync/${settings.syncSecret}?force=true`, {
+      const token = await ensureCsrfToken()
+      if (!token) {
+        setSyncMessage({ type: 'error', text: t('dashboard.syncNow.error') })
+        return
+      }
+
+      const response = await fetch('/api/sync/manual', {
         method: 'POST',
+        headers: {
+          'X-CSRF-Token': token,
+        },
       })
 
       const data = await response.json()
 
       if (response.ok) {
         if (data.skipped) {
-          setSyncMessage({ type: 'info', text: t('dashboard.syncNow.alreadyOrdered') })
+          const reason = typeof data.reason === 'string' ? data.reason : null
+
+          if (reason === 'mutations_disabled') {
+            setSyncMessage({ type: 'error', text: t('dashboard.syncNow.mutationsDisabled') })
+          } else if (reason === 'recent_sync') {
+            const minutes = typeof data.waitMinutes === 'number' ? data.waitMinutes : null
+            setSyncMessage({
+              type: 'info',
+              text: minutes
+                ? t('dashboard.syncNow.recentSync', { minutes })
+                : t('dashboard.syncNow.recentSyncGeneric')
+            })
+          } else if (reason === 'preferred_hour') {
+            const currentHour = typeof data.currentHour === 'number' ? data.currentHour : null
+            const preferredHour = typeof data.preferredHour === 'number' ? data.preferredHour : null
+            setSyncMessage({
+              type: 'info',
+              text: (currentHour !== null && preferredHour !== null)
+                ? t('dashboard.syncNow.preferredHour', { currentHour, preferredHour })
+                : t('dashboard.syncNow.preferredHourGeneric')
+            })
+          } else if (reason === 'auto_disabled') {
+            setSyncMessage({ type: 'info', text: t('dashboard.syncNow.autoDisabled') })
+          } else {
+            setSyncMessage({ type: 'info', text: t('dashboard.syncNow.alreadyOrdered') })
+          }
         } else {
           setSyncMessage({
             type: 'success',
@@ -378,7 +544,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
               GitPins
             </Link>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3" data-onboarding="dashboard-header-controls">
             <LanguageToggle />
             <ThemeToggle />
             <Link href="/help">
@@ -386,7 +552,13 @@ export function DashboardClient({ user }: DashboardClientProps) {
                 <HelpCircleIcon className="w-4 h-4" />
               </Button>
             </Link>
-            <Button variant="ghost" size="sm" onClick={() => setShowSettings(true)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleOpenSettings}
+              data-onboarding="dashboard-settings-button"
+              aria-label={t('settings.title')}
+            >
               <SettingsIcon className="w-4 h-4" />
             </Button>
             <Button variant="ghost" size="sm" onClick={fetchRepos}>
@@ -539,7 +711,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
               onDragEnd={handleDragEnd}
             >
               {/* Top Zone - Pinned repos */}
-              <div className="mb-8">
+              <div className="mb-8" data-onboarding="dashboard-pinned-zone">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <PinIcon className="w-5 h-5" />
@@ -551,7 +723,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
                     </span>
                   </div>
                   <button
-                    onClick={() => setShowSettings(true)}
+                    onClick={handleOpenSettings}
                     className="text-sm text-muted-foreground hover:text-foreground"
                   >
                     {t('dashboard.pinnedRepos.changeLimit')} ({maxPinned})
@@ -601,7 +773,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
               </div>
 
               {/* Pool Zone - All other repos */}
-              <div>
+              <div data-onboarding="dashboard-pool-zone">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold text-muted-foreground">
                     {t('dashboard.allRepos.title')} ({displayedPoolRepos.length})
@@ -676,12 +848,28 @@ export function DashboardClient({ user }: DashboardClientProps) {
       {/* Settings Modal */}
       {showSettings && settings && (
         <SettingsModal
+          username={user.username}
           settings={settings}
           totalRepos={filteredRepos.length}
-          onClose={() => setShowSettings(false)}
+          onClose={() => {
+            setShowSettings(false)
+            setAutoOpenDelete(false)
+          }}
           onChange={handleSettingsChange}
+          onStartOnboarding={handleRestartOnboarding}
+          autoOpenDelete={autoOpenDelete}
         />
       )}
+
+      <OnboardingWizard
+        key={showOnboarding ? 'open' : 'closed'}
+        open={showOnboarding}
+        isSettingsOpen={showSettings}
+        onComplete={handleOnboardingComplete}
+        onSkip={handleOnboardingSkip}
+        onRequestOpenSettings={openSettingsForOnboarding}
+        onRequestCloseSettings={closeSettingsForOnboarding}
+      />
 
     </div>
   )

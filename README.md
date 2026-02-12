@@ -13,7 +13,7 @@
 [![Prisma](https://img.shields.io/badge/Prisma-7.1-2D3748?logo=prisma&logoColor=white)](https://www.prisma.io/)
 [![Vercel](https://img.shields.io/badge/Vercel-Deployed-black?logo=vercel&logoColor=white)](https://vercel.com/)
 
-[Live Demo](https://gitpins.vercel.app) | [How It Works](#how-it-works) | [Self-Host](#self-hosting)
+[Live Demo](https://gitpins.vercel.app) | [Documentation](#documentation) | [Self-Hosting](#self-hosting)
 
 ---
 
@@ -44,26 +44,30 @@
 
 GitHub sorts repositories by "last updated" date. This means your most important projects can get buried when you make a small fix to an old repo or create a new experimental project.
 
-**GitPins solves this** by automatically updating the "last updated" timestamp of your chosen repositories, keeping them at the top of your profile.
+**GitPins solves this** by "touching" your chosen repositories (empty commit + revert) in a controlled sequence, so GitHub's recency-based order matches your preferred top list.
 
 ## Features
 
-- **Drag & Drop Ordering** - Visually arrange your repositories in the order you want
-- **Smart Sync** - Only creates commits when order changes (no unnecessary commits!)
-- **Commit Cleanup** - Remove old GitPins commits to keep your history clean
-- **Two Commit Strategies** - Choose between "revert" (cleaner history) or "branch" (more commits)
-- **Configurable Frequency** - Sync every 1, 2, 4, 6, 8, 12, or 24 hours
-- **Private Repos Support** - Include or exclude private repositories
-- **Bilingual UI** - Available in English and Spanish
-- **Dark/Light Mode** - Automatic theme detection with manual override
-- **Open Source** - Self-host or contribute
+- **Drag & Drop Ordering** - visually arrange your top list
+- **Manual Sync** - "Sync now" from the dashboard (CSRF-protected)
+- **Scheduled Sync** - trigger `/api/sync` from GitHub Actions (or any scheduler)
+- **Smart Sync** - skips when already ordered + touches only the minimal prefix needed
+- **Single Strategy (Commit + Revert)** - predictable, auditable, no file changes
+- **Commit Cleanup (Optional)** - removes GitPins commits (history rewrite; explicit warning)
+- **Private Repos Support** - include/exclude private repositories in the dashboard list
+- **Bilingual UI** - English and Spanish
+- **Dark/Light Mode** - theme toggle with system default
+- **Privacy Controls** - export your data and delete your account (requires reauth / sudo)
+- **Admin Allowlist** - admins are granted via `admin_accounts` (revocable)
 
 ## How It Works
 
-1. **Connect with GitHub** - Authenticate and install the GitPins GitHub App
-2. **Arrange Your Repos** - Drag and drop to set your preferred order
-3. **Activate Sync** - GitPins creates a config repo with a GitHub Action
-4. **Automatic Updates** - The Action periodically "bumps" your repos to maintain order
+1. **Connect with GitHub (OAuth)** - we create an app session cookie (JWT)
+2. **Install the GitHub App** - required so GitPins can create empty commits in selected repos
+3. **Arrange your repos** - save your desired top list and settings
+4. **Sync**
+   - Manual: click "Sync now" in the dashboard
+   - Scheduled: run a GitHub Action (recommended) or any scheduler that calls `POST /api/sync`
 
 ### Technical Details
 
@@ -76,33 +80,28 @@ git revert HEAD --no-edit
 git push
 ```
 
-**Branch Strategy**:
-```bash
-git checkout -b gitpins-temp
-git commit --allow-empty -m "gitpins: sync"
-git checkout main && git merge gitpins-temp
-git branch -d gitpins-temp && git push
-```
+See `docs/ORDERING.md` for the detailed algorithm, including the minimal-prefix optimization and what "single-pass" means in practice.
 
 ## Security
 
 GitPins is designed with security in mind:
 
-- **Minimal Permissions** - Only requests access to repository contents (for empty commits)
-- **No Code Access** - Cannot read, modify, or delete your actual code
+- **Minimal GitHub App Permissions** - only what is needed for empty commits
+- **No File Changes** - GitPins creates commits that point to the existing tree
 - **Encrypted Tokens** - Access tokens are encrypted with AES-256-GCM
-- **Open Source** - Full code transparency
+- **Open Source** - full code transparency
 
 ### What GitPins CAN do:
-- Create empty commits in your repositories
-- Create the `gitpins-config` repository
-- Read repository metadata (name, stars, etc.)
+- Create empty commits and update refs in repos you installed the app on
+- Read repository metadata (name, stars, etc.) via the GitHub API
+- Optionally rewrite history to remove GitPins commits (cleanup feature; explicit confirmation)
 
 ### What GitPins CANNOT do:
-- Read your source code
-- Modify existing files
-- Delete repositories or branches
-- Access other GitHub data
+- Delete repositories
+- Modify tracked files (it uses the existing tree SHA)
+- Access other GitHub data (issues, PRs, etc.) unless you grant additional permissions
+
+> Cleanup warning: cleanup rewrites git history (force-updates the default branch). This can impact collaborators and forks. Treat it as a dangerous, opt-in operation.
 
 ## Tech Stack
 
@@ -114,11 +113,21 @@ GitPins is designed with security in mind:
 - **Drag & Drop**: dnd-kit
 - **Deployment**: Vercel
 
+## Documentation
+
+Maintainer docs (recommended starting points):
+- `docs/LOCAL_DEV.md` - Docker Compose local dev + Neon clone
+- `docs/ARCHITECTURE.md` - system overview and flows
+- `docs/SECURITY.md` - threat model, auth, CSRF, admin, sync secret
+- `docs/PRIVACY.md` - export + deletion model
+- `docs/ORDERING.md` - ordering algorithm details
+- `docs/MIGRATIONS.md` - Prisma migration notes for existing DBs
+
 ## Self-Hosting
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+ (recommended) or Docker
 - PostgreSQL database
 - GitHub App
 
@@ -147,16 +156,16 @@ Go to [GitHub Developer Settings](https://github.com/settings/apps/new) and crea
 | Webhook URL | Leave empty (not required) |
 | Webhook Active | ❌ Unchecked |
 
-**For Local Development:**
+**For Local Development (Docker default):**
 | Field | Value |
 |-------|-------|
-| Homepage URL | `http://localhost:3000` |
-| Callback URL | `http://localhost:3000/api/auth/callback` |
-| Setup URL (optional) | `http://localhost:3000/api/auth/setup` |
+| Homepage URL | `http://localhost:3001` |
+| Callback URL | `http://localhost:3001/api/auth/callback` |
+| Setup URL (optional) | `http://localhost:3001/api/auth/setup` |
 | Webhook URL | Leave empty |
 | Webhook Active | ❌ Unchecked |
 
-> **Note:** You can update these URLs later. For local development, you'll need to use localhost URLs.
+If you run `npm run dev` directly (no Docker), use `http://localhost:3000` instead of `3001`.
 
 #### Required Permissions
 
@@ -165,12 +174,8 @@ Configure these permissions in your GitHub App settings:
 **Repository Permissions:**
 | Permission | Access Level | Purpose |
 |------------|--------------|---------|
-| **Actions** | Read and write | Enable/disable workflows in repos |
-| **Administration** | Read and write | Enable GitHub Actions on config repo |
-| **Contents** | Read and write | Create empty commits for ordering |
+| **Contents** | Read and write | Create empty commits / update refs |
 | **Metadata** | Read-only | Read repository list and info |
-| **Secrets** | Read and write | Create GITPINS_SYNC_SECRET |
-| **Workflows** | Read and write | Create and manage the sync workflow |
 
 **Account Permissions:**
 | Permission | Access Level | Purpose |
@@ -180,7 +185,7 @@ Configure these permissions in your GitHub App settings:
 #### OAuth Settings
 
 In the OAuth section of your GitHub App:
-- **Request user authorization (OAuth) during installation**: ✅ Enabled
+- **Request user authorization (OAuth) during installation**: Enabled
 - **Enable Device Flow**: Optional
 
 ### 2. Clone and Install
@@ -231,19 +236,78 @@ npm start
 
 ### Local Development Tips
 
-When running locally:
+When running locally with a dedicated GitHub App (`gitpins-local`):
 
-1. **Update your GitHub App URLs** to use `http://localhost:3000`
-2. **Set environment variable**: `NEXT_PUBLIC_APP_URL=http://localhost:3000`
-3. **Re-authenticate**: Log out and log back in after changing URLs to get a fresh OAuth token with correct scopes
+1. **Use localhost app URLs**:
+   - Docker: `http://localhost:3001`
+   - Non-Docker: `http://localhost:3000`
+2. **Set environment variable**: `NEXT_PUBLIC_APP_URL=http://localhost:3001` (Docker) or `http://localhost:3000` (non-Docker)
+3. **Re-authenticate** after changing app settings to refresh OAuth grants
+
+### Local Docker Setup (App + Postgres)
+
+```bash
+cp .env.docker.example .env.docker
+docker compose up -d
+```
+
+Services:
+- App: `http://localhost:3001`
+- Postgres: `localhost:5432`
+
+By default, local Docker runs with:
+- `GITPINS_DISABLE_GITHUB_MUTATIONS=true` (safe mode: no GitHub write operations)
+
+### One-shot Clone: Neon -> Local Postgres
+
+```bash
+# 1) Start only the DB
+docker compose up -d db
+
+# 2) Clone production data to local
+SOURCE_DB_URL='postgresql://...' ./scripts/clone-neon-to-local.sh
+```
+
+Notes:
+- The script does not hardcode Neon credentials.
+- It writes a temporary dump to `/tmp` and removes it after restore.
+- Use this only in secure local environments because data is cloned with full fidelity.
 
 #### Required OAuth Scopes
 
 When authenticating, GitPins requests these OAuth scopes:
-- `repo` - Full control of private repositories (needed to create the config repo)
+- `repo` - Access to private repositories (used by the dashboard repo list)
 - `user:email` - Access to email address
 
 If you're experiencing "Resource not accessible by integration" errors, the user needs to re-authenticate to get a token with the correct scopes.
+
+### Scheduled Sync (GitHub Actions)
+
+GitPins provides the sync endpoint (`POST /api/sync`) but does not automatically create a `gitpins-config` repository for you.
+
+A common setup is to create a private repo (many people name it `gitpins-config`) and add a scheduled workflow that calls your GitPins instance:
+
+```yaml
+name: GitPins - Maintain Repo Order
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync
+        run: |
+          curl -s -X POST "${{ vars.GITPINS_APP_URL }}/api/sync" \
+            -H "X-GitPins-Sync-Secret: ${{ secrets.GITPINS_SYNC_SECRET }}"
+```
+
+You must set:
+1. `GITPINS_SYNC_SECRET` (repo secret): the per-user secret stored in `repo_orders.syncSecret`.
+2. `GITPINS_APP_URL` (repo variable): your app URL (for example `https://your-domain.com`).
 
 ### Troubleshooting
 
@@ -251,8 +315,8 @@ If you're experiencing "Resource not accessible by integration" errors, the user
 |-------|----------|
 | "Resource not accessible" | Re-authenticate (logout/login) to refresh OAuth token |
 | "Bad credentials" | Check GITHUB_APP_PRIVATE_KEY format (include BEGIN/END lines) |
-| Actions not running | Enable Actions in the gitpins-config repo settings |
-| Repos not syncing | Check Actions tab in gitpins-config for workflow errors |
+| Scheduled sync not running | Check the Actions logs in the repo that hosts your workflow |
+| Repos not syncing | Verify the GitHub App is installed on those repos |
 
 ## Deploy to Vercel
 
@@ -269,18 +333,12 @@ GitPins includes an admin dashboard for managing users and viewing statistics.
 
 ### Accessing the Admin Panel
 
-1. **Get your GitHub User ID:**
-   ```bash
-   curl https://api.github.com/users/YOUR_USERNAME | grep '"id"'
-   ```
-
-2. **Set the environment variable:**
-   ```env
-   ADMIN_GITHUB_ID="your_numeric_github_id"
-   ```
-
+1. **Grant admin access in the allowlist** (`admin_accounts` table).
+2. **Log in with the granted account.**
 3. **Access the dashboard:**
    Navigate to `/admin` after logging in with the admin account.
+
+> `ADMIN_GITHUB_ID` is supported as a temporary fallback during migrations, but DB allowlist is the primary source of truth.
 
 ### Admin Features
 
@@ -294,18 +352,17 @@ GitPins includes an admin dashboard for managing users and viewing statistics.
 
 The admin panel is protected by:
 - Session validation (must be logged in)
-- GitHub ID verification against `ADMIN_GITHUB_ID`
+- Database allowlist verification (`admin_accounts`, where `revokedAt IS NULL`)
 - All admin API endpoints return 403 Forbidden for non-admin users
 
 ## Project Structure
 
 ```
 src/
-├── app/                    # Next.js App Router
+├── app/                   # Next.js App Router
 │   ├── api/               # API Routes
 │   │   ├── auth/          # OAuth endpoints
 │   │   ├── repos/         # Repository management
-│   │   ├── config/        # Config repo creation
 │   │   └── sync/          # Sync endpoint (called by GitHub Action)
 │   ├── dashboard/         # Main dashboard
 │   ├── admin/             # Admin panel

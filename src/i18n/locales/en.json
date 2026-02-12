@@ -53,7 +53,7 @@
       },
       "q3": {
         "question": "Can I stop using it?",
-        "answer": "Yes, no problem. Delete the gitpins-config repo or disable the workflow. No vendor lock-in."
+        "answer": "Yes, no problem. Disable/delete the workflow you set up (many people use a repo named gitpins-config). No vendor lock-in."
       },
       "q4": {
         "question": "Does it work with private repos?",
@@ -65,7 +65,7 @@
       },
       "q6": {
         "question": "What happens if I uninstall GitPins?",
-        "answer": "Nothing. Your repositories remain exactly the same. If you want, you can keep the Action running independently."
+        "answer": "Nothing. Your repositories remain exactly the same. If you set up a scheduled workflow, you can keep it, disable it, or delete it anytime."
       }
     },
     "features": {
@@ -171,6 +171,12 @@
       "syncing": "Syncing...",
       "success": "Sync completed: {synced} successful, {failed} failed",
       "alreadyOrdered": "Repositories are already in the correct order",
+      "mutationsDisabled": "Sync is disabled in this environment (GITPINS_DISABLE_GITHUB_MUTATIONS=true). Set it to false and restart to allow GitHub writes.",
+      "recentSync": "A sync ran recently. Please wait {minutes} min and try again.",
+      "recentSyncGeneric": "A sync ran recently. Please wait a few minutes and try again.",
+      "preferredHour": "Skipped due to preferred hour. Current: {currentHour}:00 UTC, preferred: {preferredHour}:00 UTC.",
+      "preferredHourGeneric": "Skipped due to preferred hour.",
+      "autoDisabled": "Automatic sync is disabled in Settings.",
       "error": "Sync failed. Please try again",
       "noSecret": "Sync configuration not found"
     },
@@ -205,6 +211,62 @@
       "public": "Public",
       "private": "Private",
       "noVisible": "No repositories of this type"
+    },
+    "onboarding": {
+      "badge": "Quick tour",
+      "progress": "Step {current} of {total}",
+      "targetFallback": "This section could not be highlighted on your screen, but you can continue.",
+      "waitingForSettingsClick": "Click the Settings button to continue.",
+      "skip": "Skip tour",
+      "back": "Back",
+      "next": "Next",
+      "finish": "Finish tour",
+      "steps": {
+        "welcome": {
+          "title": "Welcome to GitPins",
+          "desc": "This guide shows you how to order repos, save changes, and configure automatic sync in under 2 minutes."
+        },
+        "headerControls": {
+          "title": "Quick controls",
+          "desc": "Here you can change language/theme, open help, open settings, refresh data, and sign out."
+        },
+        "pinnedZone": {
+          "title": "Top zone (pinned repos)",
+          "desc": "Drag repos here to keep them on top. The counter shows how many are pinned versus your current limit."
+        },
+        "poolZone": {
+          "title": "Repository pool",
+          "desc": "All remaining repos stay here. Use filters and drag items to the top zone to define your final order."
+        },
+        "settingsButton": {
+          "title": "Open options",
+          "desc": "Use this button to open advanced settings for limits, private repos, sync frequency, and schedule."
+        },
+        "settingsTopN": {
+          "title": "Pinned repos limit",
+          "desc": "Define how many repos should stay on top. If you lower it below current pinned count, the list is trimmed from the end."
+        },
+        "settingsPrivate": {
+          "title": "Include private repos",
+          "desc": "Enable this so automatic ordering also includes private repositories."
+        },
+        "settingsFrequency": {
+          "title": "Sync frequency",
+          "desc": "Controls how often automatic ordering runs. More frequent means faster correction but higher Actions usage."
+        },
+        "settingsSchedule": {
+          "title": "Preferred hour (UTC)",
+          "desc": "Optional: restrict automatic execution to one specific hour for predictable operations."
+        },
+        "settingsAuto": {
+          "title": "Auto-sync",
+          "desc": "When enabled, GitPins runs ordering automatically based on your configured frequency."
+        },
+        "done": {
+          "title": "All set",
+          "desc": "You now know the full flow. You can relaunch this tour anytime from Settings."
+        }
+      }
     }
   },
   "settings": {
@@ -254,7 +316,46 @@
     },
     "autoSync": {
       "label": "Automatic sync",
-      "desc": "Run the Action automatically"
+      "desc": "Allow scheduled sync (when your workflow calls /api/sync)"
+    },
+    "onboarding": {
+      "title": "Interactive tour",
+      "desc": "Replay the guided walkthrough of dashboard and options.",
+      "start": "Start tour"
+    },
+    "privacy": {
+      "title": "Privacy and data",
+      "desc": "Download your data or delete your GitPins account.",
+      "export": "Download my data",
+      "exporting": "Preparing export...",
+      "exportDone": "Export ready. A JSON file was downloaded.",
+      "exportHint": "Includes your profile, settings, and full history (snapshots and logs). No secrets are included.",
+      "deleteTitle": "Danger zone",
+      "deleteDesc": "Delete your account and all GitPins data. This does NOT delete GitHub repositories.",
+      "deleteButton": "Delete my account",
+      "deleteConfirm": "Delete permanently",
+      "deleting": "Deleting...",
+      "errors": {
+        "csrf": "Security token unavailable. Reload the page and try again.",
+        "exportFailed": "Could not export your data. Please try again.",
+        "deleteFailed": "Could not delete the account. Please try again.",
+        "reauth": "You must reauthenticate with GitHub to continue (sudo mode)."
+      },
+      "deleteModal": {
+        "title": "Delete account",
+        "intro": "This action is irreversible. Make sure you download your data first if you need it.",
+        "item1": "Will be deleted: profile, settings, tokens, snapshots and logs.",
+        "item2": "Will not be deleted: any GitHub repositories or code.",
+        "item3": "If you set up a scheduled workflow (for example in a repo named gitpins-config), disable or delete it to stop scheduled sync.",
+        "reauthTitle": "Reauthentication required",
+        "reauthDesc": "To protect your account, GitPins requires a recent reauthentication before deleting data.",
+        "reauthButton": "Reauthenticate with GitHub",
+        "confirmUsernameLabel": "Type your username to confirm: @{username}",
+        "confirmPhraseLabel": "Type the confirmation phrase",
+        "confirmPhraseHint": "Exact phrase: DELETE MY ACCOUNT",
+        "loadingSudo": "Checking reauthentication…",
+        "cancel": "Cancel"
+      }
     },
     "configRepoPrivate": {
       "label": "Private config repo",
@@ -308,21 +409,21 @@
         "desc": "In the GitPins dashboard, you drag and drop your repositories in the order you want. You can choose to order all your repos or just the first N."
       },
       "step2": {
-        "title": "We create a config repository",
-        "desc": "When activating sync, we create a private repository called <code>gitpins-config</code> in your account. This contains the GitHub Action and your configuration."
+        "title": "Install the GitHub App",
+        "desc": "Install the GitHub App on the repositories you want GitPins to manage. This is what allows GitPins to create empty commits (no file changes) when syncing."
       },
       "step3": {
-        "title": "GitHub Actions runs periodically",
-        "desc": "Based on the frequency you configure (every 1, 6, 12, or 24 hours), the Action checks if your repos are in the correct order."
+        "title": "Scheduled sync (optional)",
+        "desc": "If you want GitPins to keep your order automatically, run a scheduled workflow (GitHub Actions or any scheduler) that calls your GitPins instance."
       },
       "step4": {
         "title": "Reorders if necessary",
-        "desc": "If any repository is out of order, the Action makes an empty commit to update its timestamp, restoring the desired order."
+        "desc": "When sync runs, GitPins checks GitHub's current order and only touches the repos needed to restore your desired top list."
       }
     },
     "strategies": {
       "title": "Commit strategies",
-      "intro": "We offer two strategies to keep your history clean:",
+      "intro": "GitPins uses a single, predictable strategy to keep your history auditable:",
       "revert": {
         "title": "Commit + Revert",
         "desc": "We make an empty commit and revert it immediately. The result is that your history stays exactly the same, but the update date changes.",
@@ -336,19 +437,19 @@
     },
     "actionCode": {
       "title": "The GitHub Action",
-      "intro": "We're 100% transparent. When you activate sync, a GitHub Action is created in your config repository that you can review, modify, or audit whenever you want.",
+      "intro": "We're 100% transparent. Scheduled sync is typically run by a GitHub Action in a repository you control, so you can review, modify, or audit it whenever you want.",
       "whatItDoes": "What does the Action do?",
       "steps": {
-        "step1": "Reads your configuration and list of repos to order",
+        "step1": "Calls your GitPins instance (/api/sync) with your per-user sync secret",
         "step2": "For each repository (in reverse order so the first one ends up most recent):",
         "step2a": "Detects the main branch (main/master)",
         "step2b": "Creates an empty commit using the GitHub API",
-        "step2c": "Reverts it immediately (or uses temporary branch)",
+        "step2c": "Reverts it immediately (commit + revert)",
         "step3": "Waits 1 second between repos to avoid API throttling",
         "step4": "Reports the result in the Action logs"
       },
       "viewCode": "View full code",
-      "codeLocation": "The code is in <code>.github/workflows/maintain-order.yml</code> inside your config repository."
+      "codeLocation": "If you use GitHub Actions for scheduled sync, the workflow lives in <code>.github/workflows/maintain-order.yml</code> inside the repository you chose for it."
     },
     "security": {
       "title": "Security and permissions",
@@ -358,13 +459,13 @@
         "title": "What we CAN do:",
         "item1": "Read your repositories list (metadata)",
         "item2": "Create empty commits (without modifying files)",
-        "item3": "Create/delete temporary branches",
-        "item4": "Create the config repo (gitpins-config)"
+        "item3": "Update refs on the default branch (to apply commit + revert)",
+        "item4": "Optionally rewrite history for cleanup (only when you explicitly run cleanup)"
       },
       "cannotDo": {
         "title": "What we CANNOT do:",
         "item1": "<strong>NEVER delete repositories</strong> - We don't have that permission",
-        "item2": "Modify, read, or delete your source code",
+        "item2": "Modify your tracked files (GitPins uses empty commits that point to the existing tree)",
         "item3": "Access your secrets or environment variables",
         "item4": "Change your repos configuration (settings)",
         "item5": "Access Issues, PRs, Wikis, or Discussions",
@@ -374,7 +475,7 @@
       "installationsLink": "github.com/settings/installations",
       "noCodeStorage": {
         "title": "We don't store your code",
-        "desc": "We only save the order of your repositories and your configuration. We never access the content of your repos."
+        "desc": "We only store ordering settings and logs in our database. We do not clone repositories or store any code."
       },
       "runsOnYourAccount": {
         "title": "The Action runs on your account",
@@ -432,7 +533,21 @@
   "legal": {
     "title": "Legal & Disclaimer",
     "subtitle": "Important information about using GitPins",
-    "lastUpdated": "Last updated: December 2025",
+    "lastUpdated": "Last updated: February 2026",
+    "toc": {
+      "title": "Contents",
+      "disclaimer": "Disclaimer",
+      "howItWorks": "How it works",
+      "risks": "Risks",
+      "permissions": "Permissions",
+      "privacy": "Privacy & data",
+      "responsibility": "Your responsibility",
+      "warranty": "No warranties",
+      "liability": "Liability",
+      "openSource": "Open source",
+      "contact": "Contact",
+      "acceptance": "Acceptance"
+    },
     "disclaimer": {
       "title": "Disclaimer",
       "p1": "GitPins is an open source project provided \"AS IS\" and \"AS AVAILABLE\", without warranties of any kind, whether express or implied, including, but not limited to, the implied warranties of merchantability, fitness for a particular purpose, and non-infringement.",
@@ -481,22 +596,41 @@
       "canDo": "What GitPins CAN do:",
       "canDo1": "Read your repositories list (metadata)",
       "canDo2": "Create empty commits (without modifying files)",
-      "canDo3": "Create and delete temporary branches",
-      "canDo4": "Create the configuration repository (gitpins-config)",
+      "canDo3": "Create a revert commit immediately after the empty commit (commit + revert)",
+      "canDo4": "Provide a sync endpoint that a scheduler (like GitHub Actions) can call",
       "cannotDo": "What GitPins CANNOT do:",
       "cannotDo1": "Delete repositories - We don't have that permission",
-      "cannotDo2": "Read, modify, or delete your source code",
+      "cannotDo2": "Modify your tracked files (GitPins uses empty commits that point to the existing tree)",
       "cannotDo3": "Access secrets or environment variables",
       "cannotDo4": "Change your repositories' settings",
       "cannotDo5": "Access Issues, Pull Requests, or Wikis",
       "cannotDo6": "Invite collaborators or modify permissions",
       "verify": "You can verify the exact permissions at any time from"
     },
+    "privacy": {
+      "title": "Privacy & Data",
+      "intro": "GitPins stores only the data needed to run the service. You control your data from Settings at any time.",
+      "whatWeStoreTitle": "What we store",
+      "store1": "Account metadata (GitHub id, username, optional email and avatar)",
+      "store2": "Ordering settings (pinned list, limits, scheduling, and sync configuration)",
+      "store3": "Operational history (order snapshots and sync logs) to help you understand changes and debug issues",
+      "store4": "Security audit events (pseudonymized) to prevent abuse and investigate incidents",
+      "tokensTitle": "Tokens and secrets",
+      "tokensP1": "OAuth tokens are encrypted at rest. We never include tokens or sync secrets in exports.",
+      "tokensP2": "Encryption details: AES-256-GCM authenticated encryption. Each token is encrypted with a unique random salt and IV.",
+      "tokensP3": "Token expiry: GitHub can issue expiring access tokens. GitPins stores the expiration timestamp and refreshes automatically when possible. If a token cannot be refreshed, you will be asked to log in again.",
+      "exportTitle": "Export your data",
+      "exportP1": "You can download a JSON export from Settings. Exports expire after 72 hours.",
+      "deleteTitle": "Delete your account",
+      "deleteP1": "You can delete your GitPins account from Settings. Deletion requires a recent GitHub reauthentication (sudo mode).",
+      "deleteP2": "Deleting your GitPins account does not delete any GitHub repositories. If you set up a scheduled workflow (for example in `gitpins-config`), disable or delete it to stop scheduled sync.",
+      "goToSettings": "Open Settings"
+    },
     "yourResponsibility": {
       "title": "Your Responsibility",
       "p1": "By using GitPins, you accept that you have read and understood how the service works. You understand that empty commits will be created in your repositories as part of the ordering process.",
       "p2": "You accept the potential risks described on this page and are responsible for monitoring GitHub Actions minutes usage on your account.",
-      "p3": "You can disable the service at any time by deleting the configuration repository or disabling the workflow, without any penalty."
+      "p3": "You can disable the service at any time by disabling/deleting any scheduled workflow you configured, without any penalty."
     },
     "noWarranty": {
       "title": "No Warranties",
@@ -678,11 +812,11 @@
       },
       "step3": {
         "title": "Save",
-        "desc": "Press save to activate automatic sync"
+        "desc": "Press save to store your order and settings"
       },
       "step4": {
         "title": "Done",
-        "desc": "The GitHub Action maintains your order automatically"
+        "desc": "Sync manually from the dashboard, or schedule sync with GitHub Actions"
       }
     },
     "githubApp": {
@@ -696,11 +830,11 @@
       "canDo": "What it CAN do",
       "can1": "Read repo metadata (name, description, stars)",
       "can2": "Create empty commits (without modifying files)",
-      "can3": "Create and delete temporary branches",
-      "can4": "Create the gitpins-config repository",
+      "can3": "Update the default branch ref (to apply commit + revert)",
+      "can4": "Optionally rewrite history for cleanup (only when you explicitly run cleanup)",
       "cannotDo": "What it CANNOT do",
       "cannot1": "Delete repositories",
-      "cannot2": "Read, modify, or delete your code",
+      "cannot2": "Modify your tracked files (GitPins uses empty commits that point to the existing tree)",
       "cannot3": "Access secrets or environment variables",
       "cannot4": "Change repo settings or permissions",
       "verify": "You can verify and revoke permissions at any time from"
@@ -713,8 +847,8 @@
       "saveTitle": "What happens when you save",
       "save1": "Your order is saved to the database",
       "save2": "A snapshot is created in history (so you can restore)",
-      "save3": "The GitHub Action is activated in your gitpins-config repo",
-      "save4": "On the next run, the Action will order your repos"
+      "save3": "You can click Sync now to apply the order immediately",
+      "save4": "Optional: set up a scheduled workflow (GitHub Actions) to keep your order automatically"
     },
     "demo": {
       "pinnedZone": "Pinned repos",
@@ -723,9 +857,9 @@
     },
     "sync": {
       "title": "Configure sync",
-      "intro": "Sync maintains your repos in the order you configured. A GitHub Action runs periodically and reorders if necessary.",
+      "intro": "Sync maintains your repos in the order you configured. You can run it manually, or schedule it using GitHub Actions.",
       "frequencyTitle": "Frequency",
-      "frequencyDesc": "How often the Action checks and reorders your repos.",
+      "frequencyDesc": "How often scheduled sync checks and reorders your repos.",
       "freq1": "Very frequent, more Actions usage",
       "freq6": "Recommended - good balance",
       "freq24": "Less frequent, minimal usage",
@@ -734,16 +868,16 @@
       "hourExample": "Example:",
       "hourNote": "If you set 14:00 UTC, sync will only run at that hour",
       "actionTitle": "How the GitHub Action works",
-      "actionDesc": "When you save your order, a workflow is created in your gitpins-config repository that runs according to the configured frequency.",
+      "actionDesc": "To run scheduled sync, add a workflow (example below) in a repository you control and have it call your GitPins instance.",
       "actionCron": "Runs every 6 hours"
     },
     "strategies": {
       "title": "Commit strategies",
-      "intro": "To update the last commit date of a repo, GitPins needs to create a commit. There are two available strategies:",
+      "intro": "To update the last commit date of a repo, GitPins creates an empty commit and reverts it immediately (commit + revert).",
       "revertTitle": "Commit + Revert",
       "recommended": "Recommended",
-      "revertPro1": "Completely clean history",
-      "revertPro2": "Automatic commit cleanup",
+      "revertPro1": "No file changes",
+      "revertPro2": "Auditable and deterministic",
       "branchTitle": "Temporary branch",
       "branchPro1": "Works in all cases",
       "branchCon1": "Leaves merge commits in history"
@@ -772,7 +906,7 @@
       },
       "q2": {
         "q": "Sync isn't working",
-        "a": "Verify that: 1) Automatic sync is enabled in Settings, 2) If you set a preferred hour, sync only runs at that UTC hour, 3) Check the Action logs in your gitpins-config repo."
+        "a": "Verify that: 1) Automatic sync is enabled in Settings, 2) If you set a preferred hour, sync only runs at that UTC hour, 3) Check the Actions logs in the repository that hosts your workflow."
       },
       "q3": {
         "q": "I want to pause sync",
@@ -780,11 +914,11 @@
       },
       "q4": {
         "q": "I want to uninstall GitPins",
-        "a": "1) Delete the gitpins-config repo from your account, 2) Go to github.com/settings/installations and uninstall the GitPins app. Your repositories will remain intact."
+        "a": "1) Disable/delete any scheduled workflow you configured, 2) Go to github.com/settings/installations and uninstall the GitPins app. Your repositories will remain intact."
       },
       "q5": {
         "q": "GitPins commits appear in my history",
-        "a": "With the Commit + Revert strategy (recommended), commits are automatically cleaned up. If you see residual commits, you can use the manual cleanup function from the dashboard."
+        "a": "Commit + Revert creates commits (no file changes). If you want to remove GitPins commits, use the cleanup tool in the dashboard (warning: cleanup rewrites history)."
       }
     },
     "cta": {

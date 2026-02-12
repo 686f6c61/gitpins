@@ -26,7 +26,7 @@ export function LegalContent() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border">
-        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <PinIcon className="w-6 h-6" />
             <span className="text-xl font-bold">GitPins</span>
@@ -39,7 +39,7 @@ export function LegalContent() {
       </header>
 
       {/* Main content */}
-      <main className="max-w-4xl mx-auto px-4 py-12">
+      <main className="max-w-5xl mx-auto px-4 py-12">
         {/* Title */}
         <div className="text-center mb-12">
           <ShieldIcon className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
@@ -55,7 +55,7 @@ export function LegalContent() {
         </div>
 
         {/* Disclaimer */}
-        <section className="mb-10">
+        <section id="disclaimer" className="mb-10 scroll-mt-24">
           <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-6">
             <div className="flex items-start gap-3">
               <AlertTriangleIcon className="w-6 h-6 text-destructive flex-shrink-0 mt-1" />
@@ -72,7 +72,7 @@ export function LegalContent() {
         </section>
 
         {/* How it works - Transparency */}
-        <section className="mb-10">
+        <section id="how-it-works" className="mb-10 scroll-mt-24">
           <h2 className="text-2xl font-bold mb-4">{t('legal.howItWorks.title')}</h2>
           <p className="text-muted-foreground mb-6">{t('legal.howItWorks.intro')}</p>
 
@@ -96,7 +96,7 @@ export function LegalContent() {
         </section>
 
         {/* Risks */}
-        <section className="mb-10">
+        <section id="risks" className="mb-10 scroll-mt-24">
           <h2 className="text-2xl font-bold mb-4">{t('legal.risks.title')}</h2>
           <p className="text-muted-foreground mb-6">{t('legal.risks.intro')}</p>
 
@@ -121,7 +121,7 @@ export function LegalContent() {
         </section>
 
         {/* No Delete - Important */}
-        <section className="mb-10">
+        <section id="permissions" className="mb-10 scroll-mt-24">
           <div className="bg-success/10 border border-success/30 rounded-xl p-6">
             <h2 className="text-2xl font-bold mb-4 text-success">{t('legal.noDelete.title')}</h2>
             <p
@@ -177,8 +177,54 @@ export function LegalContent() {
           </div>
         </section>
 
+        {/* Privacy */}
+        <section id="privacy" className="mb-10 scroll-mt-24">
+          <h2 className="text-2xl font-bold mb-4">{t('legal.privacy.title')}</h2>
+          <p className="text-muted-foreground mb-6">{t('legal.privacy.intro')}</p>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="bg-muted/30 rounded-xl p-5 border border-border">
+              <h3 className="font-semibold mb-3">{t('legal.privacy.whatWeStoreTitle')}</h3>
+              <ul className="space-y-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <li key={i} className="text-sm flex items-start gap-2">
+                    <CheckIcon className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                    <span>{t(`legal.privacy.store${i}`)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="bg-muted/30 rounded-xl p-5 border border-border">
+              <h3 className="font-semibold mb-3">{t('legal.privacy.tokensTitle')}</h3>
+              <p className="text-sm text-muted-foreground">{t('legal.privacy.tokensP1')}</p>
+              <p className="text-sm text-muted-foreground mt-3">{t('legal.privacy.tokensP2')}</p>
+              <p className="text-sm text-muted-foreground mt-3">{t('legal.privacy.tokensP3')}</p>
+            </div>
+          </div>
+
+          <div className="mt-4 grid md:grid-cols-2 gap-4">
+            <div className="rounded-xl border border-border bg-background p-5">
+              <h3 className="font-semibold mb-2">{t('legal.privacy.exportTitle')}</h3>
+              <p className="text-sm text-muted-foreground">{t('legal.privacy.exportP1')}</p>
+            </div>
+
+            <div className="rounded-xl border border-border bg-background p-5">
+              <h3 className="font-semibold mb-2">{t('legal.privacy.deleteTitle')}</h3>
+              <p className="text-sm text-muted-foreground mb-3">{t('legal.privacy.deleteP1')}</p>
+              <p className="text-sm text-muted-foreground">{t('legal.privacy.deleteP2')}</p>
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-center">
+            <Link href="/dashboard?openSettings=1">
+              <Button>{t('legal.privacy.goToSettings')}</Button>
+            </Link>
+          </div>
+        </section>
+
         {/* Your Responsibility */}
-        <section className="mb-10">
+        <section id="responsibility" className="mb-10 scroll-mt-24">
           <h2 className="text-2xl font-bold mb-4">{t('legal.yourResponsibility.title')}</h2>
           <p className="text-muted-foreground mb-4">{t('legal.yourResponsibility.p1')}</p>
           <p className="text-muted-foreground mb-4">{t('legal.yourResponsibility.p2')}</p>
@@ -186,14 +232,14 @@ export function LegalContent() {
         </section>
 
         {/* No Warranty */}
-        <section className="mb-10">
+        <section id="warranty" className="mb-10 scroll-mt-24">
           <h2 className="text-2xl font-bold mb-4">{t('legal.noWarranty.title')}</h2>
           <p className="text-muted-foreground mb-4">{t('legal.noWarranty.p1')}</p>
           <p className="text-muted-foreground">{t('legal.noWarranty.p2')}</p>
         </section>
 
         {/* Limitation of Liability */}
-        <section className="mb-10">
+        <section id="liability" className="mb-10 scroll-mt-24">
           <h2 className="text-2xl font-bold mb-4">{t('legal.limitation.title')}</h2>
           <p className="text-muted-foreground mb-4">{t('legal.limitation.p1')}</p>
           <ul className="space-y-2 mb-6">
@@ -216,7 +262,7 @@ export function LegalContent() {
         </section>
 
         {/* Open Source */}
-        <section className="mb-10">
+        <section id="open-source" className="mb-10 scroll-mt-24">
           <h2 className="text-2xl font-bold mb-4">{t('legal.openSource.title')}</h2>
           <p className="text-muted-foreground mb-4">{t('legal.openSource.p1')}</p>
           <ul className="space-y-2 mb-6">
@@ -242,7 +288,7 @@ export function LegalContent() {
         </section>
 
         {/* Contact */}
-        <section className="mb-10">
+        <section id="contact" className="mb-10 scroll-mt-24">
           <h2 className="text-2xl font-bold mb-4">{t('legal.contact.title')}</h2>
           <p className="text-muted-foreground mb-4">{t('legal.contact.p1')}</p>
           <a
@@ -257,7 +303,7 @@ export function LegalContent() {
         </section>
 
         {/* Acceptance */}
-        <section className="mb-10">
+        <section id="acceptance" className="mb-10 scroll-mt-24">
           <div className="bg-muted/50 border border-border rounded-xl p-6 text-center">
             <h2 className="text-xl font-bold mb-3">{t('legal.acceptance.title')}</h2>
             <p className="text-muted-foreground mb-6">{t('legal.acceptance.p1')}</p>

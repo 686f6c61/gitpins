@@ -41,17 +41,32 @@ describe('Admin Module Logic', () => {
       expect(result).toBe(false)
     })
 
-    it('should return false when ADMIN_GITHUB_ID is not set', () => {
-      const adminGithubId = undefined
-      const result = adminGithubId !== undefined
-
-      expect(result).toBe(false)
+    it('should allow admins present in DB allowlist', () => {
+      const allowlistRecord = { githubId: 12345, revokedAt: null }
+      const sessionGithubId = 12345
+      const isAdmin = allowlistRecord.githubId === sessionGithubId && allowlistRecord.revokedAt === null
+      expect(isAdmin).toBe(true)
     })
 
-    it('should compare numeric GitHub IDs correctly', () => {
+    it('should reject revoked allowlist records', () => {
+      const allowlistRecord = { githubId: 12345, revokedAt: new Date() }
+      const sessionGithubId = 12345
+      const isAdmin = allowlistRecord.githubId === sessionGithubId && allowlistRecord.revokedAt === null
+      expect(isAdmin).toBe(false)
+    })
+
+    it('should use ENV fallback when allowlist has no active match', () => {
       const sessionGithubId = 12345
       const adminGithubId = '12345'
+      const allowlistMatch = false
+      const envFallbackMatch = sessionGithubId === parseInt(adminGithubId, 10)
+      const isAdmin = allowlistMatch || envFallbackMatch
+      expect(isAdmin).toBe(true)
+    })
 
+    it('should compare numeric GitHub IDs correctly in fallback mode', () => {
+      const sessionGithubId = 12345
+      const adminGithubId = '12345'
       const isAdmin = sessionGithubId === parseInt(adminGithubId, 10)
 
       expect(isAdmin).toBe(true)

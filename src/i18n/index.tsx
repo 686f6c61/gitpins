@@ -12,7 +12,7 @@
 
 'use client'
 
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useCallback, useEffect, useState } from 'react'
 import es from './locales/es.json'
 import en from './locales/en.json'
 
@@ -33,6 +33,8 @@ interface I18nContextType {
 }
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined)
+const LOCALE_STORAGE_KEY = 'locale'
+const LOCALE_CHANGE_EVENT = 'gitpins:locale-change'
 
 /**
  * Gets a nested value from an object using dot notation.
@@ -55,34 +57,56 @@ function getNestedValue(obj: Record<string, unknown>, path: string): string {
   return typeof result === 'string' ? result : path
 }
 
+function resolveBrowserLocale(): Locale {
+  const savedLocale = localStorage.getItem(LOCALE_STORAGE_KEY)
+  if (savedLocale === 'es' || savedLocale === 'en') {
+    return savedLocale
+  }
+
+  return navigator.language.toLowerCase().startsWith('en') ? 'en' : 'es'
+}
+
 /**
  * I18n provider component.
  * Detects browser language on mount, loads saved preference from localStorage.
  * Provides translation function and locale switching to all children.
  */
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  // Usar lazy initialization para evitar llamar setState en useEffect
-  const [locale, setLocaleState] = useState<Locale>(() => {
-    if (typeof window !== 'undefined') {
-      const savedLocale = localStorage.getItem('locale') as Locale | null
-      if (savedLocale && (savedLocale === 'es' || savedLocale === 'en')) {
-        return savedLocale
+  // SSR and first client render must be deterministic to avoid hydration mismatches.
+  // We start with 'es' and then sync to localStorage / browser language on mount.
+  const [locale, setLocaleState] = useState<Locale>('es')
+
+  useEffect(() => {
+    const syncLocale = () => {
+      try {
+        setLocaleState(resolveBrowserLocale())
+      } catch {
+        // non-fatal
       }
-      // Detectar idioma del navegador
-      const browserLang = navigator.language.toLowerCase()
-      if (browserLang.startsWith('es')) {
-        return 'es'
-      }
-      return 'en'
     }
-    return 'es'
-  })
+
+    syncLocale()
+
+    const handleChange = () => syncLocale()
+    window.addEventListener('storage', handleChange)
+    window.addEventListener(LOCALE_CHANGE_EVENT, handleChange)
+
+    return () => {
+      window.removeEventListener('storage', handleChange)
+      window.removeEventListener(LOCALE_CHANGE_EVENT, handleChange)
+    }
+  }, [])
+
+  useEffect(() => {
+    document.documentElement.lang = locale
+  }, [locale])
 
   const setLocale = useCallback((newLocale: Locale) => {
+    if (localStorage.getItem(LOCALE_STORAGE_KEY) !== newLocale) {
+      localStorage.setItem(LOCALE_STORAGE_KEY, newLocale)
+    }
     setLocaleState(newLocale)
-    localStorage.setItem('locale', newLocale)
-    // Actualizar el atributo lang del documento
-    document.documentElement.lang = newLocale
+    window.dispatchEvent(new Event(LOCALE_CHANGE_EVENT))
   }, [])
 
   const t = useCallback((key: string, params?: Record<string, string | number>): string => {

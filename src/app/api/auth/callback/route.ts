@@ -15,9 +15,10 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { exchangeCodeForToken, getGitHubUser, getUserInstallation } from '@/lib/github'
-import { verifyOAuthState, createSession } from '@/lib/session'
+import { consumeOAuthReturnTo, createSession, verifyOAuthState } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { encrypt } from '@/lib/crypto'
+import { consumeSudoIntent, setSudoCookie } from '@/lib/sudo'
 
 /**
  * GET /api/auth/callback
@@ -61,10 +62,6 @@ export async function GET(request: NextRequest) {
     // Obtener instalación de la app
     const installationId = await getUserInstallation(tokenData.access_token)
 
-    // Determinar si es admin usando GitHub ID (más seguro que username)
-    const adminGithubId = process.env.ADMIN_GITHUB_ID
-    const isAdmin = adminGithubId ? githubUser.id === parseInt(adminGithubId, 10) : false
-
     // Encrypt tokens before storing
     const encryptedToken = encrypt(tokenData.access_token)
     const encryptedRefreshToken = tokenData.refresh_token ? encrypt(tokenData.refresh_token) : null
@@ -93,7 +90,6 @@ export async function GET(request: NextRequest) {
         avatarUrl: githubUser.avatarUrl,
         installationId,
         lastLoginAt: new Date(),
-        isAdmin,
       },
       create: {
         githubId: githubUser.id,
@@ -101,9 +97,30 @@ export async function GET(request: NextRequest) {
         email: githubUser.email,
         avatarUrl: githubUser.avatarUrl,
         installationId,
-        isAdmin,
       },
     })
+
+    // Optional bootstrap path while migrating from ENV-only admin model
+    const adminGithubId = process.env.ADMIN_GITHUB_ID
+    if (adminGithubId && githubUser.id === parseInt(adminGithubId, 10)) {
+      try {
+        await prisma.adminAccount.upsert({
+          where: { githubId: githubUser.id },
+          update: {
+            userId: user.id,
+            revokedAt: null,
+            reason: 'Bootstrapped from ADMIN_GITHUB_ID fallback',
+          },
+          create: {
+            githubId: githubUser.id,
+            userId: user.id,
+            reason: 'Bootstrapped from ADMIN_GITHUB_ID fallback',
+          },
+        })
+      } catch (error) {
+        console.error('Admin allowlist bootstrap warning:', error)
+      }
+    }
 
     // Crear o actualizar token en tabla separada (UserToken)
     await prisma.userToken.upsert({
@@ -122,16 +139,28 @@ export async function GET(request: NextRequest) {
     })
 
     // Crear sesión (sin el accessToken - ya no lo guardamos en la cookie)
-    // isAdmin no se guarda en JWT - se verifica server-side contra ADMIN_GITHUB_ID
     await createSession({
       userId: user.id,
       githubId: user.githubId,
       username: user.username,
     })
 
-    // Redirigir al dashboard si tiene instalación, si no a instalar
+    const returnTo = await consumeOAuthReturnTo('/dashboard')
+
+    // If this OAuth flow was initiated for "sudo mode", set a short-lived cookie.
+    try {
+      const shouldSudo = await consumeSudoIntent()
+      if (shouldSudo) {
+        await setSudoCookie()
+      }
+    } catch (error) {
+      // Non-fatal: failing to set sudo cookie should not block login.
+      console.error('Sudo cookie warning:', error)
+    }
+
+    // Redirigir al returnTo si tiene instalación, si no a instalar
     if (installationId) {
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard`)
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}${returnTo}`)
     } else {
       return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/install`)
     }

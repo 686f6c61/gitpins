@@ -37,7 +37,7 @@ export function createAppOctokit(installationId: number): Octokit {
  * @param options.reposOrder - Array of repository full names in desired order
  * @param options.topN - Number of top repos to maintain (6-20)
  * @param options.syncFrequency - Sync frequency in hours
- * @param options.commitStrategy - How to handle commits ('branch' or 'revert')
+ * @param options.commitStrategy - Commit strategy (fixed to 'revert')
  * @param options.username - GitHub username for ownership attribution
  * @returns JSON string formatted with 2-space indentation
  */
@@ -45,7 +45,7 @@ export function generateConfigJson(options: {
   reposOrder: string[]
   topN: number
   syncFrequency: number
-  commitStrategy: 'branch' | 'revert'
+  commitStrategy: 'revert'
   username: string
 }): string {
   return JSON.stringify(
@@ -97,8 +97,9 @@ jobs:
         run: |
           echo "🔍 Checking repository order..."
 
-          response=\$(curl -s -X POST "${options.appUrl}/api/sync/\${{ secrets.GITPINS_SYNC_SECRET }}" \\
-            -H "Content-Type: application/json")
+          response=\$(curl -s -X POST "${options.appUrl}/api/sync" \\
+            -H "Content-Type: application/json" \\
+            -H "X-GitPins-Sync-Secret: \${{ secrets.GITPINS_SYNC_SECRET }}")
 
           echo "$response" | jq '.' || echo "$response"
 

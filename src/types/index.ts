@@ -37,9 +37,10 @@ export interface RepoOrderSettings {
   includePrivate: boolean
   syncFrequency: number
   autoEnabled: boolean
-  commitStrategy: 'branch' | 'revert'
+  commitStrategy: 'revert'
   preferredHour?: number | null // 0-23 UTC, null = cualquier hora
-  syncSecret?: string
+  syncConfigured?: boolean
+  canManualSync?: boolean
 }
 
 /**

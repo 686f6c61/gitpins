@@ -15,7 +15,8 @@ import { Octokit } from 'octokit'
 // GitHub OAuth endpoints
 export const GITHUB_AUTH_URL = 'https://github.com/login/oauth/authorize'
 export const GITHUB_TOKEN_URL = 'https://github.com/login/oauth/access_token'
-export const GITHUB_APP_INSTALL_URL = `https://github.com/apps/gitpins/installations/new`
+const githubAppSlug = process.env.GITHUB_APP_SLUG || 'gitpins'
+export const GITHUB_APP_INSTALL_URL = `https://github.com/apps/${githubAppSlug}/installations/new`
 
 // Generar URL de autorización
 export function getAuthUrl(state: string): string {
@@ -23,7 +24,9 @@ export function getAuthUrl(state: string): string {
     client_id: process.env.GITHUB_APP_CLIENT_ID!,
     redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback`,
     state,
-    scope: 'repo user:email', // repo for creating config repo, user:email for email access
+    // `repo` is required to list/access private repositories via the OAuth user token (dashboard).
+    // `user:email` is used to read the user's email when available.
+    scope: 'repo user:email',
   })
   return `${GITHUB_AUTH_URL}?${params.toString()}`
 }
@@ -134,12 +137,39 @@ export async function getUserInstallation(accessToken: string): Promise<number |
 }
 
 /**
+ * Verifies that a specific installation belongs to the authenticated user.
+ * @param accessToken - OAuth access token of the authenticated user
+ * @param installationId - Installation ID to verify
+ * @returns true if the installation belongs to the user
+ */
+export async function userHasInstallation(accessToken: string, installationId: number): Promise<boolean> {
+  const octokit = createUserOctokit(accessToken)
+
+  try {
+    for (let page = 1; page <= 10; page++) {
+      const { data } = await octokit.rest.apps.listInstallationsForAuthenticatedUser({
+        per_page: 100,
+        page,
+      })
+      const installations = (data as { installations?: Array<{ id: number }> }).installations || []
+      if (installations.some((inst) => inst.id === installationId)) {
+        return true
+      }
+      if (installations.length < 100) break
+    }
+    return false
+  } catch {
+    return false
+  }
+}
+
+/**
  * Checks if a user's access token is expired or about to expire.
  * Returns the user with a refreshed token if needed.
  * @param userId - The user's database ID
  * @returns Object with the current valid access token and whether it was refreshed
  */
-export async function ensureValidToken(userId: string): Promise<{
+export async function ensureValidToken(userId: string, forceRefresh: boolean = false): Promise<{
   accessToken: string
   wasRefreshed: boolean
 }> {
@@ -167,7 +197,7 @@ export async function ensureValidToken(userId: string): Promise<{
   const expiresIn = userToken.expiresAt.getTime() - Date.now()
   const fiveMinutes = 5 * 60 * 1000
 
-  if (expiresIn > fiveMinutes) {
+  if (expiresIn > fiveMinutes && !forceRefresh) {
     // Token is still valid
     return {
       accessToken: decrypt(userToken.accessToken),

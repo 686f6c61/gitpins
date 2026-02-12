@@ -415,8 +415,7 @@ export function HelpContent() {
           <h2 className="text-2xl font-bold mb-4">{t('help.strategies.title')}</h2>
           <p className="text-muted-foreground mb-8">{t('help.strategies.intro')}</p>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Revert strategy */}
+          <div className="max-w-2xl">
             <div className="border-2 border-foreground rounded-xl p-6">
               <div className="flex items-center gap-2 mb-4">
                 <h3 className="font-semibold">{t('help.strategies.revertTitle')}</h3>
@@ -429,8 +428,8 @@ export function HelpContent() {
                 <div>git commit --allow-empty -m &quot;[GitPins]&quot;</div>
                 <div className="text-muted-foreground mt-2"># Step 2</div>
                 <div>git revert HEAD --no-edit</div>
-                <div className="text-muted-foreground mt-2"># Step 3 (auto cleanup)</div>
-                <div>git rebase -i HEAD~2 (drop both)</div>
+                <div className="text-muted-foreground mt-2"># Step 3</div>
+                <div>git push</div>
               </div>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center gap-2 text-green-600">
@@ -440,31 +439,6 @@ export function HelpContent() {
                 <li className="flex items-center gap-2 text-green-600">
                   <CheckIcon className="w-4 h-4" />
                   {t('help.strategies.revertPro2')}
-                </li>
-              </ul>
-            </div>
-
-            {/* Branch strategy */}
-            <div className="border border-border rounded-xl p-6">
-              <h3 className="font-semibold mb-4">{t('help.strategies.branchTitle')}</h3>
-              <div className="bg-muted/50 rounded-lg p-4 text-sm font-mono space-y-1 mb-4">
-                <div className="text-muted-foreground"># Step 1</div>
-                <div>git checkout -b gitpins-temp</div>
-                <div className="text-muted-foreground mt-2"># Step 2</div>
-                <div>git commit --allow-empty -m &quot;[GitPins]&quot;</div>
-                <div className="text-muted-foreground mt-2"># Step 3</div>
-                <div>git checkout main && git merge</div>
-                <div className="text-muted-foreground mt-2"># Step 4</div>
-                <div>git branch -d gitpins-temp</div>
-              </div>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-center gap-2 text-muted-foreground">
-                  <CheckIcon className="w-4 h-4" />
-                  {t('help.strategies.branchPro1')}
-                </li>
-                <li className="flex items-center gap-2 text-yellow-600">
-                  <span className="w-4 h-4 text-center">~</span>
-                  {t('help.strategies.branchCon1')}
                 </li>
               </ul>
             </div>

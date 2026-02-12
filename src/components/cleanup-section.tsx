@@ -55,8 +55,8 @@ export function CleanupSection({ language }: CleanupSectionProps) {
             // Redirigir a la página de instalación si necesita reinstalar la app
             window.location.href = '/install'
           } else {
-            // Redirigir a logout si el token expiró
-            window.location.href = '/api/auth/logout'
+            // Relogin directo si la autenticación expiró
+            window.location.href = '/api/auth/login?returnTo=/dashboard&reason=session_expired'
           }
           return
         }

@@ -24,7 +24,7 @@ export async function POST(
       return unauthorizedResponse()
     }
 
-    const isAdmin = await verifyAdmin()
+    const isAdmin = await verifyAdmin(session)
 
     if (!isAdmin) {
       return forbiddenResponse()

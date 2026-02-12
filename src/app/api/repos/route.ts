@@ -12,9 +12,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
-import { getUserRepos } from '@/lib/github'
+import { ensureValidToken, getUserRepos } from '@/lib/github'
 import { prisma } from '@/lib/prisma'
-import { decrypt } from '@/lib/crypto'
 import { checkAPIRateLimit, addSecurityHeaders } from '@/lib/security'
 
 /**
@@ -27,7 +26,7 @@ export async function GET(request: NextRequest) {
 
   if (!session) {
     return addSecurityHeaders(
-      NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      NextResponse.json({ error: 'Unauthorized', reason: 'no_session' }, { status: 401 })
     )
   }
 
@@ -46,12 +45,22 @@ export async function GET(request: NextRequest) {
 
     if (!user || !user.token?.accessToken) {
       return addSecurityHeaders(
-        NextResponse.json({ error: 'Session expired' }, { status: 401 })
+        NextResponse.json({ error: 'Session expired', reason: 'token_missing' }, { status: 401 })
       )
     }
 
-    // Decrypt the access token from UserToken
-    const accessToken = decrypt(user.token.accessToken)
+    let accessToken: string
+    try {
+      const tokenState = await ensureValidToken(session.userId)
+      accessToken = tokenState.accessToken
+    } catch {
+      return addSecurityHeaders(
+        NextResponse.json({
+          error: 'GitHub authentication expired. Please log in again.',
+          reason: 'token_expired'
+        }, { status: 401 })
+      )
+    }
 
     // Obtener repos de GitHub
     let repos
@@ -61,16 +70,23 @@ export async function GET(request: NextRequest) {
       // Detectar errores de autenticación de GitHub (401/403)
       const githubError = error as { status?: number; message?: string }
       if (githubError.status === 401 || githubError.status === 403) {
-        console.error('GitHub token invalid or expired:', githubError.message)
-        // Opcionalmente podríamos limpiar el token inválido de la DB aquí
-        return addSecurityHeaders(
-          NextResponse.json({
-            error: 'GitHub authentication expired. Please log out and log in again.',
-            needsReauth: true
-          }, { status: 401 })
-        )
+        try {
+          const forcedRefresh = await ensureValidToken(session.userId, true)
+          accessToken = forcedRefresh.accessToken
+          repos = await getUserRepos(accessToken)
+        } catch {
+          console.error('GitHub token invalid or expired:', githubError.message)
+          return addSecurityHeaders(
+            NextResponse.json({
+              error: 'GitHub authentication expired. Please log in again.',
+              reason: 'token_invalid'
+            }, { status: 401 })
+          )
+        }
       }
-      throw error
+      if (!repos) {
+        throw error
+      }
     }
 
     // Obtener orden guardado del usuario
@@ -119,11 +135,16 @@ export async function GET(request: NextRequest) {
               includePrivate: repoOrder.includePrivate,
               syncFrequency: repoOrder.syncFrequency,
               autoEnabled: repoOrder.autoEnabled,
-              commitStrategy: repoOrder.commitStrategy,
+              commitStrategy: 'revert' as const,
               preferredHour: repoOrder.preferredHour,
-              syncSecret: repoOrder.syncSecret,
+              syncConfigured: !!repoOrder.syncSecret,
+              canManualSync: !!repoOrder.syncSecret && !!user.installationId,
             }
           : null,
+      }, {
+        headers: {
+          'Cache-Control': 'no-store',
+        },
       })
     )
   } catch (error) {

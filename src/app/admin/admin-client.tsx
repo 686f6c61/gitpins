@@ -48,11 +48,7 @@ interface Stats {
   }
 }
 
-interface AdminClientProps {
-  csrfToken: string
-}
-
-export function AdminClient({ csrfToken }: AdminClientProps) {
+export function AdminClient() {
   const [users, setUsers] = useState<User[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -60,6 +56,7 @@ export function AdminClient({ csrfToken }: AdminClientProps) {
   const [error, setError] = useState<string | null>(null)
   const [banModal, setBanModal] = useState<{ userId: string; username: string } | null>(null)
   const [banReason, setBanReason] = useState('')
+  const [csrfToken, setCsrfToken] = useState<string | null>(null)
 
   const fetchData = async () => {
     try {
@@ -90,16 +87,62 @@ export function AdminClient({ csrfToken }: AdminClientProps) {
 
   useEffect(() => {
     fetchData()
+    void (async () => {
+      try {
+        const response = await fetch('/api/auth/csrf', {
+          method: 'GET',
+          cache: 'no-store',
+        })
+        if (!response.ok) return
+        const data = await response.json()
+        if (typeof data.csrfToken === 'string' && data.csrfToken) {
+          setCsrfToken(data.csrfToken)
+        }
+      } catch {
+        // No-op: token can be requested again before sensitive actions.
+      }
+    })()
   }, [])
+
+  const ensureCsrfToken = async (): Promise<string | null> => {
+    if (csrfToken) return csrfToken
+
+    try {
+      const response = await fetch('/api/auth/csrf', {
+        method: 'GET',
+        cache: 'no-store',
+      })
+
+      if (!response.ok) {
+        return null
+      }
+
+      const data = await response.json()
+      if (typeof data.csrfToken !== 'string' || !data.csrfToken) {
+        return null
+      }
+
+      setCsrfToken(data.csrfToken)
+      return data.csrfToken
+    } catch {
+      return null
+    }
+  }
 
   const handleBan = async (userId: string, reason: string) => {
     try {
       setActionLoading(userId)
+      const token = await ensureCsrfToken()
+      if (!token) {
+        setError('Security token unavailable. Please reload the page.')
+        return
+      }
+
       const res = await fetch(`/api/admin/users/${userId}/ban`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken,
+          'X-CSRF-Token': token,
         },
         body: JSON.stringify({ reason })
       })
@@ -120,10 +163,16 @@ export function AdminClient({ csrfToken }: AdminClientProps) {
   const handleUnban = async (userId: string) => {
     try {
       setActionLoading(userId)
+      const token = await ensureCsrfToken()
+      if (!token) {
+        setError('Security token unavailable. Please reload the page.')
+        return
+      }
+
       const res = await fetch(`/api/admin/users/${userId}/unban`, {
         method: 'POST',
         headers: {
-          'X-CSRF-Token': csrfToken,
+          'X-CSRF-Token': token,
         },
       })
 
@@ -145,10 +194,16 @@ export function AdminClient({ csrfToken }: AdminClientProps) {
 
     try {
       setActionLoading(userId)
+      const token = await ensureCsrfToken()
+      if (!token) {
+        setError('Security token unavailable. Please reload the page.')
+        return
+      }
+
       const res = await fetch(`/api/admin/users/${userId}/delete`, {
         method: 'DELETE',
         headers: {
-          'X-CSRF-Token': csrfToken,
+          'X-CSRF-Token': token,
         },
       })
 

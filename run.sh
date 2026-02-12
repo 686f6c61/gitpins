@@ -1,46 +1,29 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# GitPins - Script de desarrollo local
-# ====================================
+set -euo pipefail
 
-set -e
-
-# Colores
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
 echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}   GitPins - Entorno de desarrollo${NC}"
+echo -e "${GREEN}   GitPins - Docker Local Environment${NC}"
 echo -e "${GREEN}========================================${NC}"
-echo ""
 
-# Instalar dependencias si es necesario
-if [ ! -d "node_modules" ]; then
-    echo -e "${YELLOW}Instalando dependencias...${NC}"
-    npm install
+if [[ ! -f ".env.docker" ]]; then
+  echo -e "${YELLOW}No .env.docker found. Creating from template...${NC}"
+  cp .env.docker.example .env.docker
+  echo -e "${YELLOW}Edit .env.docker with your GitHub App local credentials and run again.${NC}"
+  exit 1
 fi
-echo -e "${GREEN}✓${NC} Dependencias OK"
 
-# Generar cliente Prisma
-echo -e "${YELLOW}Generando cliente Prisma...${NC}"
-npx prisma generate
+echo -e "${YELLOW}Starting Docker services...${NC}"
+docker compose up -d
 
-# Crear/actualizar base de datos SQLite
-echo -e "${YELLOW}Configurando base de datos...${NC}"
-npx prisma db push
-
-echo -e "${GREEN}✓${NC} Base de datos OK"
-
-echo ""
-echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}   Iniciando servidor...${NC}"
-echo -e "${GREEN}========================================${NC}"
-echo ""
-echo -e "App:       ${GREEN}http://localhost:3000${NC}"
-echo -e "Dashboard: ${GREEN}http://localhost:3000/dashboard${NC}"
-echo -e "Admin:     ${GREEN}http://localhost:3000/admin${NC}"
-echo ""
-
-# Iniciar servidor
-npm run dev
+echo -e "${GREEN}✓${NC} Services started"
+echo
+echo -e "App:       ${GREEN}http://localhost:3001${NC}"
+echo -e "Database:  ${GREEN}localhost:5432${NC}"
+echo
+echo -e "To follow logs: ${YELLOW}docker compose logs -f app${NC}"
+echo -e "To clone Neon to local: ${YELLOW}SOURCE_DB_URL='postgresql://...' ./scripts/clone-neon-to-local.sh${NC}"

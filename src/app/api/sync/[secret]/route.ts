@@ -10,68 +10,91 @@
  * - Validates the sync secret
  * - Applies rate limiting (10 requests/hour per secret)
  * - Creates empty commits to update repo "last updated" timestamps
- * - Supports two strategies: revert (commit+revert) and branch (temp branch merge)
+ * - Uses a single strategy: revert (commit+revert)
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { createAppOctokit } from '@/lib/github-app'
 import { checkRateLimit, rateLimits } from '@/lib/rate-limit'
+import { ensureValidToken, getUserRepos } from '@/lib/github'
 import type { Octokit } from 'octokit'
 
 // Configuración de timeout para Vercel Pro (800s máximo permitido)
 export const maxDuration = 800
+const GITHUB_MUTATIONS_DISABLED = process.env.GITPINS_DISABLE_GITHUB_MUTATIONS === 'true'
 
-/**
- * Obtiene el orden actual de los repositorios desde GitHub API.
- * Los repositorios se retornan ordenados por 'updated_at' descendente.
- * @param octokit - Authenticated Octokit client
- * @param username - GitHub username
- * @param repoNames - Array of repository full names to filter
- * @returns Array of repository full names in current order
- */
-async function getCurrentRepoOrder(
-  octokit: Octokit,
-  username: string,
-  repoNames: string[]
-): Promise<string[]> {
+async function getCurrentRepoOrderFromOAuth(userId: string): Promise<string[] | null> {
   try {
-    const { data: repos } = await octokit.rest.repos.listForUser({
-      username,
-      sort: 'updated',
-      direction: 'desc',
-      per_page: 100,
+    const { accessToken } = await ensureValidToken(userId)
+    const repos = await getUserRepos(accessToken)
+    return repos.map((r) => r.fullName)
+  } catch (error) {
+    // OAuth is not strictly required to perform ordering (we can still touch repos via installation),
+    // but using it gives us the user's true global order (including private repos) for accurate skips.
+    console.error('Error fetching current repo order via OAuth:', error)
+    return null
+  }
+}
+
+async function getCurrentRepoOrderFromInstallation(octokit: Octokit): Promise<string[]> {
+  try {
+    const repos: Array<{ full_name: string; updated_at?: string | null }> = []
+
+    for await (const response of octokit.paginate.iterator(
+      octokit.rest.apps.listReposAccessibleToInstallation,
+      { per_page: 100 }
+    )) {
+      const data = response.data as unknown as { repositories?: Array<{ full_name: string; updated_at?: string | null }> }
+      for (const repo of data.repositories || []) {
+        repos.push(repo)
+      }
+    }
+
+    repos.sort((a, b) => {
+      const aUpdated = a.updated_at ? Date.parse(a.updated_at) : 0
+      const bUpdated = b.updated_at ? Date.parse(b.updated_at) : 0
+      return bUpdated - aUpdated
     })
 
-    // Filtrar solo los repos que nos interesan y mantener el orden actual
-    const relevantRepos = repos
-      .filter(r => repoNames.includes(r.full_name))
-      .map(r => r.full_name)
-
-    return relevantRepos
+    return repos.map((r) => r.full_name)
   } catch (error) {
-    console.error('Error fetching current repo order:', error)
+    console.error('Error fetching current repo order from installation:', error)
     return []
   }
 }
 
 /**
+ * Obtiene el orden actual "global" de repositorios.
+ * Preferimos OAuth (lista real del usuario, incluyendo privados); si falla, hacemos fallback a la instalación.
+ */
+async function getCurrentRepoOrder(options: { installationOctokit: Octokit; userId: string }): Promise<string[]> {
+  const oauthOrder = await getCurrentRepoOrderFromOAuth(options.userId)
+  if (oauthOrder && oauthOrder.length > 0) return oauthOrder
+
+  return getCurrentRepoOrderFromInstallation(options.installationOctokit)
+}
+
+function arraysEqual(left: string[], right: string[]): boolean {
+  if (left.length !== right.length) return false
+  for (let i = 0; i < left.length; i++) {
+    if (left[i] !== right[i]) return false
+  }
+  return true
+}
+
+/**
  * Verifica si los repositorios ya están en el orden correcto.
- * Compara los primeros N repos actuales con los N repos deseados.
+ * Compara los primeros N repos globales con los N repos deseados.
  * @param currentOrder - Current order from GitHub API
- * @param desiredOrder - Desired order from config
- * @param topN - Number of top repos to verify
+ * @param desiredTop - Desired repos in top order
  * @returns true if repos are already in correct order
  */
 function isRepoOrderCorrect(
   currentOrder: string[],
-  desiredOrder: string[],
-  topN: number
+  desiredTop: string[]
 ): boolean {
-  const currentTop = currentOrder.slice(0, topN)
-  const desiredTop = desiredOrder.slice(0, topN)
-
-  // Verificar que tengamos suficientes repos
+  const currentTop = currentOrder.slice(0, desiredTop.length)
   if (currentTop.length < desiredTop.length) {
     return false
   }
@@ -87,6 +110,34 @@ function isRepoOrderCorrect(
 }
 
 /**
+ * Computes the minimal prefix of desired repos that must be "touched" (commit+revert)
+ * so the global top-N ends up matching desiredTop exactly.
+ */
+function getReposToTouch(
+  currentOrder: string[],
+  desiredTop: string[]
+): string[] {
+  if (desiredTop.length === 0) return []
+
+  for (let prefixLength = 0; prefixLength <= desiredTop.length; prefixLength++) {
+    const touchedPrefix = desiredTop.slice(0, prefixLength)
+    const touchedSet = new Set(touchedPrefix)
+
+    const currentWithoutTouched = currentOrder.filter(fullName => !touchedSet.has(fullName))
+    const candidateTop = [
+      ...touchedPrefix,
+      ...currentWithoutTouched.slice(0, desiredTop.length - prefixLength),
+    ]
+
+    if (arraysEqual(candidateTop, desiredTop)) {
+      return touchedPrefix
+    }
+  }
+
+  return [...desiredTop]
+}
+
+/**
  * POST /api/sync/[secret]
  * Syncs repository order by creating empty commits.
  * Called by GitHub Action on schedule.
@@ -95,6 +146,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ secret: string }> }
 ) {
+  const syncStartedAt = Date.now()
   const { secret } = await params
 
   // Validate secret format (should be UUID)
@@ -137,12 +189,38 @@ export async function POST(
       return NextResponse.json({ error: 'Configuration error' }, { status: 400 })
     }
 
-    if (!repoOrder.autoEnabled) {
-      return NextResponse.json({ message: 'Sync disabled' }, { status: 200 })
-    }
-
     // Verificar si es una ejecución forzada (manual desde dashboard)
     const forceSync = request.nextUrl.searchParams.get('force') === 'true'
+
+    if (!repoOrder.autoEnabled && !forceSync) {
+      return NextResponse.json({
+        success: true,
+        skipped: true,
+        reason: 'auto_disabled',
+        message: 'Sync is disabled in settings.',
+      }, { status: 200 })
+    }
+
+    if (GITHUB_MUTATIONS_DISABLED) {
+      await prisma.syncLog.create({
+        data: {
+          userId: user.id,
+          action: 'auto_sync_skipped',
+          status: 'success',
+          details: JSON.stringify({
+            reason: 'GitHub mutations are disabled by environment',
+            flag: 'GITPINS_DISABLE_GITHUB_MUTATIONS',
+          }),
+          reposAffected: '[]',
+        },
+      })
+      return NextResponse.json({
+        success: true,
+        skipped: true,
+        reason: 'mutations_disabled',
+        message: 'GitHub mutations are disabled in this environment.',
+      })
+    }
 
     // ========== VERIFICACIÓN DE HORA PREFERIDA ==========
     // Si el usuario ha configurado una hora preferida, solo sincronizar a esa hora
@@ -169,6 +247,7 @@ export async function POST(
           success: true,
           message: `Skipped: Current hour (${currentHour} UTC) doesn't match preferred hour (${repoOrder.preferredHour} UTC)`,
           skipped: true,
+          reason: 'preferred_hour',
           currentHour,
           preferredHour: repoOrder.preferredHour,
         })
@@ -186,6 +265,7 @@ export async function POST(
           success: true,
           message: 'Sync already in progress or completed recently. Skipping.',
           skipped: true,
+          reason: 'recent_sync',
           lastSyncAt: repoOrder.lastSyncAt.toISOString(),
           waitMinutes: Math.ceil((TEN_MINUTES - timeSinceLastSync) / 60000),
         })
@@ -239,19 +319,9 @@ export async function POST(
     }
 
     // ========== VERIFICACIÓN DE ORDEN ==========
-    // Verificar si los repos ya están en el orden correcto
-    // Si lo están, no necesitamos crear commits innecesarios
-    const currentOrder = await getCurrentRepoOrder(
-      octokit,
-      user.username,
-      reposOrderParsed
-    )
-
-    const isOrdered = isRepoOrderCorrect(
-      currentOrder,
-      reposToSync,
-      repoOrder.topN
-    )
+    // Verificar si los repos ya están en el orden correcto global.
+    const currentOrder = await getCurrentRepoOrder({ installationOctokit: octokit, userId: user.id })
+    const isOrdered = isRepoOrderCorrect(currentOrder, reposToSync)
 
     if (isOrdered) {
       // Los repos ya están en el orden correcto - no hacer nada
@@ -262,7 +332,7 @@ export async function POST(
           status: 'success',
           details: JSON.stringify({
             reason: 'Repositories already in correct order',
-            currentOrder: currentOrder.slice(0, repoOrder.topN),
+            currentOrder: currentOrder.slice(0, reposToSync.length),
             desiredOrder: reposToSync,
           }),
           reposAffected: JSON.stringify(reposToSync),
@@ -273,21 +343,47 @@ export async function POST(
         success: true,
         message: 'Repositories already in correct order. No sync needed.',
         skipped: true,
-        currentOrder: currentOrder.slice(0, repoOrder.topN),
+        reason: 'already_ordered',
+        currentOrder: currentOrder.slice(0, reposToSync.length),
         desiredOrder: reposToSync,
+      })
+    }
+
+    // Optimization: touch only the minimal prefix that must become "newer"
+    // to transform current global top-N into desired top-N.
+    const reposToTouch = getReposToTouch(currentOrder, reposToSync)
+    if (reposToTouch.length === 0) {
+      await prisma.syncLog.create({
+        data: {
+          userId: user.id,
+          action: 'auto_sync_skipped',
+          status: 'success',
+          details: JSON.stringify({
+            reason: 'No touch operations required after optimization',
+            desiredOrder: reposToSync,
+          }),
+          reposAffected: JSON.stringify(reposToSync),
+        },
+      })
+      return NextResponse.json({
+        success: true,
+        skipped: true,
+        reason: 'no_touch_needed',
+        message: 'No touch operations required.',
       })
     }
     // ========== FIN VERIFICACIÓN DE ORDEN ==========
 
-    const results: { repo: string; status: string; error?: string; cleaned?: boolean; owner?: string; repoName?: string }[] = []
+    const results: { repo: string; status: string; error?: string; durationMs: number }[] = []
     const detailedLogs: string[] = []
 
-    // Procesar repos en orden inverso (el último queda más reciente)
-    for (let i = reposToSync.length - 1; i >= 0; i--) {
-      const repoFullName = reposToSync[i]
+    // Procesar en orden inverso para que el primero deseado quede más reciente.
+    for (let i = reposToTouch.length - 1; i >= 0; i--) {
+      const repoFullName = reposToTouch[i]
       const [owner, repo] = repoFullName.split('/')
-      const position = i + 1
-      const total = reposToSync.length
+      const desiredPosition = reposToSync.indexOf(repoFullName) + 1
+      const position = reposToTouch.length - i
+      const total = reposToTouch.length
 
       // Validate repo name format (GitHub constraints: 1-100 chars, alphanumeric, hyphen, underscore, dot)
       // Must not start with a dot, and cannot be empty
@@ -304,11 +400,13 @@ export async function POST(
           repo: repoFullName,
           status: 'error',
           error: 'Invalid repository name format',
+          durationMs: 0,
         })
         continue
       }
 
-      detailedLogs.push(`[${position}/${total}] Ordering ${repoFullName}...`)
+      detailedLogs.push(`[${position}/${total}] Ordering ${repoFullName} (target ${desiredPosition}/${reposToSync.length})...`)
+      const repoStartedAt = Date.now()
 
       try {
         // Obtener referencia del branch principal
@@ -339,100 +437,50 @@ export async function POST(
           commit_sha: sha,
         })
 
-        if (repoOrder.commitStrategy === 'revert') {
-          // Estrategia: Commit + Revert
-          detailedLogs.push(`  - Creating commit for position ${position}/${total}...`)
+        // Fixed strategy: Commit + Revert
+        detailedLogs.push(`  - Creating commit for target position ${desiredPosition}/${reposToSync.length}...`)
 
-          // Crear commit vacío
-          const { data: newCommit } = await octokit.rest.git.createCommit({
-            owner,
-            repo,
-            message: `[GitPins] Position: ${i + 1}/${reposToSync.length}`,
-            tree: commitData.tree.sha,
-            parents: [sha],
-          })
+        // Crear commit vacío
+        const { data: newCommit } = await octokit.rest.git.createCommit({
+          owner,
+          repo,
+          message: `[GitPins] Position: ${desiredPosition}/${reposToSync.length}`,
+          tree: commitData.tree.sha,
+          parents: [sha],
+        })
 
-          // Actualizar referencia
-          await octokit.rest.git.updateRef({
-            owner,
-            repo,
-            ref: `heads/${defaultBranch}`,
-            sha: newCommit.sha,
-          })
+        // Actualizar referencia
+        await octokit.rest.git.updateRef({
+          owner,
+          repo,
+          ref: `heads/${defaultBranch}`,
+          sha: newCommit.sha,
+        })
 
-          detailedLogs.push(`  - Reverting commit...`)
+        detailedLogs.push(`  - Reverting commit...`)
 
-          // Revertir inmediatamente
-          const { data: revertCommit } = await octokit.rest.git.createCommit({
-            owner,
-            repo,
-            message: '[GitPins] Revert',
-            tree: commitData.tree.sha,
-            parents: [newCommit.sha],
-          })
+        // Revertir inmediatamente
+        const { data: revertCommit } = await octokit.rest.git.createCommit({
+          owner,
+          repo,
+          message: '[GitPins] Revert',
+          tree: commitData.tree.sha,
+          parents: [newCommit.sha],
+        })
 
-          await octokit.rest.git.updateRef({
-            owner,
-            repo,
-            ref: `heads/${defaultBranch}`,
-            sha: revertCommit.sha,
-          })
-
-        } else {
-          // Estrategia: Branch temporal
-          const tempBranch = `gitpins-${Date.now()}`
-
-          detailedLogs.push(`  - Creating temporary branch ${tempBranch}...`)
-
-          // Crear branch temporal
-          await octokit.rest.git.createRef({
-            owner,
-            repo,
-            ref: `refs/heads/${tempBranch}`,
-            sha: sha,
-          })
-
-          detailedLogs.push(`  - Creating commit for position ${position}/${total}...`)
-
-          // Commit vacío en el branch temporal
-          const { data: newCommit } = await octokit.rest.git.createCommit({
-            owner,
-            repo,
-            message: `[GitPins] Sync position: ${i + 1}/${reposToSync.length}`,
-            tree: commitData.tree.sha,
-            parents: [sha],
-          })
-
-          await octokit.rest.git.updateRef({
-            owner,
-            repo,
-            ref: `heads/${tempBranch}`,
-            sha: newCommit.sha,
-          })
-
-          detailedLogs.push(`  - Merging to ${defaultBranch}...`)
-
-          // Merge a main
-          await octokit.rest.repos.merge({
-            owner,
-            repo,
-            base: defaultBranch,
-            head: tempBranch,
-            commit_message: `[GitPins] Position: ${i + 1}/${reposToSync.length}`,
-          })
-
-          detailedLogs.push(`  - Deleting temporary branch...`)
-
-          // Borrar branch temporal
-          await octokit.rest.git.deleteRef({
-            owner,
-            repo,
-            ref: `heads/${tempBranch}`,
-          })
-        }
+        await octokit.rest.git.updateRef({
+          owner,
+          repo,
+          ref: `heads/${defaultBranch}`,
+          sha: revertCommit.sha,
+        })
 
         detailedLogs.push(`[${position}/${total}] ${repoFullName} - SUCCESS`)
-        results.push({ repo: repoFullName, status: 'success', owner, repoName: repo })
+        results.push({
+          repo: repoFullName,
+          status: 'success',
+          durationMs: Date.now() - repoStartedAt,
+        })
 
         // Esperar 1 segundo adicional entre repos para no saturar la API
         await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -443,50 +491,10 @@ export async function POST(
           repo: repoFullName,
           status: 'error',
           error: 'Operation failed',
+          durationMs: Date.now() - repoStartedAt,
         })
       }
     }
-
-    // ========== FASE DE CLEANUP (después de todos los commits) ==========
-    // Limpiar commits de GitPins de todos los repos exitosos
-    // Se hace en el mismo orden (inverso) para mantener el orden final
-    detailedLogs.push('')
-    detailedLogs.push('=== CLEANUP PHASE ===')
-
-    // Esperar 3 segundos para que GitHub procese todos los commits
-    await new Promise((resolve) => setTimeout(resolve, 3000))
-
-    const successfulRepos = results.filter(r => r.status === 'success' && r.owner && r.repoName)
-    let cleanedCount = 0
-
-    for (const result of successfulRepos) {
-      try {
-        detailedLogs.push(`Cleaning ${result.repo}...`)
-
-        const { cleanupRepoCommitsAutomatic } = await import('../../repos/cleanup-helper')
-        const cleanupResult = await cleanupRepoCommitsAutomatic(
-          octokit,
-          result.owner as string,
-          result.repoName as string
-        )
-
-        if (cleanupResult.status === 'success' && cleanupResult.removedCommits && cleanupResult.removedCommits > 0) {
-          result.cleaned = true
-          cleanedCount++
-          detailedLogs.push(`  ✓ Cleaned ${cleanupResult.removedCommits} commit(s)`)
-        } else {
-          detailedLogs.push(`  - No commits to clean`)
-        }
-
-        // Pequeña pausa entre cleanups
-        await new Promise((resolve) => setTimeout(resolve, 500))
-      } catch (cleanupError) {
-        detailedLogs.push(`  ✗ Cleanup failed: ${cleanupError instanceof Error ? cleanupError.message : 'Unknown error'}`)
-      }
-    }
-
-    detailedLogs.push(`=== CLEANUP COMPLETE: ${cleanedCount}/${successfulRepos.length} repos cleaned ===`)
-    // ========== FIN FASE DE CLEANUP ==========
 
     // Registrar en log con detalles completos
     await prisma.syncLog.create({
@@ -498,10 +506,11 @@ export async function POST(
           results,
           logs: detailedLogs,
           summary: {
-            total: results.length,
+            totalTouched: results.length,
+            desiredTopN: reposToSync.length,
             successful: results.filter(r => r.status === 'success').length,
             failed: results.filter(r => r.status === 'error').length,
-            cleaned: cleanedCount,
+            durationMs: Date.now() - syncStartedAt,
           }
         }),
         reposAffected: JSON.stringify(reposToSync),

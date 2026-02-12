@@ -53,7 +53,7 @@
       },
       "q3": {
         "question": "¿Puedo dejar de usarlo?",
-        "answer": "Sí, sin problemas. Borra el repo gitpins-config o desactiva el workflow. Sin vendor lock-in."
+        "answer": "Sí, sin problemas. Desactiva o borra el workflow que hayas configurado (mucha gente usa un repo llamado gitpins-config). Sin vendor lock-in."
       },
       "q4": {
         "question": "¿Funciona con repos privados?",
@@ -65,7 +65,7 @@
       },
       "q6": {
         "question": "¿Qué pasa si desinstalo GitPins?",
-        "answer": "Nada. Tus repositorios quedan exactamente igual. Si quieres, puedes mantener el Action funcionando de forma independiente."
+        "answer": "Nada. Tus repositorios quedan exactamente igual. Si configuraste un workflow programado, puedes mantenerlo, desactivarlo o borrarlo cuando quieras."
       }
     },
     "features": {
@@ -171,6 +171,12 @@
       "syncing": "Sincronizando...",
       "success": "Sincronización completada: {synced} exitosos, {failed} fallidos",
       "alreadyOrdered": "Los repositorios ya están en el orden correcto",
+      "mutationsDisabled": "La sincronización está desactivada en este entorno (GITPINS_DISABLE_GITHUB_MUTATIONS=true). Cámbialo a false y reinicia para permitir escrituras en GitHub.",
+      "recentSync": "Se ejecutó una sincronización recientemente. Espera {minutes} min y prueba de nuevo.",
+      "recentSyncGeneric": "Se ejecutó una sincronización recientemente. Espera unos minutos y prueba de nuevo.",
+      "preferredHour": "Omitido por hora preferida. Hora actual: {currentHour}:00 UTC, preferida: {preferredHour}:00 UTC.",
+      "preferredHourGeneric": "Omitido por hora preferida.",
+      "autoDisabled": "La sincronización automática está desactivada en Ajustes.",
       "error": "Sincronización fallida. Por favor, inténtalo de nuevo",
       "noSecret": "Configuración de sincronización no encontrada"
     },
@@ -205,6 +211,62 @@
       "public": "Publicos",
       "private": "Privados",
       "noVisible": "No hay repositorios de este tipo"
+    },
+    "onboarding": {
+      "badge": "Guía de inicio",
+      "progress": "Paso {current} de {total}",
+      "targetFallback": "No se pudo resaltar esta sección en tu pantalla, pero puedes continuar.",
+      "waitingForSettingsClick": "Haz clic en el botón de Opciones para continuar.",
+      "skip": "Saltar guía",
+      "back": "Atrás",
+      "next": "Siguiente",
+      "finish": "Finalizar guía",
+      "steps": {
+        "welcome": {
+          "title": "Bienvenido a GitPins",
+          "desc": "Este asistente te muestra cómo ordenar repos, guardar cambios y configurar la sincronización automática en menos de 2 minutos."
+        },
+        "headerControls": {
+          "title": "Controles rápidos",
+          "desc": "Aquí puedes cambiar idioma/tema, abrir ayuda, entrar en configuración, refrescar datos y cerrar sesión."
+        },
+        "pinnedZone": {
+          "title": "Zona superior (repos fijados)",
+          "desc": "Arrastra aquí los repos que quieres mantener arriba. El contador muestra cuántos tienes fijados frente al límite actual."
+        },
+        "poolZone": {
+          "title": "Pool de repositorios",
+          "desc": "Aquí están el resto de repos. Usa filtros y arrastra al bloque superior para definir tu orden final."
+        },
+        "settingsButton": {
+          "title": "Entrar en opciones",
+          "desc": "Desde este botón abres configuración avanzada para límite, privados, frecuencia y horario de sync."
+        },
+        "settingsTopN": {
+          "title": "Límite de repos fijados",
+          "desc": "Define cuántos repos quieres mantener arriba. Si lo reduces por debajo de tu lista actual, se recorta desde el final."
+        },
+        "settingsPrivate": {
+          "title": "Incluir repos privados",
+          "desc": "Actívalo para que el orden automático tenga en cuenta también repos privados."
+        },
+        "settingsFrequency": {
+          "title": "Frecuencia de sincronización",
+          "desc": "Controla cada cuánto se ejecuta el ordenado automático. Más frecuencia = reacción más rápida, pero más consumo de Actions."
+        },
+        "settingsSchedule": {
+          "title": "Horario preferido (UTC)",
+          "desc": "Opcional: limita la ejecución automática a una hora concreta para predecibilidad operativa."
+        },
+        "settingsAuto": {
+          "title": "Auto-sync",
+          "desc": "Cuando está activo, GitPins ejecuta el ordenado sin intervención manual según la frecuencia definida."
+        },
+        "done": {
+          "title": "Todo listo",
+          "desc": "Ya conoces el flujo completo. Puedes reabrir esta guía cuando quieras desde Configuración."
+        }
+      }
     }
   },
   "settings": {
@@ -254,7 +316,46 @@
     },
     "autoSync": {
       "label": "Sincronización automática",
-      "desc": "Ejecutar el Action automáticamente"
+      "desc": "Permite la sincronización programada (cuando tu workflow llama a /api/sync)"
+    },
+    "onboarding": {
+      "title": "Guía interactiva",
+      "desc": "Repite el recorrido guiado del dashboard y opciones.",
+      "start": "Abrir guía"
+    },
+    "privacy": {
+      "title": "Privacidad y datos",
+      "desc": "Descarga tus datos o elimina tu cuenta de GitPins.",
+      "export": "Descargar mis datos",
+      "exporting": "Preparando exportación...",
+      "exportDone": "Exportación lista. Se descargó un archivo JSON.",
+      "exportHint": "Incluye tu perfil, configuración y el histórico completo (snapshots y logs). No incluye secretos.",
+      "deleteTitle": "Zona de peligro",
+      "deleteDesc": "Elimina tu cuenta y todos tus datos de GitPins. Esto NO borra repositorios de GitHub.",
+      "deleteButton": "Eliminar mi cuenta",
+      "deleteConfirm": "Eliminar definitivamente",
+      "deleting": "Eliminando...",
+      "errors": {
+        "csrf": "Token de seguridad no disponible. Recarga la página e inténtalo de nuevo.",
+        "exportFailed": "No se pudo exportar tus datos. Inténtalo de nuevo.",
+        "deleteFailed": "No se pudo eliminar la cuenta. Inténtalo de nuevo.",
+        "reauth": "Necesitas reautenticarte con GitHub para continuar (modo sudo)."
+      },
+      "deleteModal": {
+        "title": "Eliminar cuenta",
+        "intro": "Esta acción es irreversible. Antes de continuar, asegúrate de descargar tus datos si los necesitas.",
+        "item1": "Se eliminarán: perfil, configuración, tokens, snapshots y logs.",
+        "item2": "No se eliminarán repositorios de GitHub ni código.",
+        "item3": "Si configuraste un workflow programado (por ejemplo en un repo llamado gitpins-config), desactívalo o bórralo para detener la sincronización.",
+        "reauthTitle": "Reautenticación requerida",
+        "reauthDesc": "Para proteger tu cuenta, GitPins requiere una reautenticación reciente antes de eliminar datos.",
+        "reauthButton": "Reautenticar con GitHub",
+        "confirmUsernameLabel": "Escribe tu usuario para confirmar: @{username}",
+        "confirmPhraseLabel": "Escribe la frase de confirmación",
+        "confirmPhraseHint": "Frase exacta: DELETE MY ACCOUNT",
+        "loadingSudo": "Comprobando reautenticación…",
+        "cancel": "Cancelar"
+      }
     },
     "configRepoPrivate": {
       "label": "Repo de configuración privado",
@@ -308,21 +409,21 @@
         "desc": "En el dashboard de GitPins, arrastras y sueltas tus repositorios en el orden que deseas. Puedes elegir ordenar todos tus repos o solo los primeros N."
       },
       "step2": {
-        "title": "Creamos un repositorio de configuración",
-        "desc": "Al activar la sincronización, creamos un repositorio privado llamado <code>gitpins-config</code> en tu cuenta. Este contiene el GitHub Action y tu configuración."
+        "title": "Instalas la GitHub App",
+        "desc": "Instala la GitHub App en los repositorios que quieres que GitPins gestione. Esto permite crear commits vacíos (sin cambios de archivos) cuando se ejecuta el sync."
       },
       "step3": {
-        "title": "GitHub Actions se ejecuta periódicamente",
-        "desc": "Según la frecuencia que configures (cada 1, 6, 12 o 24 horas), el Action verifica si tus repos están en el orden correcto."
+        "title": "Sincronización programada (opcional)",
+        "desc": "Si quieres que GitPins mantenga tu orden automáticamente, ejecuta un workflow programado (GitHub Actions u otro scheduler) que llame a tu instancia de GitPins."
       },
       "step4": {
         "title": "Reordena si es necesario",
-        "desc": "Si algún repositorio está fuera de orden, el Action hace un commit vacío para actualizar su timestamp, restaurando el orden deseado."
+        "desc": "Cuando se ejecuta el sync, GitPins comprueba el orden actual en GitHub y solo toca los repos necesarios para restaurar tu top configurado."
       }
     },
     "strategies": {
       "title": "Estrategias de commit",
-      "intro": "Ofrecemos dos estrategias para mantener tu historial limpio:",
+      "intro": "GitPins usa una unica estrategia predecible para mantener el historial auditable:",
       "revert": {
         "title": "Commit + Revert",
         "desc": "Hacemos un commit vacío y lo revertimos inmediatamente. El resultado es que tu historial queda exactamente igual, pero la fecha de actualización cambia.",
@@ -336,19 +437,19 @@
     },
     "actionCode": {
       "title": "El GitHub Action",
-      "intro": "Somos 100% transparentes. Al activar la sincronización, se crea un GitHub Action en tu repositorio de configuración que puedes revisar, modificar o auditar cuando quieras.",
+      "intro": "Somos 100% transparentes. La sincronización programada normalmente la ejecuta un GitHub Action en un repositorio que controlas, para que puedas revisarlo, modificarlo o auditarlo cuando quieras.",
       "whatItDoes": "¿Qué hace el Action?",
       "steps": {
-        "step1": "Lee tu configuración y lista de repos a ordenar",
+        "step1": "Llama a tu instancia de GitPins (/api/sync) con tu sync secret por usuario",
         "step2": "Para cada repositorio (en orden inverso para que el primero quede más reciente):",
         "step2a": "Detecta el branch principal (main/master)",
         "step2b": "Crea un commit vacío usando la GitHub API",
-        "step2c": "Lo revierte inmediatamente (o usa branch temporal)",
+        "step2c": "Lo revierte inmediatamente (commit + revert)",
         "step3": "Espera 1 segundo entre repos para no saturar la API",
         "step4": "Reporta el resultado en los logs del Action"
       },
       "viewCode": "Ver código completo",
-      "codeLocation": "El código está en <code>.github/workflows/maintain-order.yml</code> dentro de tu repositorio de configuración."
+      "codeLocation": "Si usas GitHub Actions para la sincronización programada, el workflow vive en <code>.github/workflows/maintain-order.yml</code> dentro del repositorio que hayas elegido."
     },
     "security": {
       "title": "Seguridad y permisos",
@@ -358,13 +459,13 @@
         "title": "Lo que SÍ podemos hacer:",
         "item1": "Leer la lista de tus repositorios (metadata)",
         "item2": "Crear commits vacíos (sin modificar archivos)",
-        "item3": "Crear/borrar branches temporales",
-        "item4": "Crear el repo de configuración (gitpins-config)"
+        "item3": "Actualizar la referencia del branch principal (para aplicar commit + revert)",
+        "item4": "Opcionalmente reescribir historial para limpieza (solo cuando ejecutas limpieza explícitamente)"
       },
       "cannotDo": {
         "title": "Lo que NO podemos hacer:",
         "item1": "<strong>JAMÁS borrar repositorios</strong> - No tenemos ese permiso",
-        "item2": "Modificar, leer o borrar tu código fuente",
+        "item2": "Modificar tus archivos versionados (GitPins usa commits vacíos que apuntan al mismo tree)",
         "item3": "Acceder a tus secrets o variables de entorno",
         "item4": "Cambiar configuración de tus repos (settings)",
         "item5": "Acceder a Issues, PRs, Wikis o Discussions",
@@ -374,7 +475,7 @@
       "installationsLink": "github.com/settings/installations",
       "noCodeStorage": {
         "title": "No almacenamos tu código",
-        "desc": "Solo guardamos el orden de tus repositorios y tu configuración. Nunca accedemos al contenido de tus repos."
+        "desc": "Solo guardamos configuración de orden y logs en base de datos. No clonamos repositorios ni almacenamos código."
       },
       "runsOnYourAccount": {
         "title": "El Action corre en tu cuenta",
@@ -432,7 +533,21 @@
   "legal": {
     "title": "Legal y Descargo de Responsabilidad",
     "subtitle": "Información importante sobre el uso de GitPins",
-    "lastUpdated": "Última actualización: Diciembre 2025",
+    "lastUpdated": "Última actualización: Febrero 2026",
+    "toc": {
+      "title": "Contenido",
+      "disclaimer": "Descargo",
+      "howItWorks": "Cómo funciona",
+      "risks": "Riesgos",
+      "permissions": "Permisos",
+      "privacy": "Privacidad y datos",
+      "responsibility": "Tu responsabilidad",
+      "warranty": "Sin garantías",
+      "liability": "Responsabilidad",
+      "openSource": "Código abierto",
+      "contact": "Contacto",
+      "acceptance": "Aceptación"
+    },
     "disclaimer": {
       "title": "Descargo de Responsabilidad",
       "p1": "GitPins es un proyecto de código abierto proporcionado \"TAL CUAL\" y \"SEGÚN DISPONIBILIDAD\", sin garantías de ningún tipo, ya sean expresas o implícitas, incluyendo, pero no limitándose a, las garantías implícitas de comerciabilidad, idoneidad para un propósito particular y no infracción.",
@@ -481,22 +596,41 @@
       "canDo": "Lo que GitPins SÍ puede hacer:",
       "canDo1": "Leer la lista de tus repositorios (metadatos)",
       "canDo2": "Crear commits vacíos (sin modificar archivos)",
-      "canDo3": "Crear y borrar branches temporales",
-      "canDo4": "Crear el repositorio de configuración (gitpins-config)",
+      "canDo3": "Crear un commit de reversión inmediatamente después del commit vacío (commit + revert)",
+      "canDo4": "Proveer un endpoint de sync que un scheduler (como GitHub Actions) puede llamar",
       "cannotDo": "Lo que GitPins NO puede hacer:",
       "cannotDo1": "Borrar repositorios - No tenemos ese permiso",
-      "cannotDo2": "Leer, modificar o eliminar tu código fuente",
+      "cannotDo2": "Modificar tus archivos versionados (GitPins usa commits vacíos que apuntan al mismo tree)",
       "cannotDo3": "Acceder a secrets o variables de entorno",
       "cannotDo4": "Cambiar la configuración de tus repositorios",
       "cannotDo5": "Acceder a Issues, Pull Requests o Wikis",
       "cannotDo6": "Invitar colaboradores o modificar permisos",
       "verify": "Puedes verificar los permisos exactos en cualquier momento desde"
     },
+    "privacy": {
+      "title": "Privacidad y Datos",
+      "intro": "GitPins almacena solo los datos necesarios para ofrecer el servicio. Puedes controlar tu información desde Ajustes en cualquier momento.",
+      "whatWeStoreTitle": "Qué almacenamos",
+      "store1": "Metadatos de cuenta (id de GitHub, username, email opcional y avatar)",
+      "store2": "Configuración de orden (lista fijada, límites, programación y configuración de sync)",
+      "store3": "Histórico operativo (snapshots de orden y logs de sync) para entender cambios y depurar problemas",
+      "store4": "Eventos de auditoría de seguridad (seudonimizados) para prevenir abuso e investigar incidencias",
+      "tokensTitle": "Tokens y secretos",
+      "tokensP1": "Los tokens OAuth se guardan cifrados. Nunca incluimos tokens ni secretos de sync en los exports.",
+      "tokensP2": "Detalles de cifrado: AES-256-GCM (cifrado autenticado). Cada token se cifra con un salt y un IV aleatorios únicos.",
+      "tokensP3": "Caducidad del token: GitHub puede emitir access tokens con caducidad. GitPins guarda la fecha de expiración e intenta refrescar automáticamente cuando es posible. Si no se puede refrescar, tendrás que volver a iniciar sesión.",
+      "exportTitle": "Descargar tus datos",
+      "exportP1": "Puedes descargar un export en JSON desde Ajustes. Los exports caducan a las 72 horas.",
+      "deleteTitle": "Borrar tu cuenta",
+      "deleteP1": "Puedes borrar tu cuenta de GitPins desde Ajustes. El borrado requiere reautenticación reciente con GitHub (modo sudo).",
+      "deleteP2": "Borrar tu cuenta de GitPins no borra repositorios de GitHub. Si configuraste un workflow programado (por ejemplo en `gitpins-config`), desactívalo o bórralo para detener la sincronización.",
+      "goToSettings": "Abrir Ajustes"
+    },
     "yourResponsibility": {
       "title": "Tu Responsabilidad",
       "p1": "Al usar GitPins, aceptas que has leído y entendido cómo funciona el servicio. Entiendes que se crearán commits vacíos en tus repositorios como parte del proceso de ordenación.",
       "p2": "Aceptas los riesgos potenciales descritos en esta página y eres responsable de monitorear el uso de minutos de GitHub Actions en tu cuenta.",
-      "p3": "Puedes desactivar el servicio en cualquier momento eliminando el repositorio de configuración o deshabilitando el workflow, sin ninguna penalización."
+      "p3": "Puedes desactivar el servicio en cualquier momento desactivando o borrando cualquier workflow programado que hayas configurado, sin ninguna penalización."
     },
     "noWarranty": {
       "title": "Sin Garantías",
@@ -678,11 +812,11 @@
       },
       "step3": {
         "title": "Guardar",
-        "desc": "Pulsa guardar para activar la sincronización automática"
+        "desc": "Pulsa guardar para guardar tu orden y configuración"
       },
       "step4": {
         "title": "Listo",
-        "desc": "El GitHub Action mantiene tu orden automáticamente"
+        "desc": "Sincroniza manualmente desde el dashboard, o programa la sincronización con GitHub Actions"
       }
     },
     "githubApp": {
@@ -696,11 +830,11 @@
       "canDo": "Lo que SÍ puede hacer",
       "can1": "Leer metadatos de tus repos (nombre, descripción, estrellas)",
       "can2": "Crear commits vacíos (sin modificar archivos)",
-      "can3": "Crear y borrar branches temporales",
-      "can4": "Crear el repositorio gitpins-config",
+      "can3": "Actualizar la referencia del branch principal (para aplicar commit + revert)",
+      "can4": "Opcionalmente reescribir historial para limpieza (solo cuando ejecutas limpieza explícitamente)",
       "cannotDo": "Lo que NO puede hacer",
       "cannot1": "Borrar repositorios",
-      "cannot2": "Leer, modificar o eliminar tu código",
+      "cannot2": "Modificar tus archivos versionados (GitPins usa commits vacíos que apuntan al mismo tree)",
       "cannot3": "Acceder a secrets o variables de entorno",
       "cannot4": "Cambiar configuración de repos o permisos",
       "verify": "Puedes verificar y revocar permisos en cualquier momento desde"
@@ -713,8 +847,8 @@
       "saveTitle": "Qué ocurre al guardar",
       "save1": "Tu orden se guarda en la base de datos",
       "save2": "Se crea un snapshot en el historial (para poder restaurar)",
-      "save3": "Se activa el GitHub Action en tu repo gitpins-config",
-      "save4": "En la próxima ejecución, el Action ordenará tus repos"
+      "save3": "Puedes pulsar Sincronizar ahora para aplicar el orden inmediatamente",
+      "save4": "Opcional: configura un workflow programado (GitHub Actions) para mantener el orden automáticamente"
     },
     "demo": {
       "pinnedZone": "Repos pinneados",
@@ -723,9 +857,9 @@
     },
     "sync": {
       "title": "Configurar sincronización",
-      "intro": "La sincronización mantiene tus repos en el orden que configuraste. Un GitHub Action se ejecuta periódicamente y reordena si es necesario.",
+      "intro": "La sincronización mantiene tus repos en el orden que configuraste. Puedes ejecutarla manualmente o programarla con GitHub Actions.",
       "frequencyTitle": "Frecuencia",
-      "frequencyDesc": "Con qué frecuencia el Action verifica y reordena tus repos.",
+      "frequencyDesc": "Con qué frecuencia la sincronización programada verifica y reordena tus repos.",
       "freq1": "Muy frecuente, más consumo de Actions",
       "freq6": "Recomendado - buen balance",
       "freq24": "Menos frecuente, mínimo consumo",
@@ -734,16 +868,16 @@
       "hourExample": "Ejemplo:",
       "hourNote": "Si configuras 14:00 UTC, el sync solo se ejecutará a esa hora",
       "actionTitle": "Cómo funciona el GitHub Action",
-      "actionDesc": "Cuando guardas tu orden, se crea un workflow en tu repositorio gitpins-config que se ejecuta según la frecuencia configurada.",
+      "actionDesc": "Para ejecutar la sincronización programada, añade un workflow (ejemplo abajo) en un repositorio que controles y haz que llame a tu instancia de GitPins.",
       "actionCron": "Ejecuta cada 6 horas"
     },
     "strategies": {
       "title": "Estrategias de commit",
-      "intro": "Para actualizar la fecha de último commit de un repo, GitPins necesita crear un commit. Hay dos estrategias disponibles:",
+      "intro": "Para actualizar la fecha de último commit de un repo, GitPins crea un commit vacío y lo revierte inmediatamente (commit + revert).",
       "revertTitle": "Commit + Revert",
       "recommended": "Recomendada",
-      "revertPro1": "Historial completamente limpio",
-      "revertPro2": "Limpieza automática de commits",
+      "revertPro1": "Sin cambios de archivos",
+      "revertPro2": "Auditable y determinista",
       "branchTitle": "Branch temporal",
       "branchPro1": "Funciona en todos los casos",
       "branchCon1": "Deja merge commits en el historial"
@@ -772,7 +906,7 @@
       },
       "q2": {
         "q": "La sincronización no funciona",
-        "a": "Verifica que: 1) La sincronización automática está activada en Settings, 2) Si configuraste una hora preferida, el sync solo se ejecuta a esa hora UTC, 3) Revisa los logs del Action en tu repo gitpins-config."
+        "a": "Verifica que: 1) La sincronización automática está activada en Settings, 2) Si configuraste una hora preferida, el sync solo se ejecuta a esa hora UTC, 3) Revisa los logs de Actions en el repositorio donde tengas el workflow."
       },
       "q3": {
         "q": "Quiero pausar la sincronización",
@@ -780,11 +914,11 @@
       },
       "q4": {
         "q": "Quiero desinstalar GitPins",
-        "a": "1) Borra el repo gitpins-config de tu cuenta, 2) Ve a github.com/settings/installations y desinstala la app GitPins. Tus repositorios quedarán intactos."
+        "a": "1) Desactiva o borra cualquier workflow programado que hayas configurado, 2) Ve a github.com/settings/installations y desinstala la app GitPins. Tus repositorios quedarán intactos."
       },
       "q5": {
         "q": "Los commits de GitPins aparecen en mi historial",
-        "a": "Con la estrategia Commit + Revert (recomendada), los commits se limpian automáticamente. Si ves commits residuales, puedes usar la función de limpieza manual desde el dashboard."
+        "a": "Commit + Revert crea commits (sin cambios de archivos). Si quieres eliminar commits de GitPins, usa la herramienta de limpieza en el dashboard (aviso: la limpieza reescribe el historial)."
       }
     },
     "cta": {

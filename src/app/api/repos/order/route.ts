@@ -18,7 +18,7 @@ import { validateOrigin, checkAPIRateLimit, isValidRepoFullName, addSecurityHead
 /**
  * POST /api/repos/order
  * Saves repository order and settings to database.
- * Body: { reposOrder, topN, syncFrequency, autoEnabled, commitStrategy }
+ * Body: { reposOrder, topN, syncFrequency, autoEnabled }
  */
 export async function POST(request: NextRequest) {
   // Validate origin for CSRF protection
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { reposOrder, topN, syncFrequency, autoEnabled, commitStrategy } = body
+    const { reposOrder, topN, syncFrequency, autoEnabled } = body
 
     // Validate reposOrder array
     if (!Array.isArray(reposOrder)) {
@@ -76,15 +76,23 @@ export async function POST(request: NextRequest) {
     const validFrequencies = [1, 2, 4, 6, 8, 12, 24, 48, 168, 360, 720]
     const validSyncFrequency = validFrequencies.includes(syncFrequency) ? syncFrequency : 168
 
-    // Validate commitStrategy
-    const validStrategies = ['branch', 'revert']
-    const validCommitStrategy = validStrategies.includes(commitStrategy) ? commitStrategy : 'revert'
+    // Strategy is fixed to revert to reduce operational complexity.
+    const validCommitStrategy = 'revert'
 
     // Validate preferredHour (0-23 UTC or null)
     const preferredHour = body.preferredHour
     const validPreferredHour = (typeof preferredHour === 'number' && preferredHour >= 0 && preferredHour <= 23)
       ? preferredHour
       : null
+
+    const includePrivate = typeof body.includePrivate === 'boolean' ? body.includePrivate : true
+    const validAutoEnabled = typeof autoEnabled === 'boolean' ? autoEnabled : true
+
+    const existingRepoOrder = await prisma.repoOrder.findUnique({
+      where: { userId: session.userId },
+      select: { syncSecret: true },
+    })
+    const syncSecret = existingRepoOrder?.syncSecret || crypto.randomUUID()
 
     // Crear o actualizar orden
     const reposOrderJson = JSON.stringify(reposOrder)
@@ -93,21 +101,23 @@ export async function POST(request: NextRequest) {
       update: {
         reposOrder: reposOrderJson,
         topN: validTopN,
-        includePrivate: body.includePrivate ?? true,
+        includePrivate,
         syncFrequency: validSyncFrequency,
-        autoEnabled: autoEnabled ?? true,
+        autoEnabled: validAutoEnabled,
         commitStrategy: validCommitStrategy,
         preferredHour: validPreferredHour,
+        syncSecret,
       },
       create: {
         userId: session.userId,
         reposOrder: reposOrderJson,
         topN: validTopN,
-        includePrivate: body.includePrivate ?? true,
+        includePrivate,
         syncFrequency: validSyncFrequency,
-        autoEnabled: autoEnabled ?? true,
+        autoEnabled: validAutoEnabled,
         commitStrategy: validCommitStrategy,
         preferredHour: validPreferredHour,
+        syncSecret,
       },
     })
 
@@ -145,8 +155,21 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Do not return syncSecret to the browser. The secret authenticates scheduled sync calls
+    // and must be treated like a password.
     return addSecurityHeaders(
-      NextResponse.json({ success: true, repoOrder: repoOrderResult })
+      NextResponse.json({
+        success: true,
+        settings: {
+          topN: repoOrderResult.topN,
+          includePrivate: repoOrderResult.includePrivate,
+          syncFrequency: repoOrderResult.syncFrequency,
+          autoEnabled: repoOrderResult.autoEnabled,
+          commitStrategy: 'revert' as const,
+          preferredHour: repoOrderResult.preferredHour,
+          syncConfigured: true,
+        },
+      })
     )
   } catch (error) {
     console.error('Error saving order:', error)

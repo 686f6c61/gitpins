@@ -24,7 +24,7 @@ export async function POST(
       return unauthorizedResponse()
     }
 
-    const isAdmin = await verifyAdmin()
+    const isAdmin = await verifyAdmin(session)
 
     if (!isAdmin) {
       return forbiddenResponse()
@@ -71,9 +71,23 @@ export async function POST(
     }
 
     // Prevent banning yourself
-    if (user.githubId === parseInt(process.env.ADMIN_GITHUB_ID || '0')) {
+    if (user.githubId === session.githubId) {
       return NextResponse.json(
         { error: 'Cannot ban admin user' },
+        { status: 400 }
+      )
+    }
+
+    const activeAdmin = await prisma.adminAccount.findFirst({
+      where: {
+        githubId: user.githubId,
+        revokedAt: null,
+      },
+      select: { id: true },
+    })
+    if (activeAdmin) {
+      return NextResponse.json(
+        { error: 'Cannot ban an active admin account' },
         { status: 400 }
       )
     }

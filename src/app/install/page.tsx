@@ -24,7 +24,7 @@ export default async function InstallPage() {
   const session = await getSession()
 
   if (!session) {
-    redirect('/')
+    redirect('/api/auth/login?returnTo=/install')
   }
 
   return (
@@ -54,7 +54,7 @@ export default async function InstallPage() {
                 2
               </div>
               <p className="text-sm text-muted-foreground">
-                GitPins solo necesita permisos para hacer commits vacíos y crear el archivo de configuración
+                GitPins solo necesita permisos para hacer commits vacíos (sin cambios de archivos)
               </p>
             </div>
             <div className="flex items-start gap-3">
