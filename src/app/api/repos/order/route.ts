@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     const validFrequencies = [1, 2, 4, 6, 8, 12, 24, 48, 168, 360, 720]
     const validSyncFrequency = validFrequencies.includes(syncFrequency) ? syncFrequency : 168
 
-    // Strategy is fixed to revert to reduce operational complexity.
+    // Strategy key is kept as 'revert' for backward compatibility.
     const validCommitStrategy = 'revert'
 
     // Validate preferredHour (0-23 UTC or null)

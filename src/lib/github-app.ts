@@ -37,7 +37,7 @@ export function createAppOctokit(installationId: number): Octokit {
  * @param options.reposOrder - Array of repository full names in desired order
  * @param options.topN - Number of top repos to maintain (6-20)
  * @param options.syncFrequency - Sync frequency in hours
- * @param options.commitStrategy - Commit strategy (fixed to 'revert')
+ * @param options.commitStrategy - Commit strategy setting (legacy key kept as 'revert' for compatibility)
  * @param options.username - GitHub username for ownership attribution
  * @returns JSON string formatted with 2-space indentation
  */

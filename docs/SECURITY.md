@@ -170,7 +170,7 @@ Design:
 
 GitPins should request only what it needs.
 
-Required in practice for commit+revert:
+Required in practice for temporary-ref touch:
 1. Repository contents read/write (to create commits).
 2. Repository metadata read (to list repos and read default branch).
 
@@ -195,4 +195,3 @@ If you keep the cleanup feature, documentation and UI should always describe it 
 4. Run behind HTTPS in production.
 5. Enable database backups and access controls.
 6. Consider replacing in-memory rate limiting with Redis.
-

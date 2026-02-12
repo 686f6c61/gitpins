@@ -1,4 +1,4 @@
-# Ordering Strategy (Commit + Revert)
+# Ordering Strategy (Temporary Ref Touch)
 
 This document explains how GitPins maintains a desired repository order and what "single-pass" means in practice.
 
@@ -17,14 +17,16 @@ Key observation:
 Implementation: `src/app/api/sync/[secret]/route.ts`
 
 GitPins uses a fixed strategy:
-1. Create an empty commit (no file changes).
-2. Create a revert commit immediately after.
+1. Create an empty commit (no file changes) whose tree is identical to the current HEAD.
+2. Create a temporary branch (ref) that points to that commit.
+3. Delete the temporary branch immediately.
 
-This produces two commits but no code changes.
+This updates the repository's recency (GitHub's `pushed_at/updated_at` signals) without adding commits to the default branch history.
 
-Why we keep the revert:
-1. It makes the operation auditable and deterministic.
-2. The repository content remains unchanged.
+Why this strategy:
+1. No history noise in `main/master` (no "[GitPins]" commits in your normal log).
+2. No merges, no branch cleanup required for users.
+3. The repository content remains unchanged (empty commit, same tree SHA).
 
 ## Desired Order vs Global Order
 
@@ -42,11 +44,11 @@ Naive approach:
 
 Result:
 1. Usually works.
-2. Creates 2*N commits every time a reorder is needed.
+2. Touches N repositories every time a reorder is needed.
 
 Downside:
 1. Expensive in API calls and GitHub Actions minutes.
-2. Noisy commit history.
+2. Unnecessary operations when only a subset must move.
 
 ## Optimization: Touch Only the Minimal Prefix
 
@@ -89,7 +91,6 @@ Cleanup (history rewrite) is a separate, explicit action.
 
 ## Performance Characteristics
 
-1. Touching `k` repositories creates `2*k` commits.
+1. Touching `k` repositories creates `k` empty commit objects + `2*k` ref operations (create+delete).
 2. The minimal-prefix search is O(N^2) in worst case, but N is small (user-configured topN, max 100).
 3. Most time is spent on GitHub API calls and the 1s delay between repo touches (rate safety).
-

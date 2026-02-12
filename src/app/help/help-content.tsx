@@ -425,11 +425,11 @@ export function HelpContent() {
               </div>
               <div className="bg-muted/50 rounded-lg p-4 text-sm font-mono space-y-1 mb-4">
                 <div className="text-muted-foreground"># Step 1</div>
-                <div>git commit --allow-empty -m &quot;[GitPins]&quot;</div>
+                <div>git commit --allow-empty -m &quot;[GitPins] Touch: 9/45&quot;</div>
                 <div className="text-muted-foreground mt-2"># Step 2</div>
-                <div>git revert HEAD --no-edit</div>
+                <div>git push origin HEAD:refs/heads/gitpins-touch-abc123</div>
                 <div className="text-muted-foreground mt-2"># Step 3</div>
-                <div>git push</div>
+                <div>git push origin :refs/heads/gitpins-touch-abc123</div>
               </div>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center gap-2 text-green-600">

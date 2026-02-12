@@ -9,8 +9,8 @@
  * Called by the GitHub Action to sync repository order.
  * - Validates the sync secret
  * - Applies rate limiting (10 requests/hour per secret)
- * - Creates empty commits to update repo "last updated" timestamps
- * - Uses a single strategy: revert (commit+revert)
+ * - "Touches" repositories to update repo "last updated" timestamps
+ * - Uses a single strategy: create+delete a temporary ref (no default-branch history noise)
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -110,7 +110,7 @@ function isRepoOrderCorrect(
 }
 
 /**
- * Computes the minimal prefix of desired repos that must be "touched" (commit+revert)
+ * Computes the minimal prefix of desired repos that must be "touched"
  * so the global top-N ends up matching desiredTop exactly.
  */
 function getReposToTouch(
@@ -409,25 +409,45 @@ export async function POST(
       const repoStartedAt = Date.now()
 
       try {
-        // Obtener referencia del branch principal
-        let refData
+        // Resolve default branch (works for non main/master repos too).
+        let defaultBranch: string | null = null
         try {
-          const response = await octokit.rest.git.getRef({
-            owner,
-            repo,
-            ref: 'heads/main',
-          })
-          refData = response.data
+          const { data: repoData } = await octokit.rest.repos.get({ owner, repo })
+          if (typeof repoData.default_branch === 'string' && repoData.default_branch) {
+            defaultBranch = repoData.default_branch
+          }
         } catch {
-          const response = await octokit.rest.git.getRef({
-            owner,
-            repo,
-            ref: 'heads/master',
-          })
-          refData = response.data
+          // Best-effort fallback below
         }
 
-        const defaultBranch = refData.ref.replace('refs/heads/', '')
+        // Obtener referencia del branch principal
+        let refData
+        if (defaultBranch) {
+          refData = (await octokit.rest.git.getRef({
+            owner,
+            repo,
+            ref: `heads/${defaultBranch}`,
+          })).data
+        } else {
+          try {
+            const response = await octokit.rest.git.getRef({
+              owner,
+              repo,
+              ref: 'heads/main',
+            })
+            refData = response.data
+            defaultBranch = 'main'
+          } catch {
+            const response = await octokit.rest.git.getRef({
+              owner,
+              repo,
+              ref: 'heads/master',
+            })
+            refData = response.data
+            defaultBranch = 'master'
+          }
+        }
+
         const sha = refData.object.sha
 
         // Obtener el tree del commit actual
@@ -437,43 +457,40 @@ export async function POST(
           commit_sha: sha,
         })
 
-        // Fixed strategy: Commit + Revert
-        detailedLogs.push(`  - Creating commit for target position ${desiredPosition}/${reposToSync.length}...`)
+        // Fixed strategy: Create+delete a temporary ref (no default-branch history noise).
+        // We still create an empty commit (same tree as HEAD) but we only attach it to a short-lived branch.
+        // This should update the repository "pushed_at/updated_at" without polluting main/master history.
+        detailedLogs.push(`  - Touching via temporary ref for target position ${desiredPosition}/${reposToSync.length}...`)
 
-        // Crear commit vacío
-        const { data: newCommit } = await octokit.rest.git.createCommit({
+        const tempRefSuffix = `${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`
+        const tempBranch = `gitpins-touch-${tempRefSuffix}-${desiredPosition}`
+
+        const { data: touchCommit } = await octokit.rest.git.createCommit({
           owner,
           repo,
-          message: `[GitPins] Position: ${desiredPosition}/${reposToSync.length}`,
+          message: `[GitPins] Touch: ${desiredPosition}/${reposToSync.length}`,
           tree: commitData.tree.sha,
           parents: [sha],
         })
 
-        // Actualizar referencia
-        await octokit.rest.git.updateRef({
+        await octokit.rest.git.createRef({
           owner,
           repo,
-          ref: `heads/${defaultBranch}`,
-          sha: newCommit.sha,
+          ref: `refs/heads/${tempBranch}`,
+          sha: touchCommit.sha,
         })
 
-        detailedLogs.push(`  - Reverting commit...`)
-
-        // Revertir inmediatamente
-        const { data: revertCommit } = await octokit.rest.git.createCommit({
-          owner,
-          repo,
-          message: '[GitPins] Revert',
-          tree: commitData.tree.sha,
-          parents: [newCommit.sha],
-        })
-
-        await octokit.rest.git.updateRef({
-          owner,
-          repo,
-          ref: `heads/${defaultBranch}`,
-          sha: revertCommit.sha,
-        })
+        try {
+          await octokit.rest.git.deleteRef({
+            owner,
+            repo,
+            ref: `heads/${tempBranch}`,
+          })
+        } catch (error) {
+          // Non-fatal: leaving a temp branch is noisy but safer than failing the entire run.
+          detailedLogs.push(`  - Warning: failed to delete temporary ref ${tempBranch}`)
+          console.error('Failed to delete temp ref:', { owner, repo, tempBranch, error })
+        }
 
         detailedLogs.push(`[${position}/${total}] ${repoFullName} - SUCCESS`)
         results.push({

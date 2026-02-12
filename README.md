@@ -44,7 +44,7 @@
 
 GitHub sorts repositories by "last updated" date. This means your most important projects can get buried when you make a small fix to an old repo or create a new experimental project.
 
-**GitPins solves this** by "touching" your chosen repositories (empty commit + revert) in a controlled sequence, so GitHub's recency-based order matches your preferred top list.
+**GitPins solves this** by "touching" your chosen repositories (empty commit on a short-lived ref) in a controlled sequence, so GitHub's recency-based order matches your preferred top list.
 
 ## Features
 
@@ -52,7 +52,7 @@ GitHub sorts repositories by "last updated" date. This means your most important
 - **Manual Sync** - "Sync now" from the dashboard (CSRF-protected)
 - **Scheduled Sync** - trigger `/api/sync` from GitHub Actions (or any scheduler)
 - **Smart Sync** - skips when already ordered + touches only the minimal prefix needed
-- **Single Strategy (Commit + Revert)** - predictable, auditable, no file changes
+- **Single Strategy (Temporary Ref Touch)** - no default-branch history noise, no file changes
 - **Commit Cleanup (Optional)** - removes GitPins commits (history rewrite; explicit warning)
 - **Private Repos Support** - include/exclude private repositories in the dashboard list
 - **Bilingual UI** - English and Spanish
@@ -71,13 +71,15 @@ GitHub sorts repositories by "last updated" date. This means your most important
 
 ### Technical Details
 
-GitPins uses empty commits to update the "last updated" timestamp:
+GitPins updates the "last updated" timestamp by creating an empty commit (same tree as HEAD), attaching it to a temporary branch, and deleting that branch immediately.
 
-**Revert Strategy** (Recommended):
+This keeps your default branch history clean (no `[GitPins]` commits in `main/master`).
+
+Conceptually:
 ```bash
-git commit --allow-empty -m "gitpins: bump"
-git revert HEAD --no-edit
-git push
+git commit --allow-empty -m "[GitPins] Touch: 9/45"
+git push origin HEAD:refs/heads/gitpins-touch-<id>
+git push origin :refs/heads/gitpins-touch-<id>
 ```
 
 See `docs/ORDERING.md` for the detailed algorithm, including the minimal-prefix optimization and what "single-pass" means in practice.
@@ -92,7 +94,7 @@ GitPins is designed with security in mind:
 - **Open Source** - full code transparency
 
 ### What GitPins CAN do:
-- Create empty commits and update refs in repos you installed the app on
+- Create empty commits and create/delete temporary refs in repos you installed the app on
 - Read repository metadata (name, stars, etc.) via the GitHub API
 - Optionally rewrite history to remove GitPins commits (cleanup feature; explicit confirmation)
 

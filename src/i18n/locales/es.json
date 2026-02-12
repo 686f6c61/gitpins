@@ -38,14 +38,14 @@
       },
       "step4": {
         "title": "Sin rastro",
-        "desc": "Los commits se revierten automáticamente. Tu historial queda intacto"
+        "desc": "Las refs temporales se eliminan automáticamente. El historial del branch principal queda intacto"
       }
     },
     "faq": {
       "title": "Preguntas frecuentes",
       "q1": {
         "question": "¿Modifica mi código?",
-        "answer": "No. Solo hace commits vacíos que se revierten inmediatamente. Tu código y tu historial quedan intactos."
+        "answer": "No. Crea commits vacíos y refs temporales sin modificar archivos versionados. El historial del branch principal queda intacto."
       },
       "q2": {
         "question": "¿Cuánto cuesta?",
@@ -84,7 +84,7 @@
       },
       "cleanCommits": {
         "title": "Commits limpios",
-        "desc": "Los commits vacíos se revierten automáticamente. Tu historial queda intacto."
+        "desc": "Las refs temporales se borran automáticamente. El historial del branch principal queda intacto."
       }
     },
     "useCases": {
@@ -133,7 +133,7 @@
     },
     "disclaimer": {
       "title": "Antes de continuar",
-      "text": "GitPins es un proyecto open source que realiza commits vacíos en tus repositorios para mantener el orden que configures. Estos commits son revertidos inmediatamente y no modifican tu código.",
+      "text": "GitPins es un proyecto open source que crea commits vacíos y refs temporales para mantener el orden que configures. Esto no modifica tus archivos versionados.",
       "text2": "Al continuar, aceptas que usas este servicio bajo tu propia responsabilidad. El código es open source y está a tu disposición para revisarlo, mejorarlo o ejecutarlo en tu propia infraestructura.",
       "accept": "Acepto y continuar",
       "cancel": "Cancelar",
@@ -158,7 +158,7 @@
       "title": "Descargo de responsabilidad",
       "text": "Al crear el repositorio de configuración, aceptas que:",
       "item1": "GitPins realizará commits vacíos en tus repositorios seleccionados",
-      "item2": "Estos commits son revertidos inmediatamente y no modifican tu código",
+      "item2": "GitPins usa refs temporales y no modifica tus archivos versionados",
       "item3": "El servicio se proporciona sin garantías de ningún tipo",
       "item4": "Eres responsable de revisar y entender cómo funciona el sistema",
       "accept": "Acepto y continuar",
@@ -306,12 +306,12 @@
     "commitStrategy": {
       "label": "Estrategia de commits",
       "revert": {
-        "title": "Commit + Revert",
-        "desc": "Hace un commit vacío y lo revierte inmediatamente."
+        "title": "Toque con ref temporal",
+        "desc": "Crea un commit vacío en una rama temporal y borra la rama inmediatamente."
       },
       "branch": {
-        "title": "Branch temporal",
-        "desc": "Crea un branch, hace commit, merge y borra el branch."
+        "title": "Flujo legacy por branch",
+        "desc": "Obsoleto. GitPins ahora usa solo toque con ref temporal."
       }
     },
     "autoSync": {
@@ -368,26 +368,26 @@
   },
   "strategyInfo": {
     "title": "Estrategias de commits",
-    "intro": "Para mantener tus repos arriba, GitPins necesita actualizar la fecha de \"último commit\". Esto se hace con commits vacíos que no modifican tu código. Hay dos formas de hacerlo:",
+    "intro": "Para mantener tus repos arriba, GitPins actualiza la recencia con un commit vacío que conserva el mismo tree SHA. Ese commit se apunta a una ref temporal y la ref se elimina al instante.",
     "revert": {
-      "title": "Commit + Revert",
-      "desc": "Hace un commit vacío y lo revierte inmediatamente. Tu historial queda exactamente igual que antes, pero la fecha de actualización cambia.",
-      "step1": "# Paso 1: Commit vacío",
-      "step2": "# Paso 2: Revertir",
-      "step3": "# Paso 3: Push",
-      "pro": "+ Simple y rápido",
-      "con": "~ 2 commits en historial"
+      "title": "Toque con ref temporal",
+      "desc": "Crea un commit vacío (mismo tree que HEAD), lo publica en una rama temporal y borra esa rama. El historial del branch principal queda limpio.",
+      "step1": "# Paso 1: Commit vacío (mismo tree)",
+      "step2": "# Paso 2: Push de ref temporal",
+      "step3": "# Paso 3: Borrar ref temporal",
+      "pro": "+ Sin ruido de commits en main/master",
+      "con": "~ Depende del comportamiento de recencia de GitHub"
     },
     "branch": {
-      "title": "Branch temporal",
-      "desc": "Crea un branch temporal, hace el commit ahí, mergea a main y borra el branch. Más pasos pero el resultado es más limpio.",
+      "title": "Flujo legacy por branch",
+      "desc": "Flujo obsoleto mantenido solo como referencia.",
       "step1": "# Paso 1: Crear branch",
-      "step2": "# Paso 2: Commit vacío",
-      "step3": "# Paso 3: Merge y limpiar",
-      "pro": "+ Solo 1 commit merge",
-      "con": "~ Más operaciones"
+      "step2": "# Paso 2: Commit",
+      "step3": "# Paso 3: Merge",
+      "pro": "+ N/A",
+      "con": "~ No se usa"
     },
-    "note": "Ambas estrategias son seguras y no modifican tu código. La diferencia es solo en cómo se ve el historial de commits."
+    "note": "GitPins no modifica archivos del repositorio. Solo toca metadatos de commit mediante refs temporales."
   },
   "howItWorksPage": {
     "title": "Cómo funciona GitPins",
@@ -400,7 +400,7 @@
     "solution": {
       "title": "La solución",
       "p1": "GitPins utiliza un mecanismo simple pero efectivo: <strong>actualizar la fecha de último commit</strong> de tus repositorios en el orden que tú elijas.",
-      "p2": "Esto se hace mediante commits vacíos que no afectan tu código, y que inmediatamente se eliminan de tu historial."
+      "p2": "Esto se hace con commits vacíos apuntados a refs temporales. No se modifican archivos versionados y el historial del branch principal queda limpio."
     },
     "steps": {
       "title": "Proceso paso a paso",
@@ -410,7 +410,7 @@
       },
       "step2": {
         "title": "Instalas la GitHub App",
-        "desc": "Instala la GitHub App en los repositorios que quieres que GitPins gestione. Esto permite crear commits vacíos (sin cambios de archivos) cuando se ejecuta el sync."
+        "desc": "Instala la GitHub App en los repositorios que quieres que GitPins gestione. Esto permite crear commits vacíos y refs temporales (sin cambios de archivos) cuando se ejecuta el sync."
       },
       "step3": {
         "title": "Sincronización programada (opcional)",
@@ -425,8 +425,8 @@
       "title": "Estrategias de commit",
       "intro": "GitPins usa una unica estrategia predecible para mantener el historial auditable:",
       "revert": {
-        "title": "Commit + Revert",
-        "desc": "Hacemos un commit vacío y lo revertimos inmediatamente. El resultado es que tu historial queda exactamente igual, pero la fecha de actualización cambia.",
+        "title": "Toque con ref temporal",
+        "desc": "Creamos un commit vacío (mismo tree que HEAD), apuntamos una rama temporal a ese commit y borramos la rama al instante. La recencia cambia sin ensuciar el historial del branch principal.",
         "comment": "# Lo que hace el Action:"
       },
       "branch": {
@@ -444,7 +444,7 @@
         "step2": "Para cada repositorio (en orden inverso para que el primero quede más reciente):",
         "step2a": "Detecta el branch principal (main/master)",
         "step2b": "Crea un commit vacío usando la GitHub API",
-        "step2c": "Lo revierte inmediatamente (commit + revert)",
+        "step2c": "Crea y borra una rama temporal para ese commit",
         "step3": "Espera 1 segundo entre repos para no saturar la API",
         "step4": "Reporta el resultado en los logs del Action"
       },
@@ -459,7 +459,7 @@
         "title": "Lo que SÍ podemos hacer:",
         "item1": "Leer la lista de tus repositorios (metadata)",
         "item2": "Crear commits vacíos (sin modificar archivos)",
-        "item3": "Actualizar la referencia del branch principal (para aplicar commit + revert)",
+        "item3": "Crear y borrar refs temporales para aplicar el orden",
         "item4": "Opcionalmente reescribir historial para limpieza (solo cuando ejecutas limpieza explícitamente)"
       },
       "cannotDo": {
@@ -494,7 +494,7 @@
       "title": "Preguntas frecuentes",
       "affectsCode": {
         "q": "¿Afecta esto a mi código?",
-        "a": "No. Los commits vacíos no modifican ningún archivo. Y al revertirlos inmediatamente, tu historial de commits permanece intacto."
+        "a": "No. Los commits vacíos no modifican archivos versionados y las refs temporales se eliminan automáticamente."
       },
       "actionsMinutes": {
         "q": "¿Cuántos minutos de Actions consume?",
@@ -562,8 +562,8 @@
         "desc": "GitPins crea commits que no contienen cambios en el código. Estos commits solo actualizan la fecha de \"último commit\" del repositorio."
       },
       "step2": {
-        "title": "Reversión Automática",
-        "desc": "Inmediatamente después del commit vacío, se crea otro commit que lo revierte. Tu historial de git técnicamente tiene 2 commits adicionales, pero sin cambios de código."
+        "title": "Toque con Ref Temporal",
+        "desc": "El commit vacío se apunta a una ref de rama temporal y se elimina al instante. Esto actualiza la recencia sin añadir commits al branch principal."
       },
       "step3": {
         "title": "GitHub Actions",
@@ -575,7 +575,7 @@
       "intro": "Aunque GitPins está diseñado para ser seguro, existen riesgos potenciales que debes conocer:",
       "risk1": {
         "title": "Historial de Git",
-        "desc": "Tu historial de commits tendrá entradas adicionales (commit + revert). Aunque el código no cambia, los commits son visibles en el historial."
+        "desc": "Durante la sincronización pueden aparecer refs temporales de forma breve. Se eliminan automáticamente y el historial del branch principal queda limpio."
       },
       "risk2": {
         "title": "Dependencia de APIs",
@@ -596,7 +596,7 @@
       "canDo": "Lo que GitPins SÍ puede hacer:",
       "canDo1": "Leer la lista de tus repositorios (metadatos)",
       "canDo2": "Crear commits vacíos (sin modificar archivos)",
-      "canDo3": "Crear un commit de reversión inmediatamente después del commit vacío (commit + revert)",
+      "canDo3": "Crear y borrar refs temporales para aplicar el orden",
       "canDo4": "Proveer un endpoint de sync que un scheduler (como GitHub Actions) puede llamar",
       "cannotDo": "Lo que GitPins NO puede hacer:",
       "cannotDo1": "Borrar repositorios - No tenemos ese permiso",
@@ -830,7 +830,7 @@
       "canDo": "Lo que SÍ puede hacer",
       "can1": "Leer metadatos de tus repos (nombre, descripción, estrellas)",
       "can2": "Crear commits vacíos (sin modificar archivos)",
-      "can3": "Actualizar la referencia del branch principal (para aplicar commit + revert)",
+      "can3": "Crear y borrar refs temporales para aplicar el orden",
       "can4": "Opcionalmente reescribir historial para limpieza (solo cuando ejecutas limpieza explícitamente)",
       "cannotDo": "Lo que NO puede hacer",
       "cannot1": "Borrar repositorios",
@@ -873,11 +873,11 @@
     },
     "strategies": {
       "title": "Estrategias de commit",
-      "intro": "Para actualizar la fecha de último commit de un repo, GitPins crea un commit vacío y lo revierte inmediatamente (commit + revert).",
-      "revertTitle": "Commit + Revert",
+      "intro": "Para actualizar la recencia de un repo, GitPins crea un commit vacío, apunta una rama temporal y borra esa rama inmediatamente.",
+      "revertTitle": "Toque con ref temporal",
       "recommended": "Recomendada",
       "revertPro1": "Sin cambios de archivos",
-      "revertPro2": "Auditable y determinista",
+      "revertPro2": "Sin ruido de commits en el branch principal",
       "branchTitle": "Branch temporal",
       "branchPro1": "Funciona en todos los casos",
       "branchCon1": "Deja merge commits en el historial"
@@ -918,7 +918,7 @@
       },
       "q5": {
         "q": "Los commits de GitPins aparecen en mi historial",
-        "a": "Commit + Revert crea commits (sin cambios de archivos). Si quieres eliminar commits de GitPins, usa la herramienta de limpieza en el dashboard (aviso: la limpieza reescribe el historial)."
+        "a": "La estrategia actual evita crear commits en tu branch principal. Si aún tienes commits antiguos de GitPins de versiones previas, usa la herramienta de limpieza del dashboard (aviso: la limpieza reescribe el historial)."
       }
     },
     "cta": {

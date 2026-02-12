@@ -38,14 +38,14 @@
       },
       "step4": {
         "title": "No trace",
-        "desc": "Commits are reverted automatically. Your history stays intact"
+        "desc": "Temporary refs are removed automatically. Your default branch history stays intact"
       }
     },
     "faq": {
       "title": "Frequently asked questions",
       "q1": {
         "question": "Does it modify my code?",
-        "answer": "No. It only makes empty commits that are immediately reverted. Your code and history stay intact."
+        "answer": "No. It creates empty commits and temporary refs without modifying tracked files. Default branch history stays intact."
       },
       "q2": {
         "question": "How much does it cost?",
@@ -84,7 +84,7 @@
       },
       "cleanCommits": {
         "title": "Clean commits",
-        "desc": "Empty commits are reverted automatically. Your history stays intact."
+        "desc": "Temporary refs are deleted automatically. Your default branch history stays intact."
       }
     },
     "useCases": {
@@ -133,7 +133,7 @@
     },
     "disclaimer": {
       "title": "Before you continue",
-      "text": "GitPins is an open source project that makes empty commits to your repositories to maintain the order you configure. These commits are immediately reverted and do not modify your code.",
+      "text": "GitPins is an open source project that creates empty commits and temporary refs to maintain the order you configure. This does not modify your tracked files.",
       "text2": "By continuing, you accept that you use this service at your own risk. The code is open source and available for you to review, improve, or run on your own infrastructure.",
       "accept": "I accept and continue",
       "cancel": "Cancel",
@@ -158,7 +158,7 @@
       "title": "Disclaimer",
       "text": "By creating the configuration repository, you agree that:",
       "item1": "GitPins will make empty commits to your selected repositories",
-      "item2": "These commits are immediately reverted and do not modify your code",
+      "item2": "GitPins uses temporary refs and does not modify your tracked files",
       "item3": "The service is provided without warranties of any kind",
       "item4": "You are responsible for reviewing and understanding how the system works",
       "accept": "I accept and continue",
@@ -306,12 +306,12 @@
     "commitStrategy": {
       "label": "Commit strategy",
       "revert": {
-        "title": "Commit + Revert",
-        "desc": "Makes an empty commit and reverts it immediately."
+        "title": "Temporary ref touch",
+        "desc": "Creates an empty commit on a short-lived branch and deletes the branch immediately."
       },
       "branch": {
-        "title": "Temporary branch",
-        "desc": "Creates a branch, commits, merges and deletes the branch."
+        "title": "Legacy branch flow",
+        "desc": "Deprecated. GitPins now uses temporary ref touch only."
       }
     },
     "autoSync": {
@@ -368,26 +368,26 @@
   },
   "strategyInfo": {
     "title": "Commit strategies",
-    "intro": "To keep your repos on top, GitPins needs to update the \"last commit\" date. This is done with empty commits that don't modify your code. There are two ways to do it:",
+    "intro": "To keep your repos on top, GitPins updates repository recency with an empty commit that keeps the same tree SHA. The commit is attached to a temporary ref and the ref is removed immediately.",
     "revert": {
-      "title": "Commit + Revert",
-      "desc": "Makes an empty commit and reverts it immediately. Your history stays exactly the same, but the update date changes.",
-      "step1": "# Step 1: Empty commit",
-      "step2": "# Step 2: Revert",
-      "step3": "# Step 3: Push",
-      "pro": "+ Simple and fast",
-      "con": "~ 2 commits in history"
+      "title": "Temporary ref touch",
+      "desc": "Creates one empty commit (same tree as HEAD), pushes it to a temporary branch, then deletes that branch. Your default branch history stays clean.",
+      "step1": "# Step 1: Empty commit (same tree)",
+      "step2": "# Step 2: Push temp ref",
+      "step3": "# Step 3: Delete temp ref",
+      "pro": "+ No commit noise in main/master",
+      "con": "~ Depends on GitHub recency behavior"
     },
     "branch": {
-      "title": "Temporary branch",
-      "desc": "Creates a temporary branch, makes the commit there, merges to main and deletes the branch. More steps but cleaner result.",
+      "title": "Legacy branch flow",
+      "desc": "Deprecated flow kept for documentation only.",
       "step1": "# Step 1: Create branch",
-      "step2": "# Step 2: Empty commit",
-      "step3": "# Step 3: Merge and clean",
-      "pro": "+ Only 1 merge commit",
-      "con": "~ More operations"
+      "step2": "# Step 2: Commit",
+      "step3": "# Step 3: Merge",
+      "pro": "+ N/A",
+      "con": "~ Not used"
     },
-    "note": "Both strategies are safe and don't modify your code. The difference is only in how the commit history looks."
+    "note": "GitPins does not modify repository files. It only touches commit metadata through temporary refs."
   },
   "howItWorksPage": {
     "title": "How GitPins works",
@@ -400,7 +400,7 @@
     "solution": {
       "title": "The solution",
       "p1": "GitPins uses a simple but effective mechanism: <strong>update the last commit date</strong> of your repositories in the order you choose.",
-      "p2": "This is done through empty commits that don't affect your code, and that are immediately removed from your history."
+      "p2": "This is done through empty commits attached to temporary refs. Your tracked files are not modified and default-branch history stays clean."
     },
     "steps": {
       "title": "Step by step process",
@@ -410,7 +410,7 @@
       },
       "step2": {
         "title": "Install the GitHub App",
-        "desc": "Install the GitHub App on the repositories you want GitPins to manage. This is what allows GitPins to create empty commits (no file changes) when syncing."
+        "desc": "Install the GitHub App on the repositories you want GitPins to manage. This allows GitPins to create empty commits and temporary refs (no file changes) when syncing."
       },
       "step3": {
         "title": "Scheduled sync (optional)",
@@ -425,8 +425,8 @@
       "title": "Commit strategies",
       "intro": "GitPins uses a single, predictable strategy to keep your history auditable:",
       "revert": {
-        "title": "Commit + Revert",
-        "desc": "We make an empty commit and revert it immediately. The result is that your history stays exactly the same, but the update date changes.",
+        "title": "Temporary ref touch",
+        "desc": "We create one empty commit (same tree as HEAD), point a temporary branch to it, and delete that branch immediately. Recency updates without adding commits to your default branch.",
         "comment": "# What the Action does:"
       },
       "branch": {
@@ -444,7 +444,7 @@
         "step2": "For each repository (in reverse order so the first one ends up most recent):",
         "step2a": "Detects the main branch (main/master)",
         "step2b": "Creates an empty commit using the GitHub API",
-        "step2c": "Reverts it immediately (commit + revert)",
+        "step2c": "Creates and deletes a temporary branch ref for that commit",
         "step3": "Waits 1 second between repos to avoid API throttling",
         "step4": "Reports the result in the Action logs"
       },
@@ -459,7 +459,7 @@
         "title": "What we CAN do:",
         "item1": "Read your repositories list (metadata)",
         "item2": "Create empty commits (without modifying files)",
-        "item3": "Update refs on the default branch (to apply commit + revert)",
+        "item3": "Create and delete temporary refs to apply ordering touches",
         "item4": "Optionally rewrite history for cleanup (only when you explicitly run cleanup)"
       },
       "cannotDo": {
@@ -494,7 +494,7 @@
       "title": "Frequently asked questions",
       "affectsCode": {
         "q": "Does this affect my code?",
-        "a": "No. Empty commits don't modify any files. And by reverting them immediately, your commit history stays intact."
+        "a": "No. Empty commits do not modify tracked files, and temporary refs are deleted automatically."
       },
       "actionsMinutes": {
         "q": "How many Actions minutes does it use?",
@@ -562,8 +562,8 @@
         "desc": "GitPins creates commits that contain no code changes. These commits only update the \"last commit\" date of the repository."
       },
       "step2": {
-        "title": "Automatic Reversion",
-        "desc": "Immediately after the empty commit, another commit is created that reverts it. Your git history technically has 2 additional commits, but no code changes."
+        "title": "Temporary Ref Touch",
+        "desc": "The empty commit is attached to a short-lived branch ref and deleted immediately. This updates recency without adding commits to your default branch."
       },
       "step3": {
         "title": "GitHub Actions",
@@ -575,7 +575,7 @@
       "intro": "Although GitPins is designed to be safe, there are potential risks you should know about:",
       "risk1": {
         "title": "Git History",
-        "desc": "Your commit history will have additional entries (commit + revert). Although the code doesn't change, the commits are visible in the history."
+        "desc": "Temporary refs can appear briefly during sync. They are removed automatically and default branch history remains clean."
       },
       "risk2": {
         "title": "API Dependency",
@@ -596,7 +596,7 @@
       "canDo": "What GitPins CAN do:",
       "canDo1": "Read your repositories list (metadata)",
       "canDo2": "Create empty commits (without modifying files)",
-      "canDo3": "Create a revert commit immediately after the empty commit (commit + revert)",
+      "canDo3": "Create and delete temporary refs to apply ordering touches",
       "canDo4": "Provide a sync endpoint that a scheduler (like GitHub Actions) can call",
       "cannotDo": "What GitPins CANNOT do:",
       "cannotDo1": "Delete repositories - We don't have that permission",
@@ -830,7 +830,7 @@
       "canDo": "What it CAN do",
       "can1": "Read repo metadata (name, description, stars)",
       "can2": "Create empty commits (without modifying files)",
-      "can3": "Update the default branch ref (to apply commit + revert)",
+      "can3": "Create and delete temporary refs to apply ordering touches",
       "can4": "Optionally rewrite history for cleanup (only when you explicitly run cleanup)",
       "cannotDo": "What it CANNOT do",
       "cannot1": "Delete repositories",
@@ -873,11 +873,11 @@
     },
     "strategies": {
       "title": "Commit strategies",
-      "intro": "To update the last commit date of a repo, GitPins creates an empty commit and reverts it immediately (commit + revert).",
-      "revertTitle": "Commit + Revert",
+      "intro": "To update repo recency, GitPins creates an empty commit, points a temporary branch to it, and deletes that branch immediately.",
+      "revertTitle": "Temporary ref touch",
       "recommended": "Recommended",
       "revertPro1": "No file changes",
-      "revertPro2": "Auditable and deterministic",
+      "revertPro2": "No commit noise in the default branch",
       "branchTitle": "Temporary branch",
       "branchPro1": "Works in all cases",
       "branchCon1": "Leaves merge commits in history"
@@ -918,7 +918,7 @@
       },
       "q5": {
         "q": "GitPins commits appear in my history",
-        "a": "Commit + Revert creates commits (no file changes). If you want to remove GitPins commits, use the cleanup tool in the dashboard (warning: cleanup rewrites history)."
+        "a": "Current strategy avoids creating commits in your default branch. If you still have old GitPins commits from previous versions, use the cleanup tool in the dashboard (warning: cleanup rewrites history)."
       }
     },
     "cta": {

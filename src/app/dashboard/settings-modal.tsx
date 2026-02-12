@@ -10,7 +10,7 @@
  * - Number of repos to pin (topN)
  * - Include/exclude private repos
  * - Sync frequency
- * - Fixed commit strategy (revert)
+ * - Fixed commit strategy (temporary ref touch)
  * - Auto-sync toggle
  * - Config repo visibility
  */
@@ -490,7 +490,7 @@ export function SettingsModal({
                 {t('strategyInfo.intro')}
               </p>
 
-              {/* Revert Strategy */}
+              {/* Temporary ref touch strategy */}
               <div className="border border-border rounded-lg p-4">
                 <h4 className="font-semibold mb-2">{t('strategyInfo.revert.title')}</h4>
                 <p className="text-sm text-muted-foreground mb-3">
@@ -498,11 +498,11 @@ export function SettingsModal({
                 </p>
                 <div className="bg-muted rounded-lg p-3 font-mono text-xs space-y-1">
                   <div className="text-muted-foreground">{t('strategyInfo.revert.step1')}</div>
-                  <div>git commit --allow-empty -m &quot;gitpins: bump&quot;</div>
+                  <div>git commit --allow-empty -m &quot;[GitPins] Touch: 9/45&quot;</div>
                   <div className="text-muted-foreground mt-2">{t('strategyInfo.revert.step2')}</div>
-                  <div>git revert HEAD --no-edit</div>
+                  <div>git push origin HEAD:refs/heads/gitpins-touch-abc123</div>
                   <div className="text-muted-foreground mt-2">{t('strategyInfo.revert.step3')}</div>
-                  <div>git push</div>
+                  <div>git push origin :refs/heads/gitpins-touch-abc123</div>
                 </div>
                 <div className="mt-3 flex gap-4 text-xs">
                   <span className="text-green-600">{t('strategyInfo.revert.pro')}</span>
