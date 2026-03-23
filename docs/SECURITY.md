@@ -134,7 +134,7 @@ Files:
 
 Design:
 1. Sync endpoint is authenticated by a per-user UUID secret.
-2. GitHub Action calls `POST /api/sync` and provides the secret in `X-GitPins-Sync-Secret`.
+2. An external scheduler calls `POST /api/sync` and provides the secret in `X-GitPins-Sync-Secret`.
 3. `/api/sync` proxies internally to `/api/sync/[secret]`.
 
 Security properties:

@@ -46,7 +46,7 @@ Result:
 2. Touches N repositories every time a reorder is needed.
 
 Downside:
-1. Expensive in API calls and GitHub Actions minutes.
+1. Expensive in API calls and in whatever scheduler/runtime you use (for GitHub Actions users, this also means Actions minutes).
 2. Unnecessary operations when only a subset must move.
 
 ## Optimization: Touch Only the Minimal Prefix

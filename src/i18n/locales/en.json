@@ -22,6 +22,32 @@
       "cta": "Order now",
       "noCreditCard": "Free and open source"
     },
+    "visualDemo": {
+      "badge": "Has this happened to you?",
+      "title": "See the difference before you connect anything",
+      "subtitle": "Same profile, same repositories, two completely different first impressions. GitPins lets you keep your showcase stable instead of letting the latest random commit decide it.",
+      "note": "Visual simulation of the same GitHub profile before and after applying a saved GitPins order.",
+      "states": {
+        "noisy": "Recent activity pushes it to the top",
+        "hidden": "Strong project, but now buried lower",
+        "showcase": "Key project kept visible on purpose",
+        "stable": "Important repo stays in the showcase",
+        "moved": "Still there, but no longer steals the spotlight"
+      },
+      "before": {
+        "label": "Before",
+        "title": "GitHub default order",
+        "tag": "Latest activity",
+        "desc": "A quick commit to an old or secondary repo can move it above the projects you actually want people to see first."
+      },
+      "after": {
+        "label": "After",
+        "title": "GitPins curated order",
+        "tag": "Pinned priority",
+        "desc": "Your top repos stay in front as your public showcase. Background activity can continue without reshuffling your profile.",
+        "pinned": "Pinned"
+      }
+    },
     "howItWorks": {
       "title": "How it works",
       "step1": {
@@ -112,7 +138,7 @@
       "button": "Connect with GitHub"
     },
     "comingSoon": {
-      "title": "Features v0.3.5",
+      "title": "Features v0.3.6",
       "subtitle": "",
       "filters": {
         "title": "Advanced Filters",
@@ -166,6 +192,32 @@
     },
     "syncActive": "Automatic sync active",
     "viewRepo": "View repository",
+    "authExpired": {
+      "title": "Session expired",
+      "desc": "Your GitHub authentication has expired or the app was uninstalled. You will be redirected to log in again."
+    },
+    "summary": {
+      "saveState": "Save state",
+      "saved": "Saved",
+      "pending": "Pending",
+      "saveHintSaved": "Your current order matches the last saved configuration.",
+      "saveHintPending": "You have changes waiting to be saved.",
+      "pinnedNow": "Pinned now",
+      "pinnedValue": "{pinned} / {limit}",
+      "pinnedHint": "Repos currently selected for the top section.",
+      "autoSync": "Automatic sync",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "privateRepos": "Private repos",
+      "included": "Included",
+      "excluded": "Excluded",
+      "manualReady": "Manual sync is ready from this dashboard.",
+      "manualSetup": "Manual sync needs configuration first.",
+      "lastSync": "Last sync",
+      "never": "Not yet",
+      "anyHour": "Runs at any UTC hour",
+      "preferredHour": "Preferred hour: {hour}:00 UTC"
+    },
     "syncNow": {
       "button": "Sync now",
       "syncing": "Syncing...",
@@ -185,6 +237,7 @@
       "changeLimit": "Change limit",
       "emptyTitle": "Drag repos here to pin them",
       "emptyDesc": "You can pin up to {max} repos",
+      "remove": "Remove from pinned repos",
       "slotsAvailable_one": "{count} slot available",
       "slotsAvailable_other": "{count} slots available"
     },
@@ -271,6 +324,31 @@
   },
   "settings": {
     "title": "Settings",
+    "summary": {
+      "pinned": "Pinned",
+      "private": "Private",
+      "autoSync": "Auto sync",
+      "on": "On",
+      "off": "Off"
+    },
+    "sections": {
+      "ordering": {
+        "title": "Ordering",
+        "desc": "Define how many repositories stay on top and whether private repos participate."
+      },
+      "sync": {
+        "title": "Scheduled sync",
+        "desc": "Control how often GitPins should restore your preferred order and under which timing rules."
+      },
+      "privacy": {
+        "title": "Privacy and data",
+        "desc": "Export the data GitPins stores for your account."
+      },
+      "danger": {
+        "title": "Danger zone",
+        "desc": "Irreversible actions that affect your GitPins account only."
+      }
+    },
     "reposToKeep": {
       "label": "Repositories to keep on top",
       "hint": "Drag the repos you want to always keep on top",
@@ -305,6 +383,7 @@
     },
     "commitStrategy": {
       "label": "Commit strategy",
+      "learnMore": "Learn more",
       "revert": {
         "title": "Temporary ref touch",
         "desc": "Creates a short-lived tag ref that points to HEAD and deletes it immediately."
@@ -326,6 +405,7 @@
     "privacy": {
       "title": "Privacy and data",
       "desc": "Download your data or delete your GitPins account.",
+      "exportTitle": "Export your data",
       "export": "Download my data",
       "exporting": "Preparing export...",
       "exportDone": "Export ready. A JSON file was downloaded.",
@@ -369,6 +449,7 @@
   "strategyInfo": {
     "title": "Commit strategies",
     "intro": "To keep your repos on top, GitPins updates repository recency by creating a temporary tag ref that points to HEAD and removing it immediately.",
+    "noteLabel": "Note",
     "revert": {
       "title": "Temporary ref touch",
       "desc": "Creates a temporary tag ref that points to HEAD, then deletes it immediately. Your default branch history stays clean.",
@@ -528,7 +609,12 @@
     "delete": "Delete",
     "edit": "Edit",
     "private": "Private",
-    "public": "Public"
+    "public": "Public",
+    "theme": {
+      "light": "Light mode",
+      "system": "System",
+      "dark": "Dark mode"
+    }
   },
   "legal": {
     "title": "Legal & Disclaimer",
@@ -678,36 +764,64 @@
     "openIssue": "Open an Issue",
     "backToHome": "Back to home"
   },
+  "install": {
+    "title": "Install GitPins on GitHub",
+    "subtitle": "To order your repositories, GitPins needs to be installed as a GitHub App on the repos you want to manage.",
+    "steps": {
+      "step1": "Choose the repositories you want GitPins to manage, or install it on all repositories.",
+      "step2": "GitPins only needs permission to create and delete temporary refs. It does not edit tracked files.",
+      "step3": "You can uninstall the app at any time directly from GitHub."
+    },
+    "canTitle": "What GitPins can do",
+    "can1": "Create temporary refs on the repositories you select.",
+    "can2": "Restore the order you configured in GitPins.",
+    "can3": "Be removed at any time without affecting your repositories.",
+    "cannotTitle": "What GitPins cannot do",
+    "cannot1": "Delete repositories.",
+    "cannot2": "Modify your tracked files or push code changes.",
+    "cannot3": "Read more than the permissions granted by the GitHub App.",
+    "button": "Install on GitHub",
+    "learnMore": "Review how it works",
+    "redirectNote": "You will be redirected to GitHub to complete the installation."
+  },
   "admin": {
     "title": "GitPins Admin",
     "backToDashboard": "Back to dashboard",
-    "stats": {
-      "totalUsers": "Total Users",
-      "activeUsers": "Active Users",
-      "bannedUsers": "Banned",
-      "configRepos": "Config Repos",
-      "totalSyncs": "Total Syncs",
-      "syncsToday": "Syncs Today",
-      "syncsThisWeek": "This Week"
+    "accessDenied": {
+      "title": "403 - Admin access required",
+      "desc": "Your account is authenticated, but it is not in the admin allowlist."
     },
+  "stats": {
+    "totalUsers": "Total Users",
+    "activeUsers": "Active Users",
+    "bannedUsers": "Banned",
+    "configRepos": "Saved Setups",
+    "totalSyncs": "Total Syncs",
+    "syncsToday": "Syncs Today",
+    "syncsThisWeek": "This Week"
+  },
     "charts": {
       "registrations": "User Registrations (30 days)",
       "syncActivity": "Sync Activity (30 days)",
       "daysAgo": "30 days ago",
       "today": "Today"
     },
-    "users": {
-      "title": "Users",
-      "user": "User",
-      "configRepo": "Config Repo",
-      "repos": "Repos",
-      "syncs": "Syncs",
-      "lastLogin": "Last Login",
-      "status": "Status",
-      "actions": "Actions",
-      "active": "Active",
-      "inactive": "Inactive",
-      "banned": "Banned",
+  "users": {
+    "title": "Users",
+    "user": "User",
+    "configRepo": "Setup",
+    "repos": "Repos",
+    "syncs": "Syncs",
+    "lastLogin": "Last Login",
+    "status": "Status",
+    "actions": "Actions",
+    "syncSetupAuto": "Auto sync",
+    "syncSetupManual": "Manual only",
+    "syncSetupEveryHours": "Every {hours}h",
+    "syncSetupSavedOrder": "Order saved in GitPins",
+    "active": "Active",
+    "inactive": "Inactive",
+    "banned": "Banned",
       "ban": "Ban",
       "unban": "Unban",
       "delete": "Delete"
@@ -725,7 +839,9 @@
       "loadingData": "Error loading data",
       "banningUser": "Error banning user",
       "unbanningUser": "Error unbanning user",
-      "deletingUser": "Error deleting user"
+      "deletingUser": "Error deleting user",
+      "securityToken": "Security token unavailable. Please reload the page.",
+      "reauthRequired": "Recent reauthentication required. Redirecting to GitHub..."
     }
   },
   "orderHistory": {

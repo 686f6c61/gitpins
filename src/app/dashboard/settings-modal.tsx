@@ -34,6 +34,34 @@ interface SettingsModalProps {
   autoOpenDelete?: boolean
 }
 
+function SettingsSection({
+  title,
+  description,
+  children,
+  tone = 'default',
+}: {
+  title: string
+  description: string
+  children: React.ReactNode
+  tone?: 'default' | 'danger'
+}) {
+  const tones = tone === 'danger'
+    ? 'border-destructive/20 bg-destructive/5'
+    : 'border-border bg-muted/20'
+
+  return (
+    <section className={`rounded-xl border p-4 ${tones}`}>
+      <div className="mb-4">
+        <h3 className="text-sm font-semibold">{title}</h3>
+        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+      </div>
+      <div className="space-y-4">
+        {children}
+      </div>
+    </section>
+  )
+}
+
 /**
  * Settings modal component.
  * Provides a full settings interface for customizing sync behavior.
@@ -242,179 +270,207 @@ export function SettingsModal({
 
         {/* Content */}
         <div className="p-4 space-y-6">
-          {/* Cuantos repos ordenar */}
-          <div data-onboarding="settings-topn">
-            <label className="block text-sm font-medium mb-2">
-              {t('settings.reposToKeep.label')}
-            </label>
-            <div className="flex items-center gap-3">
-              <input
-                type="number"
-                min={1}
-                max={totalRepos}
-                value={settings.topN || ''}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value)
-                  if (!isNaN(val) && val >= 1 && val <= totalRepos) {
-                    onChange({ topN: val })
-                  } else if (e.target.value === '') {
-                    onChange({ topN: 1 })
-                  }
-                }}
-                placeholder="Ej: 10"
-                className="w-24 h-10 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-foreground text-center"
-              />
-              <span className="text-sm text-muted-foreground">
-                {t('settings.reposToKeep.of', { total: totalRepos })}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {t('settings.reposToKeep.hint')}
-            </p>
-          </div>
-
-          {/* Incluir privados */}
-          <div className="flex items-center justify-between" data-onboarding="settings-private">
-            <div>
-              <div className="font-medium text-sm">{t('settings.includePrivate.label')}</div>
-              <div className="text-xs text-muted-foreground">
-                {t('settings.includePrivate.desc')}
+          <div className="rounded-xl border border-border bg-background p-4">
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="rounded-lg bg-muted/50 px-3 py-2">
+                <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                  {t('settings.summary.pinned')}
+                </div>
+                <div className="mt-1 text-sm font-semibold">{settings.topN}</div>
+              </div>
+              <div className="rounded-lg bg-muted/50 px-3 py-2">
+                <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                  {t('settings.summary.private')}
+                </div>
+                <div className="mt-1 text-sm font-semibold">
+                  {settings.includePrivate ? t('settings.summary.on') : t('settings.summary.off')}
+                </div>
+              </div>
+              <div className="rounded-lg bg-muted/50 px-3 py-2">
+                <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                  {t('settings.summary.autoSync')}
+                </div>
+                <div className="mt-1 text-sm font-semibold">
+                  {settings.autoEnabled ? t('settings.summary.on') : t('settings.summary.off')}
+                </div>
               </div>
             </div>
-            <button
-              onClick={() => onChange({ includePrivate: !settings.includePrivate })}
-              className={`w-12 h-6 rounded-full transition-colors ${
-                settings.includePrivate ? 'bg-foreground' : 'bg-muted'
-              }`}
-            >
-              <div
-                className={`w-5 h-5 rounded-full bg-background shadow transition-transform ${
-                  settings.includePrivate ? 'translate-x-6' : 'translate-x-0.5'
-                }`}
-              />
-            </button>
           </div>
 
-          <hr className="border-border" />
-
-          {/* Sync frequency */}
-          <div data-onboarding="settings-frequency">
-            <label className="block text-sm font-medium mb-2">
-              {t('settings.syncFrequency.label')}
-            </label>
-            <select
-              value={settings.syncFrequency}
-              onChange={(e) => onChange({ syncFrequency: parseInt(e.target.value) })}
-              className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-foreground"
-            >
-              <option value={1}>{t('settings.syncFrequency.options.1')}</option>
-              <option value={2}>{t('settings.syncFrequency.options.2')}</option>
-              <option value={4}>{t('settings.syncFrequency.options.4')}</option>
-              <option value={6}>{t('settings.syncFrequency.options.6')}</option>
-              <option value={8}>{t('settings.syncFrequency.options.8')}</option>
-              <option value={12}>{t('settings.syncFrequency.options.12')}</option>
-              <option value={24}>{t('settings.syncFrequency.options.24')}</option>
-              <option value={48}>{t('settings.syncFrequency.options.48')}</option>
-              <option value={168}>{t('settings.syncFrequency.options.168')}</option>
-              <option value={360}>{t('settings.syncFrequency.options.360')}</option>
-              <option value={720}>{t('settings.syncFrequency.options.720')}</option>
-            </select>
-            <p className="text-xs text-muted-foreground mt-1">
-              {t('settings.syncFrequency.hint')}
-            </p>
-          </div>
-
-          {/* Preferred hour */}
-          <div className="p-4 bg-muted/30 rounded-lg border border-border" data-onboarding="settings-schedule">
-            <div className="text-sm font-medium mb-2">{t('settings.schedule.title')}</div>
-            <label className="block text-xs text-muted-foreground mb-1">
-              {t('settings.schedule.preferredHour')}
-            </label>
-            <select
-              value={settings.preferredHour ?? ''}
-              onChange={(e) => onChange({
-                preferredHour: e.target.value === '' ? null : parseInt(e.target.value)
-              })}
-              className="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-foreground"
-            >
-              <option value="">{t('settings.schedule.anyHour')}</option>
-              {Array.from({ length: 24 }, (_, i) => (
-                <option key={i} value={i}>
-                  {i.toString().padStart(2, '0')}:00 UTC
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-muted-foreground mt-2">
-              {t('settings.schedule.utcNote')}
-            </p>
-          </div>
-
-          {/* Commit strategy (fixed) */}
-          <div>
-            <div className="block text-sm font-medium mb-2">
-              {t('settings.commitStrategy.label')}
+          <SettingsSection
+            title={t('settings.sections.ordering.title')}
+            description={t('settings.sections.ordering.desc')}
+          >
+            <div data-onboarding="settings-topn">
+              <label className="block text-sm font-medium mb-2">
+                {t('settings.reposToKeep.label')}
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  min={1}
+                  max={totalRepos}
+                  value={settings.topN || ''}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value)
+                    if (!isNaN(val) && val >= 1 && val <= totalRepos) {
+                      onChange({ topN: val })
+                    } else if (e.target.value === '') {
+                      onChange({ topN: 1 })
+                    }
+                  }}
+                  placeholder="10"
+                  className="w-24 h-10 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-foreground text-center"
+                />
+                <span className="text-sm text-muted-foreground">
+                  {t('settings.reposToKeep.of', { total: totalRepos })}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {t('settings.reposToKeep.hint')}
+              </p>
             </div>
-            <div className="p-3 rounded-lg border border-border bg-muted/30">
-              <div className="font-medium text-sm">{t('settings.commitStrategy.revert.title')}</div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {t('settings.commitStrategy.revert.desc')}
+
+            <div className="flex items-center justify-between" data-onboarding="settings-private">
+              <div>
+                <div className="font-medium text-sm">{t('settings.includePrivate.label')}</div>
+                <div className="text-xs text-muted-foreground">
+                  {t('settings.includePrivate.desc')}
+                </div>
               </div>
               <button
-                type="button"
-                onClick={() => setShowStrategyInfo(true)}
-                className="mt-2 text-xs underline text-muted-foreground hover:text-foreground"
+                onClick={() => onChange({ includePrivate: !settings.includePrivate })}
+                className={`w-12 h-6 rounded-full transition-colors ${
+                  settings.includePrivate ? 'bg-foreground' : 'bg-muted'
+                }`}
+                aria-label={t('settings.includePrivate.label')}
               >
-                Learn more
+                <div
+                  className={`w-5 h-5 rounded-full bg-background shadow transition-transform ${
+                    settings.includePrivate ? 'translate-x-6' : 'translate-x-0.5'
+                  }`}
+                />
               </button>
             </div>
-          </div>
 
-          {/* Auto enabled */}
-          <div className="flex items-center justify-between" data-onboarding="settings-auto">
+            <div className="rounded-lg border border-border bg-background p-3">
+              <div className="text-sm font-medium mb-1">{t('settings.onboarding.title')}</div>
+              <p className="text-xs text-muted-foreground">
+                {t('settings.onboarding.desc')}
+              </p>
+              <Button
+                type="button"
+                variant="secondary"
+                className="mt-3 w-full"
+                onClick={onStartOnboarding}
+              >
+                {t('settings.onboarding.start')}
+              </Button>
+            </div>
+          </SettingsSection>
+
+          <SettingsSection
+            title={t('settings.sections.sync.title')}
+            description={t('settings.sections.sync.desc')}
+          >
+            <div data-onboarding="settings-frequency">
+              <label className="block text-sm font-medium mb-2">
+                {t('settings.syncFrequency.label')}
+              </label>
+              <select
+                value={settings.syncFrequency}
+                onChange={(e) => onChange({ syncFrequency: parseInt(e.target.value) })}
+                className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-foreground"
+              >
+                <option value={1}>{t('settings.syncFrequency.options.1')}</option>
+                <option value={2}>{t('settings.syncFrequency.options.2')}</option>
+                <option value={4}>{t('settings.syncFrequency.options.4')}</option>
+                <option value={6}>{t('settings.syncFrequency.options.6')}</option>
+                <option value={8}>{t('settings.syncFrequency.options.8')}</option>
+                <option value={12}>{t('settings.syncFrequency.options.12')}</option>
+                <option value={24}>{t('settings.syncFrequency.options.24')}</option>
+                <option value={48}>{t('settings.syncFrequency.options.48')}</option>
+                <option value={168}>{t('settings.syncFrequency.options.168')}</option>
+                <option value={360}>{t('settings.syncFrequency.options.360')}</option>
+                <option value={720}>{t('settings.syncFrequency.options.720')}</option>
+              </select>
+              <p className="text-xs text-muted-foreground mt-1">
+                {t('settings.syncFrequency.hint')}
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-border bg-background p-4" data-onboarding="settings-schedule">
+              <div className="text-sm font-medium mb-2">{t('settings.schedule.title')}</div>
+              <label className="block text-xs text-muted-foreground mb-1">
+                {t('settings.schedule.preferredHour')}
+              </label>
+              <select
+                value={settings.preferredHour ?? ''}
+                onChange={(e) => onChange({
+                  preferredHour: e.target.value === '' ? null : parseInt(e.target.value)
+                })}
+                className="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-foreground"
+              >
+                <option value="">{t('settings.schedule.anyHour')}</option>
+                {Array.from({ length: 24 }, (_, i) => (
+                  <option key={i} value={i}>
+                    {i.toString().padStart(2, '0')}:00 UTC
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground mt-2">
+                {t('settings.schedule.utcNote')}
+              </p>
+            </div>
+
             <div>
-              <div className="font-medium text-sm">{t('settings.autoSync.label')}</div>
-              <div className="text-xs text-muted-foreground">
-                {t('settings.autoSync.desc')}
+              <div className="block text-sm font-medium mb-2">
+                {t('settings.commitStrategy.label')}
+              </div>
+              <div className="p-3 rounded-lg border border-border bg-background">
+                <div className="font-medium text-sm">{t('settings.commitStrategy.revert.title')}</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {t('settings.commitStrategy.revert.desc')}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowStrategyInfo(true)}
+                  className="mt-2 text-xs underline text-muted-foreground hover:text-foreground"
+                >
+                  {t('settings.commitStrategy.learnMore')}
+                </button>
               </div>
             </div>
-            <button
-              onClick={() => onChange({ autoEnabled: !settings.autoEnabled })}
-              className={`w-12 h-6 rounded-full transition-colors ${
-                settings.autoEnabled ? 'bg-foreground' : 'bg-muted'
-              }`}
-            >
-              <div
-                className={`w-5 h-5 rounded-full bg-background shadow transition-transform ${
-                  settings.autoEnabled ? 'translate-x-6' : 'translate-x-0.5'
+
+            <div className="flex items-center justify-between" data-onboarding="settings-auto">
+              <div>
+                <div className="font-medium text-sm">{t('settings.autoSync.label')}</div>
+                <div className="text-xs text-muted-foreground">
+                  {t('settings.autoSync.desc')}
+                </div>
+              </div>
+              <button
+                onClick={() => onChange({ autoEnabled: !settings.autoEnabled })}
+                className={`w-12 h-6 rounded-full transition-colors ${
+                  settings.autoEnabled ? 'bg-foreground' : 'bg-muted'
                 }`}
-              />
-            </button>
-          </div>
+                aria-label={t('settings.autoSync.label')}
+              >
+                <div
+                  className={`w-5 h-5 rounded-full bg-background shadow transition-transform ${
+                    settings.autoEnabled ? 'translate-x-6' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+            </div>
+          </SettingsSection>
 
-          <div className="p-4 bg-muted/30 rounded-lg border border-border">
-            <div className="text-sm font-medium mb-1">{t('settings.onboarding.title')}</div>
-            <p className="text-xs text-muted-foreground">
-              {t('settings.onboarding.desc')}
-            </p>
-            <Button
-              type="button"
-              variant="secondary"
-              className="mt-3 w-full"
-              onClick={onStartOnboarding}
-            >
-              {t('settings.onboarding.start')}
-            </Button>
-          </div>
-
-          <hr className="border-border" />
-
-          {/* Privacy & Data */}
-          <div className="p-4 rounded-lg border border-border bg-muted/20">
-            <div className="text-sm font-medium">{t('settings.privacy.title')}</div>
-            <p className="text-xs text-muted-foreground mt-1">{t('settings.privacy.desc')}</p>
-
+          <SettingsSection
+            title={t('settings.sections.privacy.title')}
+            description={t('settings.sections.privacy.desc')}
+          >
             {privacyMessage && (
-              <div className={`mt-3 rounded-lg border px-3 py-2 text-xs ${
+              <div className={`rounded-lg border px-3 py-2 text-xs ${
                 privacyMessage.type === 'success'
                   ? 'bg-muted/30 border-border text-foreground'
                   : privacyMessage.type === 'info'
@@ -425,22 +481,29 @@ export function SettingsModal({
               </div>
             )}
 
-            <div className="mt-3 flex gap-2">
+            <div className="rounded-lg border border-border bg-background p-3">
+              <div className="text-sm font-medium">{t('settings.privacy.exportTitle')}</div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {t('settings.privacy.exportHint')}
+              </p>
               <Button
                 type="button"
                 variant="secondary"
-                className="w-full"
+                className="mt-3 w-full"
                 onClick={handleExport}
                 disabled={exporting}
               >
                 {exporting ? t('settings.privacy.exporting') : t('settings.privacy.export')}
               </Button>
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {t('settings.privacy.exportHint')}
-            </p>
+          </SettingsSection>
 
-            <div className="mt-4 pt-4 border-t border-border">
+          <SettingsSection
+            title={t('settings.sections.danger.title')}
+            description={t('settings.sections.danger.desc')}
+            tone="danger"
+          >
+            <div className="rounded-lg border border-destructive/20 bg-background p-3">
               <div className="text-sm font-medium">{t('settings.privacy.deleteTitle')}</div>
               <p className="text-xs text-muted-foreground mt-1">
                 {t('settings.privacy.deleteDesc')}
@@ -459,7 +522,7 @@ export function SettingsModal({
                 {t('settings.privacy.deleteButton')}
               </Button>
             </div>
-          </div>
+          </SettingsSection>
 
         </div>
 
@@ -511,7 +574,7 @@ export function SettingsModal({
               </div>
 
               <div className="bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground">
-                <strong>Nota:</strong> {t('strategyInfo.note')}
+                <strong>{t('strategyInfo.noteLabel')}:</strong> {t('strategyInfo.note')}
               </div>
             </div>
 

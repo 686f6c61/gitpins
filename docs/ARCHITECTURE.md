@@ -24,11 +24,11 @@ flowchart LR
   Browser -->|API calls| App
   App --> DB[(Postgres)]
   App --> GitHubAPI[GitHub REST API]
-  Action[GitHub Action (user-owned)] -->|POST /api/sync| App
+  Scheduler[User-owned scheduler] -->|POST /api/sync| App
 ```
 
 Notes:
-1. The GitHub Action is "user-owned": it runs in the user's GitHub account, not in GitPins infrastructure.
+1. Scheduled sync is user-owned: the caller can be GitHub Actions or any external scheduler under the user's control, not GitPins infrastructure.
 2. The sync endpoint is authenticated by a per-user secret (`repo_orders.syncSecret`) passed in a header.
 
 ## Code Layout
@@ -205,4 +205,4 @@ See `docs/LOCAL_DEV.md` for end-to-end steps.
 
 ## Known Gaps / Future Work
 
-This architecture assumes some external scheduler (often a GitHub Action) calls the sync endpoint regularly. If you run GitPins without that, ordering works in the UI but auto-maintenance will not occur.
+This architecture assumes some external scheduler (often GitHub Actions, but not necessarily) calls the sync endpoint regularly. If you run GitPins without that, ordering works in the UI but auto-maintenance will not occur.

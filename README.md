@@ -50,7 +50,7 @@ GitHub sorts repositories by "last updated" date. This means your most important
 
 - **Drag & Drop Ordering** - visually arrange your top list
 - **Manual Sync** - "Sync now" from the dashboard (CSRF-protected)
-- **Scheduled Sync** - trigger `/api/sync` from GitHub Actions (or any scheduler)
+- **Scheduled Sync** - trigger `/api/sync` from GitHub Actions or any scheduler you control
 - **Smart Sync** - skips when already ordered + touches only the minimal prefix needed
 - **Single Strategy (Temporary Ref Touch)** - no default-branch history noise, no file changes
 - **Commit Cleanup (Optional)** - removes GitPins commits (history rewrite; explicit warning)
@@ -67,7 +67,7 @@ GitHub sorts repositories by "last updated" date. This means your most important
 3. **Arrange your repos** - save your desired top list and settings
 4. **Sync**
    - Manual: click "Sync now" in the dashboard
-   - Scheduled: run a GitHub Action (recommended) or any scheduler that calls `POST /api/sync`
+   - Scheduled: run GitHub Actions or any scheduler that calls `POST /api/sync`
 
 ### Technical Details
 
@@ -118,12 +118,17 @@ GitPins is designed with security in mind:
 ## Documentation
 
 Maintainer docs (recommended starting points):
+- `docs/README.md` - documentation index and suggested reading order
 - `docs/LOCAL_DEV.md` - Docker Compose local dev + Neon clone
 - `docs/ARCHITECTURE.md` - system overview and flows
 - `docs/SECURITY.md` - threat model, auth, CSRF, admin, sync secret
 - `docs/PRIVACY.md` - export + deletion model
 - `docs/ORDERING.md` - ordering algorithm details
+- `docs/DEPLOYMENT.md` - Vercel/Neon deployment and rollback guidance
+- `docs/ADMIN.md` - allowlist, sudo, audit model, bootstrap CLI
+- `docs/API.md` - maintainer API overview
 - `docs/MIGRATIONS.md` - Prisma migration notes for existing DBs
+- `docs/TROUBLESHOOTING.md` - common failure modes and operational fixes
 
 ## Self-Hosting
 
@@ -282,11 +287,11 @@ When authenticating, GitPins requests these OAuth scopes:
 
 If you're experiencing "Resource not accessible by integration" errors, the user needs to re-authenticate to get a token with the correct scopes.
 
-### Scheduled Sync (GitHub Actions)
+### Scheduled Sync (GitHub Actions or Any Scheduler)
 
 GitPins provides the sync endpoint (`POST /api/sync`) but does not automatically create a `gitpins-config` repository for you.
 
-A common setup is to create a private repo (many people name it `gitpins-config`) and add a scheduled workflow that calls your GitPins instance:
+A common setup is to create a private repo (many people name it `gitpins-config`) and add a scheduled GitHub Actions workflow that calls your GitPins instance. If you prefer, any scheduler that can send the same HTTP request will work.
 
 ```yaml
 name: GitPins - Maintain Repo Order
@@ -316,7 +321,7 @@ You must set:
 |-------|----------|
 | "Resource not accessible" | Re-authenticate (logout/login) to refresh OAuth token |
 | "Bad credentials" | Check GITHUB_APP_PRIVATE_KEY format (include BEGIN/END lines) |
-| Scheduled sync not running | Check the Actions logs in the repo that hosts your workflow |
+| Scheduled sync not running | Check the scheduler logs. If you use GitHub Actions, inspect the workflow logs in the repo that hosts it |
 | Repos not syncing | Verify the GitHub App is installed on those repos |
 
 ## Deploy to Vercel
@@ -363,7 +368,7 @@ src/
 │   ├── api/               # API Routes
 │   │   ├── auth/          # OAuth endpoints
 │   │   ├── repos/         # Repository management
-│   │   └── sync/          # Sync endpoint (called by GitHub Action)
+│   │   └── sync/          # Sync endpoints (called manually or by an external scheduler)
 │   ├── dashboard/         # Main dashboard
 │   ├── admin/             # Admin panel
 │   └── how-it-works/      # Documentation page

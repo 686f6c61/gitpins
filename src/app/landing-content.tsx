@@ -21,6 +21,104 @@ import { LanguageToggle } from '@/components/language-toggle'
 import { Footer } from '@/components/footer'
 import { useTranslation } from '@/i18n'
 
+interface VisualRepoItem {
+  name: string
+  stateKey: 'noisy' | 'hidden' | 'showcase' | 'stable' | 'moved'
+  pinned?: boolean
+}
+
+const BEFORE_REPOS: VisualRepoItem[] = [
+  { name: 'old-experiment', stateKey: 'noisy' },
+  { name: 'weekend-sandbox', stateKey: 'noisy' },
+  { name: 'main-sdk', stateKey: 'hidden' },
+  { name: 'design-system', stateKey: 'hidden' },
+]
+
+const AFTER_REPOS: VisualRepoItem[] = [
+  { name: 'main-sdk', stateKey: 'showcase', pinned: true },
+  { name: 'design-system', stateKey: 'stable', pinned: true },
+  { name: 'portfolio-site', stateKey: 'showcase', pinned: true },
+  { name: 'old-experiment', stateKey: 'moved' },
+]
+
+function OrderPreviewCard({
+  sectionKey,
+  repos,
+  t,
+}: {
+  sectionKey: 'before' | 'after'
+  repos: VisualRepoItem[]
+  t: (key: string, params?: Record<string, string | number>) => string
+}) {
+  const isAfter = sectionKey === 'after'
+
+  return (
+    <div className="rounded-2xl border border-border bg-background shadow-sm">
+      <div className="border-b border-border p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              {t(`landing.visualDemo.${sectionKey}.label`)}
+            </div>
+            <h3 className="mt-2 text-xl font-semibold">
+              {t(`landing.visualDemo.${sectionKey}.title`)}
+            </h3>
+          </div>
+          <div className={`rounded-full px-3 py-1 text-xs font-medium ${
+            isAfter
+              ? 'bg-foreground text-background'
+              : 'bg-muted text-muted-foreground'
+          }`}>
+            {t(`landing.visualDemo.${sectionKey}.tag`)}
+          </div>
+        </div>
+        <p className="mt-3 text-sm text-muted-foreground">
+          {t(`landing.visualDemo.${sectionKey}.desc`)}
+        </p>
+      </div>
+
+      <div className="p-4">
+        <div className="space-y-3">
+          {repos.map((repo, index) => (
+            <div
+              key={`${sectionKey}-${repo.name}`}
+              className={`rounded-xl border px-4 py-3 ${
+                repo.pinned
+                  ? 'border-foreground/20 bg-foreground/[0.04]'
+                  : 'border-border bg-background'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+                  repo.pinned
+                    ? 'bg-foreground text-background'
+                    : 'bg-muted text-foreground'
+                }`}>
+                  {index + 1}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="truncate font-medium">{repo.name}</span>
+                    {repo.pinned && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-background px-2 py-0.5 text-[11px] font-medium text-foreground border border-border">
+                        <PinIcon className="h-3.5 w-3.5" />
+                        {t('landing.visualDemo.after.pinned')}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {t(`landing.visualDemo.states.${repo.stateKey}`)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /**
  * Landing page content component.
  * Renders the full marketing page with all sections.
@@ -79,6 +177,32 @@ export function LandingContent() {
           </Button>
           <p className="text-sm text-muted-foreground mt-4">
             {t('landing.hero.noCreditCard')}
+          </p>
+        </div>
+      </section>
+
+      {/* Visual comparison */}
+      <section className="pb-20">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="mx-auto max-w-3xl text-center">
+            <div className="inline-flex items-center rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              {t('landing.visualDemo.badge')}
+            </div>
+            <h2 className="mt-4 text-2xl md:text-3xl font-bold">
+              {t('landing.visualDemo.title')}
+            </h2>
+            <p className="mt-3 text-muted-foreground">
+              {t('landing.visualDemo.subtitle')}
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-6 lg:grid-cols-2">
+            <OrderPreviewCard sectionKey="before" repos={BEFORE_REPOS} t={t} />
+            <OrderPreviewCard sectionKey="after" repos={AFTER_REPOS} t={t} />
+          </div>
+
+          <p className="mx-auto mt-5 max-w-3xl text-center text-sm text-muted-foreground">
+            {t('landing.visualDemo.note')}
           </p>
         </div>
       </section>

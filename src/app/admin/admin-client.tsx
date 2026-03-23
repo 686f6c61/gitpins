@@ -9,9 +9,10 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button, Card, CardHeader, CardTitle, CardContent } from '@/components/ui'
 import { RefreshIcon, XIcon, CheckIcon, AlertTriangleIcon, GitHubIcon } from '@/components/icons'
+import { useTranslation } from '@/i18n'
 
 interface User {
   id: string
@@ -24,7 +25,6 @@ interface User {
   bannedReason: string | null
   createdAt: string
   lastLoginAt: string
-  configRepoUrl: string | null
   reposConfigured: number
   syncCount: number
   hasConfig: boolean
@@ -49,6 +49,7 @@ interface Stats {
 }
 
 export function AdminClient() {
+  const { t, locale } = useTranslation()
   const [users, setUsers] = useState<User[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -58,7 +59,7 @@ export function AdminClient() {
   const [banReason, setBanReason] = useState('')
   const [csrfToken, setCsrfToken] = useState<string | null>(null)
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -78,15 +79,15 @@ export function AdminClient() {
       setUsers(usersData.users)
       setStats(statsData)
     } catch (err) {
-      setError('Error loading data')
+      setError(t('admin.errors.loadingData'))
       console.error(err)
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
 
   useEffect(() => {
-    fetchData()
+    void fetchData()
     void (async () => {
       try {
         const response = await fetch('/api/auth/csrf', {
@@ -102,7 +103,7 @@ export function AdminClient() {
         // No-op: token can be requested again before sensitive actions.
       }
     })()
-  }, [])
+  }, [fetchData])
 
   const ensureCsrfToken = async (): Promise<string | null> => {
     if (csrfToken) return csrfToken
@@ -140,7 +141,7 @@ export function AdminClient() {
 
     const data = await response.json().catch(() => null) as { error?: string; reason?: string } | null
     if (response.status === 403 && data?.reason === 'reauth_required') {
-      setError('Recent reauthentication required. Redirecting to GitHub...')
+      setError(t('admin.errors.reauthRequired'))
       redirectToAdminSudoLogin()
       throw new Error('__handled__')
     }
@@ -152,8 +153,8 @@ export function AdminClient() {
     try {
       setActionLoading(userId)
       const token = await ensureCsrfToken()
-      if (!token) {
-        setError('Security token unavailable. Please reload the page.')
+        if (!token) {
+        setError(t('admin.errors.securityToken'))
         return
       }
 
@@ -176,7 +177,7 @@ export function AdminClient() {
         return
       }
       console.error(err)
-      setError(err instanceof Error ? err.message : 'Error banning user')
+      setError(err instanceof Error ? err.message : t('admin.errors.banningUser'))
     } finally {
       setActionLoading(null)
     }
@@ -187,7 +188,7 @@ export function AdminClient() {
       setActionLoading(userId)
       const token = await ensureCsrfToken()
       if (!token) {
-        setError('Security token unavailable. Please reload the page.')
+        setError(t('admin.errors.securityToken'))
         return
       }
 
@@ -206,14 +207,14 @@ export function AdminClient() {
         return
       }
       console.error(err)
-      setError(err instanceof Error ? err.message : 'Error unbanning user')
+      setError(err instanceof Error ? err.message : t('admin.errors.unbanningUser'))
     } finally {
       setActionLoading(null)
     }
   }
 
   const handleDelete = async (userId: string, username: string) => {
-    if (!confirm(`Are you sure you want to delete user @${username}? This action cannot be undone.`)) {
+    if (!confirm(t('admin.deleteConfirm', { username }))) {
       return
     }
 
@@ -221,7 +222,7 @@ export function AdminClient() {
       setActionLoading(userId)
       const token = await ensureCsrfToken()
       if (!token) {
-        setError('Security token unavailable. Please reload the page.')
+        setError(t('admin.errors.securityToken'))
         return
       }
 
@@ -240,7 +241,7 @@ export function AdminClient() {
         return
       }
       console.error(err)
-      setError(err instanceof Error ? err.message : 'Error deleting user')
+      setError(err instanceof Error ? err.message : t('admin.errors.deletingUser'))
     } finally {
       setActionLoading(null)
     }
@@ -272,43 +273,43 @@ export function AdminClient() {
           <Card>
             <CardContent className="pt-6">
               <div className="text-2xl font-bold">{stats.totals.users}</div>
-              <div className="text-xs text-muted-foreground">Total Users</div>
+              <div className="text-xs text-muted-foreground">{t('admin.stats.totalUsers')}</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
               <div className="text-2xl font-bold text-success">{stats.totals.activeUsers}</div>
-              <div className="text-xs text-muted-foreground">Active Users</div>
+              <div className="text-xs text-muted-foreground">{t('admin.stats.activeUsers')}</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
               <div className="text-2xl font-bold text-destructive">{stats.totals.bannedUsers}</div>
-              <div className="text-xs text-muted-foreground">Banned</div>
+              <div className="text-xs text-muted-foreground">{t('admin.stats.bannedUsers')}</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
               <div className="text-2xl font-bold">{stats.totals.configRepos}</div>
-              <div className="text-xs text-muted-foreground">Config Repos</div>
+              <div className="text-xs text-muted-foreground">{t('admin.stats.configRepos')}</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
               <div className="text-2xl font-bold">{stats.totals.syncs}</div>
-              <div className="text-xs text-muted-foreground">Total Syncs</div>
+              <div className="text-xs text-muted-foreground">{t('admin.stats.totalSyncs')}</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
               <div className="text-2xl font-bold">{stats.totals.syncsToday}</div>
-              <div className="text-xs text-muted-foreground">Syncs Today</div>
+              <div className="text-xs text-muted-foreground">{t('admin.stats.syncsToday')}</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
               <div className="text-2xl font-bold">{stats.totals.syncsThisWeek}</div>
-              <div className="text-xs text-muted-foreground">This Week</div>
+              <div className="text-xs text-muted-foreground">{t('admin.stats.syncsThisWeek')}</div>
             </CardContent>
           </Card>
         </div>
@@ -319,7 +320,7 @@ export function AdminClient() {
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">User Registrations (30 days)</CardTitle>
+              <CardTitle className="text-base">{t('admin.charts.registrations')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-32 flex items-end gap-1">
@@ -331,21 +332,21 @@ export function AdminClient() {
                       key={i}
                       className="flex-1 bg-foreground/20 hover:bg-foreground/40 rounded-t transition-colors"
                       style={{ height: `${Math.max(height, 2)}%` }}
-                      title={`${day.date}: ${day.count} users`}
+                      title={`${day.date}: ${day.count} ${t('admin.users.title').toLowerCase()}`}
                     />
                   )
                 })}
               </div>
               <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                <span>30 days ago</span>
-                <span>Today</span>
+                <span>{t('admin.charts.daysAgo')}</span>
+                <span>{t('admin.charts.today')}</span>
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Sync Activity (30 days)</CardTitle>
+              <CardTitle className="text-base">{t('admin.charts.syncActivity')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-32 flex items-end gap-1">
@@ -357,14 +358,14 @@ export function AdminClient() {
                       key={i}
                       className="flex-1 bg-success/40 hover:bg-success/60 rounded-t transition-colors"
                       style={{ height: `${Math.max(height, 2)}%` }}
-                      title={`${day.date}: ${day.count} syncs`}
+                      title={`${day.date}: ${day.count} ${t('admin.users.syncs').toLowerCase()}`}
                     />
                   )
                 })}
               </div>
               <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                <span>30 days ago</span>
-                <span>Today</span>
+                <span>{t('admin.charts.daysAgo')}</span>
+                <span>{t('admin.charts.today')}</span>
               </div>
             </CardContent>
           </Card>
@@ -374,7 +375,7 @@ export function AdminClient() {
       {/* Users Table */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Users ({users.length})</CardTitle>
+          <CardTitle>{t('admin.users.title')} ({users.length})</CardTitle>
           <Button variant="ghost" size="sm" onClick={fetchData}>
             <RefreshIcon className="w-4 h-4" />
           </Button>
@@ -384,13 +385,13 @@ export function AdminClient() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left py-3 px-2">User</th>
-                  <th className="text-left py-3 px-2">Config Repo</th>
-                  <th className="text-center py-3 px-2">Repos</th>
-                  <th className="text-center py-3 px-2">Syncs</th>
-                  <th className="text-left py-3 px-2">Last Login</th>
-                  <th className="text-center py-3 px-2">Status</th>
-                  <th className="text-right py-3 px-2">Actions</th>
+                  <th className="text-left py-3 px-2">{t('admin.users.user')}</th>
+                  <th className="text-left py-3 px-2">{t('admin.users.configRepo')}</th>
+                  <th className="text-center py-3 px-2">{t('admin.users.repos')}</th>
+                  <th className="text-center py-3 px-2">{t('admin.users.syncs')}</th>
+                  <th className="text-left py-3 px-2">{t('admin.users.lastLogin')}</th>
+                  <th className="text-center py-3 px-2">{t('admin.users.status')}</th>
+                  <th className="text-right py-3 px-2">{t('admin.users.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -417,21 +418,29 @@ export function AdminClient() {
                             <GitHubIcon className="w-3 h-3 opacity-50" />
                           </a>
                           <div className="text-xs text-muted-foreground">
-                            {new Date(user.createdAt).toLocaleDateString()}
+                            {new Date(user.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'es-ES')}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="py-3 px-2">
-                      {user.configRepoUrl ? (
-                        <a
-                          href={user.configRepoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs hover:underline text-muted-foreground"
-                        >
-                          gitpins-config
-                        </a>
+                      {user.hasConfig ? (
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-foreground/5 px-2 py-1 text-xs font-medium text-foreground/80">
+                            {user.autoEnabled
+                              ? t('admin.users.syncSetupAuto')
+                              : t('admin.users.syncSetupManual')}
+                          </span>
+                          {user.autoEnabled && user.syncFrequency ? (
+                            <div className="text-xs text-muted-foreground">
+                              {t('admin.users.syncSetupEveryHours', { hours: user.syncFrequency })}
+                            </div>
+                          ) : (
+                            <div className="text-xs text-muted-foreground">
+                              {t('admin.users.syncSetupSavedOrder')}
+                            </div>
+                          )}
+                        </div>
                       ) : (
                         <span className="text-xs text-muted-foreground">-</span>
                       )}
@@ -444,22 +453,22 @@ export function AdminClient() {
                     </td>
                     <td className="py-3 px-2">
                       <span className="text-xs text-muted-foreground">
-                        {new Date(user.lastLoginAt).toLocaleDateString()}
+                        {new Date(user.lastLoginAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'es-ES')}
                       </span>
                     </td>
                     <td className="py-3 px-2 text-center">
                       {user.isBanned ? (
                         <span className="inline-flex items-center gap-1 text-xs bg-destructive/10 text-destructive px-2 py-1 rounded">
                           <XIcon className="w-3 h-3" />
-                          Banned
+                          {t('admin.users.banned')}
                         </span>
                       ) : user.hasConfig ? (
                         <span className="inline-flex items-center gap-1 text-xs bg-success/10 text-success px-2 py-1 rounded">
                           <CheckIcon className="w-3 h-3" />
-                          Active
+                          {t('admin.users.active')}
                         </span>
                       ) : (
-                        <span className="text-xs text-muted-foreground">Inactive</span>
+                        <span className="text-xs text-muted-foreground">{t('admin.users.inactive')}</span>
                       )}
                     </td>
                     <td className="py-3 px-2 text-right">
@@ -471,7 +480,7 @@ export function AdminClient() {
                             onClick={() => handleUnban(user.id)}
                             disabled={actionLoading === user.id}
                           >
-                            Unban
+                            {t('admin.users.unban')}
                           </Button>
                         ) : (
                           <Button
@@ -480,7 +489,7 @@ export function AdminClient() {
                             onClick={() => setBanModal({ userId: user.id, username: user.username })}
                             disabled={actionLoading === user.id}
                           >
-                            Ban
+                            {t('admin.users.ban')}
                           </Button>
                         )}
                         <Button
@@ -489,7 +498,7 @@ export function AdminClient() {
                           onClick={() => handleDelete(user.id, user.username)}
                           disabled={actionLoading === user.id}
                         >
-                          Delete
+                          {t('admin.users.delete')}
                         </Button>
                       </div>
                     </td>
@@ -506,20 +515,20 @@ export function AdminClient() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-background border border-border rounded-xl max-w-md w-full p-6">
             <h3 className="text-lg font-semibold mb-4">
-              Ban @{banModal.username}
+              {t('admin.banModal.title', { username: banModal.username })}
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              This user will not be able to log in or use GitPins until unbanned.
+              {t('admin.banModal.message')}
             </p>
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2">
-                Reason (optional)
+                {t('admin.banModal.reasonLabel')}
               </label>
               <input
                 type="text"
                 value={banReason}
                 onChange={(e) => setBanReason(e.target.value)}
-                placeholder="Violation of terms of service"
+                placeholder={t('admin.banModal.reasonPlaceholder')}
                 className="w-full px-3 py-2 border border-border rounded-lg bg-background text-sm"
               />
             </div>
@@ -532,15 +541,15 @@ export function AdminClient() {
                 }}
                 className="flex-1"
               >
-                Cancel
+                {t('admin.banModal.cancel')}
               </Button>
               <Button
                 variant="danger"
-                onClick={() => handleBan(banModal.userId, banReason || 'Violation of terms of service')}
+                onClick={() => handleBan(banModal.userId, banReason || t('admin.banModal.reasonPlaceholder'))}
                 disabled={actionLoading === banModal.userId}
                 className="flex-1"
               >
-                Ban User
+                {t('admin.banModal.confirm')}
               </Button>
             </div>
           </div>

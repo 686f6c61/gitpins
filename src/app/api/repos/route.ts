@@ -137,6 +137,7 @@ export async function GET(request: NextRequest) {
               autoEnabled: repoOrder.autoEnabled,
               commitStrategy: 'revert' as const,
               preferredHour: repoOrder.preferredHour,
+              lastSyncAt: repoOrder.lastSyncAt?.toISOString() ?? null,
               syncConfigured: !!repoOrder.syncSecret,
               canManualSync: !!repoOrder.syncSecret && !!user.installationId,
             }

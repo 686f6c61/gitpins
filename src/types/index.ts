@@ -39,6 +39,7 @@ export interface RepoOrderSettings {
   autoEnabled: boolean
   commitStrategy: 'revert'
   preferredHour?: number | null // 0-23 UTC, null = cualquier hora
+  lastSyncAt?: string | null
   syncConfigured?: boolean
   canManualSync?: boolean
 }

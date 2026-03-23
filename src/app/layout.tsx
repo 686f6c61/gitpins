@@ -15,6 +15,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { I18nProvider } from "@/i18n";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import packageJson from "../../package.json";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -85,7 +86,7 @@ export const metadata: Metadata = {
   },
   category: "technology",
   other: {
-    "version": "1.0.0",
+    "version": packageJson.version,
   },
 };
 

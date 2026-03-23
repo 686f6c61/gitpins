@@ -14,6 +14,7 @@
 import { useSyncExternalStore } from 'react'
 import { useTheme } from './theme-provider'
 import { SunIcon, MoonIcon, MonitorIcon } from './icons'
+import { useTranslation } from '@/i18n'
 
 let hasHydrated = false
 const hydrationListeners = new Set<() => void>()
@@ -47,6 +48,7 @@ function subscribeHydration(callback: () => void) {
  */
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
+  const { t } = useTranslation()
   const hydrated = useSyncExternalStore(subscribeHydration, getHydrationSnapshot, () => false)
 
   // Keep first SSR/client render deterministic to avoid hydration mismatch.
@@ -59,7 +61,7 @@ export function ThemeToggle() {
         className={`p-1.5 rounded-md transition-colors ${
           selectedTheme === 'light' ? 'bg-background shadow-sm' : 'hover:bg-background/50'
         }`}
-        title="Modo claro"
+        title={t('common.theme.light')}
       >
         <SunIcon className="w-4 h-4" />
       </button>
@@ -68,7 +70,7 @@ export function ThemeToggle() {
         className={`p-1.5 rounded-md transition-colors ${
           selectedTheme === 'system' ? 'bg-background shadow-sm' : 'hover:bg-background/50'
         }`}
-        title="Sistema"
+        title={t('common.theme.system')}
       >
         <MonitorIcon className="w-4 h-4" />
       </button>
@@ -77,7 +79,7 @@ export function ThemeToggle() {
         className={`p-1.5 rounded-md transition-colors ${
           selectedTheme === 'dark' ? 'bg-background shadow-sm' : 'hover:bg-background/50'
         }`}
-        title="Modo oscuro"
+        title={t('common.theme.dark')}
       >
         <MoonIcon className="w-4 h-4" />
       </button>

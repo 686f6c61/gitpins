@@ -15,6 +15,7 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { GripVerticalIcon, StarIcon, ForkIcon } from '@/components/icons'
+import { useTranslation } from '@/i18n'
 import type { Repo } from '@/types'
 
 /** Props for the SortableRepoItem component */
@@ -31,6 +32,7 @@ interface SortableRepoItemProps {
  * Uses dnd-kit's useSortable hook for drag-and-drop functionality.
  */
 export function SortableRepoItem({ repo, index, isTop, onRemove }: SortableRepoItemProps) {
+  const { t } = useTranslation()
   const {
     attributes,
     listeners,
@@ -87,7 +89,7 @@ export function SortableRepoItem({ repo, index, isTop, onRemove }: SortableRepoI
           </a>
           {repo.isPrivate && (
             <span className="text-xs px-2 py-0.5 bg-muted rounded-full text-muted-foreground">
-              Private
+              {t('common.private')}
             </span>
           )}
         </div>
@@ -118,8 +120,8 @@ export function SortableRepoItem({ repo, index, isTop, onRemove }: SortableRepoI
         <button
           onClick={onRemove}
           className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors shrink-0"
-          title="Remove from pinned"
-          aria-label="Remove from pinned repos"
+          title={t('dashboard.pinnedRepos.remove')}
+          aria-label={t('dashboard.pinnedRepos.remove')}
         >
           <svg
             className="w-4 h-4"

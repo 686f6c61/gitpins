@@ -55,6 +55,32 @@ interface DashboardClientProps {
   }
 }
 
+function DashboardStatusCard({
+  label,
+  value,
+  hint,
+}: {
+  label: string
+  value: string
+  hint?: string
+}) {
+  return (
+    <Card className="p-4">
+      <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        {label}
+      </div>
+      <div className="mt-2 text-lg font-semibold">
+        {value}
+      </div>
+      {hint && (
+        <div className="mt-1 text-xs text-muted-foreground">
+          {hint}
+        </div>
+      )}
+    </Card>
+  )
+}
+
 /**
  * Droppable zone component for drag-and-drop.
  * Highlights when items are dragged over it.
@@ -234,6 +260,27 @@ export function DashboardClient({ user }: DashboardClientProps) {
     return filteredRepos.find(r => r.fullName === activeId) || null
   }, [activeId, filteredRepos])
 
+  const formattedLastSync = useMemo(() => {
+    if (!settings?.lastSyncAt) {
+      return t('dashboard.summary.never')
+    }
+
+    const date = new Date(settings.lastSyncAt)
+    if (Number.isNaN(date.getTime())) {
+      return t('dashboard.summary.never')
+    }
+
+    return new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'es-ES', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(date)
+  }, [locale, settings?.lastSyncAt, t])
+
+  const syncFrequencyLabel = useMemo(() => {
+    if (!settings) return ''
+    return t(`settings.syncFrequency.options.${settings.syncFrequency}`)
+  }, [settings, t])
+
   async function fetchRepos() {
     setLoading(true)
     setAuthError(false)
@@ -264,6 +311,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
         syncFrequency: 168,
         autoEnabled: true,
         commitStrategy: 'revert',
+        lastSyncAt: null,
         syncConfigured: false,
         canManualSync: false,
       }
@@ -595,12 +643,10 @@ export function DashboardClient({ user }: DashboardClientProps) {
                 </svg>
               </div>
               <h2 className="text-xl font-semibold mb-2">
-                {locale === 'es' ? 'Sesión expirada' : 'Session Expired'}
+                {t('dashboard.authExpired.title')}
               </h2>
               <p className="text-muted-foreground mb-4">
-                {locale === 'es'
-                  ? 'Tu autenticación con GitHub ha expirado o la aplicación fue desinstalada. Serás redirigido al inicio para volver a iniciar sesión.'
-                  : 'Your GitHub authentication has expired or the app was uninstalled. You will be redirected to login again.'}
+                {t('dashboard.authExpired.desc')}
               </p>
               <LoaderIcon className="w-6 h-6 mx-auto text-muted-foreground" />
             </Card>
@@ -630,6 +676,41 @@ export function DashboardClient({ user }: DashboardClientProps) {
                     t('dashboard.saveOrder')
                   )}
                 </Button>
+              </div>
+            )}
+
+            {settings && (
+              <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                <DashboardStatusCard
+                  label={t('dashboard.summary.saveState')}
+                  value={hasChanges ? t('dashboard.summary.pending') : t('dashboard.summary.saved')}
+                  hint={hasChanges ? t('dashboard.summary.saveHintPending') : t('dashboard.summary.saveHintSaved')}
+                />
+                <DashboardStatusCard
+                  label={t('dashboard.summary.pinnedNow')}
+                  value={t('dashboard.summary.pinnedValue', {
+                    pinned: pinnedRepos.length,
+                    limit: maxPinned,
+                  })}
+                  hint={t('dashboard.summary.pinnedHint')}
+                />
+                <DashboardStatusCard
+                  label={t('dashboard.summary.autoSync')}
+                  value={settings.autoEnabled ? t('dashboard.summary.enabled') : t('dashboard.summary.disabled')}
+                  hint={syncFrequencyLabel}
+                />
+                <DashboardStatusCard
+                  label={t('dashboard.summary.privateRepos')}
+                  value={settings.includePrivate ? t('dashboard.summary.included') : t('dashboard.summary.excluded')}
+                  hint={settings.canManualSync ? t('dashboard.summary.manualReady') : t('dashboard.summary.manualSetup')}
+                />
+                <DashboardStatusCard
+                  label={t('dashboard.summary.lastSync')}
+                  value={formattedLastSync}
+                  hint={settings.preferredHour === null || settings.preferredHour === undefined
+                    ? t('dashboard.summary.anyHour')
+                    : t('dashboard.summary.preferredHour', { hour: `${settings.preferredHour}`.padStart(2, '0') })}
+                />
               </div>
             )}
 

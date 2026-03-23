@@ -72,7 +72,6 @@ export async function GET() {
         : 0,
       syncCount: user._count.syncLogs,
       hasConfig: !!user.repoOrder,
-      configRepoUrl: user.repoOrder ? `https://github.com/${user.username}/gitpins-config` : null,
       syncFrequency: user.repoOrder?.syncFrequency || null,
       autoEnabled: user.repoOrder?.autoEnabled || false,
     }))
