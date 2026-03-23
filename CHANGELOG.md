@@ -6,7 +6,7 @@ The format is based on Keep a Changelog.
 
 ## Unreleased
 
-## 0.3.6 - 2026-03-23
+## 0.3.7 - 2026-03-23
 
 ### Added
 - Added `admin:access` CLI tooling to grant, revoke and inspect admin allowlist entries from the database.
