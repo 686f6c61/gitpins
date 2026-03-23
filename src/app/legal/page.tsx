@@ -9,11 +9,15 @@
  * Comprehensive disclaimer and legal information page.
  */
 
+import type { Metadata } from 'next'
 import { LegalContent } from './legal-content'
 
-export const metadata = {
-  title: 'Legal & Disclaimer - GitPins',
-  description: 'Legal information and disclaimer for GitPins service',
+export const metadata: Metadata = {
+  title: 'Legal y privacidad',
+  description: 'Información legal, privacidad, exportación y borrado de cuenta en GitPins.',
+  alternates: {
+    canonical: '/legal',
+  },
 }
 
 export default function LegalPage() {

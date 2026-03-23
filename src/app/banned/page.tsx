@@ -12,8 +12,12 @@ import { Metadata } from 'next'
 import { BannedContent } from './banned-content'
 
 export const metadata: Metadata = {
-  title: 'Account Suspended - GitPins',
-  description: 'Your GitPins account has been suspended',
+  title: 'Cuenta suspendida',
+  description: 'Estado de suspensión de una cuenta de GitPins.',
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 export default function BannedPage() {

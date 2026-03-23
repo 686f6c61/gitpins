@@ -8,11 +8,20 @@
  * Only accessible to users in the admin allowlist.
  */
 
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { verifyAdmin } from '@/lib/admin'
 import { getSession } from '@/lib/session'
 import { AdminClient } from './admin-client'
 import { AdminShell } from './admin-shell'
+
+export const metadata: Metadata = {
+  title: 'Admin',
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 export default async function AdminPage() {
   const session = await getSession()

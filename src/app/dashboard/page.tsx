@@ -10,11 +10,20 @@
  * Redirects to appropriate pages if not authenticated or app not installed.
  */
 
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { ensureValidToken, getUserInstallation } from '@/lib/github'
 import { DashboardClient } from './dashboard-client'
+
+export const metadata: Metadata = {
+  title: 'Dashboard',
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 /**
  * Dashboard page server component.

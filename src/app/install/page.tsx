@@ -10,10 +10,20 @@
  * Redirects unauthenticated users to the home page.
  */
 
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/session'
 import { GITHUB_APP_INSTALL_URL } from '@/lib/github'
 import { InstallContent } from './install-content'
+
+export const metadata: Metadata = {
+  title: 'Instalar GitPins',
+  description: 'Flujo de instalación autenticado de GitPins en GitHub.',
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 /**
  * Install page component.
