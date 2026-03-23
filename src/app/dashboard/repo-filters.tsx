@@ -39,7 +39,7 @@ function getUniqueLanguages(repos: Repo[]): string[] {
       languages.add(repo.language)
     }
   })
-  return Array.from(languages).sort()
+  return Array.from(languages).sort((left, right) => left.localeCompare(right))
 }
 
 /**
@@ -131,7 +131,7 @@ export function RepoFilters({ repos, filters, onFiltersChange }: RepoFiltersProp
           type="number"
           min="0"
           value={filters.minStars || ''}
-          onChange={(e) => onFiltersChange({ ...filters, minStars: parseInt(e.target.value) || 0 })}
+          onChange={(e) => onFiltersChange({ ...filters, minStars: Number.parseInt(e.target.value, 10) || 0 })}
           className="w-20 px-3 py-2 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-foreground/20"
           placeholder="0"
         />

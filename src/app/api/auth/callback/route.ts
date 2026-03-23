@@ -19,6 +19,7 @@ import { consumeOAuthReturnTo, createSession, verifyOAuthState } from '@/lib/ses
 import { prisma } from '@/lib/prisma'
 import { encrypt } from '@/lib/crypto'
 import { consumeSudoIntent, setSudoCookie } from '@/lib/sudo'
+import { syncAdminAccountUserLink } from '@/lib/admin'
 
 /**
  * GET /api/auth/callback
@@ -100,26 +101,14 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    // Optional bootstrap path while migrating from ENV-only admin model
-    const adminGithubId = process.env.ADMIN_GITHUB_ID
-    if (adminGithubId && githubUser.id === parseInt(adminGithubId, 10)) {
-      try {
-        await prisma.adminAccount.upsert({
-          where: { githubId: githubUser.id },
-          update: {
-            userId: user.id,
-            revokedAt: null,
-            reason: 'Bootstrapped from ADMIN_GITHUB_ID fallback',
-          },
-          create: {
-            githubId: githubUser.id,
-            userId: user.id,
-            reason: 'Bootstrapped from ADMIN_GITHUB_ID fallback',
-          },
-        })
-      } catch (error) {
-        console.error('Admin allowlist bootstrap warning:', error)
-      }
+    try {
+      await syncAdminAccountUserLink({
+        userId: user.id,
+        githubId: user.githubId,
+      })
+    } catch (error) {
+      // Non-fatal: login should still succeed even if allowlist linkage update fails.
+      console.error('Admin allowlist link warning:', error)
     }
 
     // Crear o actualizar token en tabla separada (UserToken)

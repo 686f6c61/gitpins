@@ -103,5 +103,9 @@ describe('Sanitize Module', () => {
     it('should return false for tags with attributes', () => {
       expect(validateHTML('<strong class="x">text</strong>')).toBe(false)
     })
+
+    it('should return false for malformed tags without a closing bracket', () => {
+      expect(validateHTML('<strong')).toBe(false)
+    })
   })
 })

@@ -133,6 +133,33 @@ export function sanitizeInput(input: string, maxLength: number = 1000): string {
 }
 
 /**
+ * Removes ASCII control characters from a string while preserving normal text.
+ * Useful for audit reasons and admin notes that should remain single-line safe text.
+ */
+export function stripControlCharacters(input: string): string {
+  if (typeof input !== 'string') return ''
+
+  let sanitized = ''
+  for (const character of input) {
+    const codePoint = character.codePointAt(0)
+    if (codePoint === undefined) continue
+
+    if (codePoint >= 0x20 && codePoint !== 0x7f) {
+      sanitized += character
+    }
+  }
+
+  return sanitized
+}
+
+/**
+ * Sanitizes plain-text input by removing control characters, trimming and truncating.
+ */
+export function sanitizePlainText(input: string, maxLength: number = 1000): string {
+  return stripControlCharacters(input).trim().slice(0, maxLength).trim()
+}
+
+/**
  * Validates a GitHub repository name format.
  * GitHub allows: alphanumeric, hyphens, underscores, dots (max 100 chars)
  * @param name - The repository name to validate

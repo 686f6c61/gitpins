@@ -1,36 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import {
-  checkAdminRateLimit,
-  csrfFailedResponse,
-  forbiddenResponse,
-  unauthorizedResponse,
-  verifyAdmin,
-  verifyCSRF,
+  authorizeAdminMutation,
+  createAdminAuditLog,
 } from '@/lib/admin'
-import { getSession } from '@/lib/session'
+import { sanitizePlainText } from '@/lib/security'
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession()
-    if (!session) {
-      return unauthorizedResponse()
+    const auth = await authorizeAdminMutation(request)
+    if ('response' in auth) {
+      return auth.response
     }
-
-    const isAdmin = await verifyAdmin(session)
-    if (!isAdmin) {
-      return forbiddenResponse()
-    }
-
-    const csrfValid = await verifyCSRF(request)
-    if (!csrfValid) {
-      return csrfFailedResponse()
-    }
-
-    const rateLimit = checkAdminRateLimit(session.userId)
-    if (!rateLimit.allowed) {
-      return rateLimit.response!
-    }
+    const { session } = auth
 
     const body = await request.json().catch(() => ({}))
     const githubIdRaw = body.githubId
@@ -41,41 +23,45 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid githubId' }, { status: 400 })
     }
 
-    const reason = typeof reasonRaw === 'string' && reasonRaw.trim()
-      ? reasonRaw.trim().slice(0, 500)
+    const reason = typeof reasonRaw === 'string' && sanitizePlainText(reasonRaw, 500)
+      ? sanitizePlainText(reasonRaw, 500)
       : 'Granted via admin API'
 
-    const targetUser = await prisma.user.findUnique({
-      where: { githubId },
-      select: { id: true, username: true },
-    })
+    const adminAccount = await prisma.$transaction(async (tx) => {
+      const targetUser = await tx.user.findUnique({
+        where: { githubId },
+        select: { id: true, username: true, githubId: true },
+      })
 
-    const adminAccount = await prisma.adminAccount.upsert({
-      where: { githubId },
-      update: {
-        userId: targetUser?.id || null,
-        grantedByUserId: session.userId,
-        reason,
-        revokedAt: null,
-      },
-      create: {
-        githubId,
-        userId: targetUser?.id || null,
-        grantedByUserId: session.userId,
-        reason,
-      },
-    })
-
-    if (targetUser) {
-      await prisma.adminLog.create({
-        data: {
-          adminId: session.userId,
-          targetUserId: targetUser.id,
-          action: 'GRANT_ADMIN',
+      const updated = await tx.adminAccount.upsert({
+        where: { githubId },
+        update: {
+          userId: targetUser?.id ?? null,
+          grantedByUserId: session.userId,
+          revokedByUserId: null,
+          reason,
+          revokedAt: null,
+        },
+        create: {
+          githubId,
+          userId: targetUser?.id ?? null,
+          grantedByUserId: session.userId,
+          revokedByUserId: null,
           reason,
         },
       })
-    }
+
+      await createAdminAuditLog({
+        action: 'GRANT_ADMIN',
+        admin: session,
+        target: targetUser,
+        targetGithubId: githubId,
+        reason,
+        client: tx,
+      })
+
+      return updated
+    })
 
     return NextResponse.json({ success: true, admin: adminAccount })
   } catch (error) {

@@ -60,7 +60,7 @@ Files:
 Design:
 1. Admin access is granted by inserting a GitHub id into `admin_accounts` with `revokedAt IS NULL`.
 2. Allowlist can be revoked (`revokedAt` set).
-3. `ADMIN_GITHUB_ID` env var is supported as a temporary fallback (migration aid), but DB allowlist is the intended source of truth.
+3. DB allowlist is the single runtime source of truth. Bootstrap/recovery should be done with the admin CLI or direct DB access.
 
 Auditing:
 1. Admin actions write to `admin_logs`.

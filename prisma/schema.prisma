@@ -14,7 +14,7 @@ model User {
   email          String?
   avatarUrl      String?
   installationId Int?     @unique
-  isAdmin        Boolean  @default(false)
+  isAdmin        Boolean  @default(false) // Legacy flag. Admin access is enforced via admin_accounts.
   isBanned       Boolean  @default(false)
   bannedAt       DateTime?
   bannedReason   String?
@@ -123,18 +123,23 @@ model UserToken {
 }
 
 model AdminLog {
-  id           String   @id @default(cuid())
-  adminId      String
-  admin        User     @relation("AdminActions", fields: [adminId], references: [id], onDelete: Cascade)
-  targetUserId String
-  targetUser   User     @relation("TargetedUser", fields: [targetUserId], references: [id], onDelete: Cascade)
-  action       String   // BAN, UNBAN, DELETE, WARN
-  reason       String?
-  details      String?
-  createdAt    DateTime @default(now())
+  id                    String   @id @default(cuid())
+  adminId               String?
+  admin                 User?    @relation("AdminActions", fields: [adminId], references: [id], onDelete: SetNull)
+  adminGithubId         Int?
+  adminUsernameSnapshot String?
+  targetUserId          String?
+  targetUser            User?    @relation("TargetedUser", fields: [targetUserId], references: [id], onDelete: SetNull)
+  targetGithubId        Int?
+  targetUsernameSnapshot String?
+  action                String   // BAN, UNBAN, DELETE, WARN, GRANT_ADMIN, REVOKE_ADMIN, BOOTSTRAP_*
+  reason                String?
+  details               String?
+  createdAt             DateTime @default(now())
 
   @@index([adminId, createdAt])
   @@index([targetUserId, createdAt])
+  @@index([action, createdAt])
   @@map("admin_logs")
 }
 
@@ -144,9 +149,11 @@ model AdminAccount {
   userId          String?
   user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   grantedByUserId String?
+  revokedByUserId String?
   reason          String?
   revokedAt       DateTime?
   createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@index([revokedAt])
   @@map("admin_accounts")

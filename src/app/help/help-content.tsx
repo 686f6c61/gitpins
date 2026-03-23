@@ -108,10 +108,12 @@ function DragDemo() {
             {poolRepos.map((repo) => {
               const isAdded = pinnedRepos.some(p => p.name === repo.name)
               return (
-                <div
+                <button
                   key={repo.name}
-                  className={`flex items-center gap-3 p-3 border border-border rounded-lg ${
-                    isAdded ? 'opacity-50' : 'bg-background cursor-pointer hover:bg-muted/50'
+                  type="button"
+                  disabled={isAdded}
+                  className={`w-full flex items-center gap-3 p-3 border border-border rounded-lg text-left ${
+                    isAdded ? 'opacity-50 cursor-not-allowed' : 'bg-background cursor-pointer hover:bg-muted/50'
                   }`}
                   onClick={() => !isAdded && handleAdd(repo)}
                 >
@@ -121,7 +123,7 @@ function DragDemo() {
                     <StarIcon className="w-3 h-3" />
                     {repo.stars}
                   </span>
-                </div>
+                </button>
               )
             })}
           </div>

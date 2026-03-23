@@ -22,10 +22,12 @@
 
 # misc
 .DS_Store
+.scannerwork/
 *.pem
 *.key
 *.dump
 *.sql
+!prisma/migrations/**/migration.sql
 
 # debug
 npm-debug.log*

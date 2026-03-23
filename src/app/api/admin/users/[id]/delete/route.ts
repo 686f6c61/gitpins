@@ -10,37 +10,18 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { verifyAdmin, forbiddenResponse, unauthorizedResponse, checkAdminRateLimit, verifyCSRF, csrfFailedResponse } from '@/lib/admin'
-import { getSession } from '@/lib/session'
+import { authorizeAdminMutation, createAdminAuditLog } from '@/lib/admin'
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSession()
-
-    if (!session) {
-      return unauthorizedResponse()
+    const auth = await authorizeAdminMutation(request)
+    if ('response' in auth) {
+      return auth.response
     }
-
-    const isAdmin = await verifyAdmin(session)
-
-    if (!isAdmin) {
-      return forbiddenResponse()
-    }
-
-    // CSRF verification for destructive action
-    const csrfValid = await verifyCSRF(request)
-    if (!csrfValid) {
-      return csrfFailedResponse()
-    }
-
-    // Rate limiting for admin
-    const rateLimit = checkAdminRateLimit(session.userId)
-    if (!rateLimit.allowed) {
-      return rateLimit.response!
-    }
+    const { session } = auth
 
     const { id } = await params
 
@@ -79,13 +60,15 @@ export async function DELETE(
     }
 
     // Log admin action BEFORE deleting (to maintain FK reference)
-    await prisma.adminLog.create({
-      data: {
-        adminId: session.userId,
-        targetUserId: id,
-        action: 'DELETE',
-        details: `Deleted user: ${user.username} (GitHub ID: ${user.githubId})`,
-      }
+    await createAdminAuditLog({
+      action: 'DELETE',
+      admin: session,
+      target: {
+        id: user.id,
+        githubId: user.githubId,
+        username: user.username,
+      },
+      details: `Deleted user: ${user.username} (GitHub ID: ${user.githubId})`,
     })
 
     // Delete user (cascade will delete repoOrder, syncLogs, userToken)

@@ -13,6 +13,7 @@
  * - Uses a single strategy: create+delete a temporary tag ref (no branches, no default-branch history noise)
  */
 
+import { randomUUID } from 'node:crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { createAppOctokit } from '@/lib/github-app'
@@ -455,7 +456,7 @@ export async function POST(
         // This should update repository recency signals without creating GitPins commits.
         detailedLogs.push(`  - Touching via temporary tag ref for target position ${desiredPosition}/${reposToSync.length}...`)
 
-        const tempRefSuffix = `${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`
+        const tempRefSuffix = `${Date.now().toString(36)}-${randomUUID().slice(0, 8)}`
         const tempTag = `gitpins-touch-${tempRefSuffix}-${desiredPosition}`
 
         await octokit.rest.git.createRef({

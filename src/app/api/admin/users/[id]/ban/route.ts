@@ -10,53 +10,28 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { verifyAdmin, forbiddenResponse, unauthorizedResponse, checkAdminRateLimit, verifyCSRF, csrfFailedResponse } from '@/lib/admin'
-import { getSession } from '@/lib/session'
+import { authorizeAdminMutation, createAdminAuditLog } from '@/lib/admin'
+import { sanitizePlainText } from '@/lib/security'
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSession()
-
-    if (!session) {
-      return unauthorizedResponse()
+    const auth = await authorizeAdminMutation(request)
+    if ('response' in auth) {
+      return auth.response
     }
-
-    const isAdmin = await verifyAdmin(session)
-
-    if (!isAdmin) {
-      return forbiddenResponse()
-    }
-
-    // CSRF verification for destructive action
-    const csrfValid = await verifyCSRF(request)
-    if (!csrfValid) {
-      return csrfFailedResponse()
-    }
-
-    // Rate limiting for admin
-    const rateLimit = checkAdminRateLimit(session.userId)
-    if (!rateLimit.allowed) {
-      return rateLimit.response!
-    }
+    const { session } = auth
 
     const { id } = await params
     const body = await request.json().catch(() => ({}))
 
     // Validate and sanitize ban reason
-    const MAX_REASON_LENGTH = 500
-    let reason = body.reason
-    if (typeof reason !== 'string' || !reason.trim()) {
-      reason = 'Violation of terms of service'
-    } else {
-      // Sanitize: trim, limit length, remove control characters
-      reason = reason
-        .trim()
-        .slice(0, MAX_REASON_LENGTH)
-        .replace(/[\x00-\x1F\x7F]/g, '') // Remove control characters
-    }
+    const sanitizedReason = typeof body.reason === 'string'
+      ? sanitizePlainText(body.reason, 500)
+      : ''
+    const reason = sanitizedReason || 'Violation of terms of service'
 
     // Check user exists
     const user = await prisma.user.findUnique({
@@ -103,13 +78,15 @@ export async function POST(
     })
 
     // Log admin action
-    await prisma.adminLog.create({
-      data: {
-        adminId: session.userId,
-        targetUserId: id,
-        action: 'BAN',
-        reason: reason,
-      }
+    await createAdminAuditLog({
+      action: 'BAN',
+      admin: session,
+      target: {
+        id: user.id,
+        githubId: user.githubId,
+        username: user.username,
+      },
+      reason,
     })
 
     return NextResponse.json({

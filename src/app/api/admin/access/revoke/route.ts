@@ -1,36 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import {
-  checkAdminRateLimit,
-  csrfFailedResponse,
-  forbiddenResponse,
-  unauthorizedResponse,
-  verifyAdmin,
-  verifyCSRF,
+  authorizeAdminMutation,
+  createAdminAuditLog,
 } from '@/lib/admin'
-import { getSession } from '@/lib/session'
+import { sanitizePlainText } from '@/lib/security'
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession()
-    if (!session) {
-      return unauthorizedResponse()
+    const auth = await authorizeAdminMutation(request)
+    if ('response' in auth) {
+      return auth.response
     }
-
-    const isAdmin = await verifyAdmin(session)
-    if (!isAdmin) {
-      return forbiddenResponse()
-    }
-
-    const csrfValid = await verifyCSRF(request)
-    if (!csrfValid) {
-      return csrfFailedResponse()
-    }
-
-    const rateLimit = checkAdminRateLimit(session.userId)
-    if (!rateLimit.allowed) {
-      return rateLimit.response!
-    }
+    const { session } = auth
 
     const body = await request.json().catch(() => ({}))
     const githubIdRaw = body.githubId
@@ -47,36 +29,49 @@ export async function POST(request: NextRequest) {
 
     const adminAccount = await prisma.adminAccount.findUnique({
       where: { githubId },
-      select: { id: true, userId: true },
+      select: {
+        id: true,
+        userId: true,
+        githubId: true,
+        user: {
+          select: {
+            id: true,
+            username: true,
+            githubId: true,
+          },
+        },
+      },
     })
 
     if (!adminAccount) {
       return NextResponse.json({ error: 'Admin account not found' }, { status: 404 })
     }
 
-    const reason = typeof reasonRaw === 'string' && reasonRaw.trim()
-      ? reasonRaw.trim().slice(0, 500)
+    const reason = typeof reasonRaw === 'string' && sanitizePlainText(reasonRaw, 500)
+      ? sanitizePlainText(reasonRaw, 500)
       : 'Revoked via admin API'
 
-    const revoked = await prisma.adminAccount.update({
-      where: { githubId },
-      data: {
-        revokedAt: new Date(),
-        grantedByUserId: session.userId,
-        reason,
-      },
-    })
-
-    if (adminAccount.userId) {
-      await prisma.adminLog.create({
+    const revoked = await prisma.$transaction(async (tx) => {
+      const updated = await tx.adminAccount.update({
+        where: { githubId },
         data: {
-          adminId: session.userId,
-          targetUserId: adminAccount.userId,
-          action: 'REVOKE_ADMIN',
+          revokedAt: new Date(),
+          revokedByUserId: session.userId,
           reason,
         },
       })
-    }
+
+      await createAdminAuditLog({
+        action: 'REVOKE_ADMIN',
+        admin: session,
+        target: adminAccount.user,
+        targetGithubId: adminAccount.githubId,
+        reason,
+        client: tx,
+      })
+
+      return updated
+    })
 
     return NextResponse.json({ success: true, admin: revoked })
   } catch (error) {

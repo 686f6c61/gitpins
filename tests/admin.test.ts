@@ -55,37 +55,20 @@ describe('Admin Module Logic', () => {
       expect(isAdmin).toBe(false)
     })
 
-    it('should use ENV fallback when allowlist has no active match', () => {
-      const sessionGithubId = 12345
-      const adminGithubId = '12345'
-      const allowlistMatch = false
-      const envFallbackMatch = sessionGithubId === parseInt(adminGithubId, 10)
-      const isAdmin = allowlistMatch || envFallbackMatch
-      expect(isAdmin).toBe(true)
-    })
-
-    it('should compare numeric GitHub IDs correctly in fallback mode', () => {
-      const sessionGithubId = 12345
-      const adminGithubId = '12345'
-      const isAdmin = sessionGithubId === parseInt(adminGithubId, 10)
-
-      expect(isAdmin).toBe(true)
-    })
-
-    it('should reject mismatched GitHub IDs', () => {
-      const sessionGithubId = 12345
-      const adminGithubId = '67890'
-
-      const isAdmin = sessionGithubId === parseInt(adminGithubId, 10)
+    it('should reject users not present in the allowlist', () => {
+      const allowlistRecord = null
+      const isAdmin = allowlistRecord !== null
 
       expect(isAdmin).toBe(false)
     })
 
-    it('should handle invalid ADMIN_GITHUB_ID gracefully', () => {
-      const adminGithubId = 'not-a-number'
-      const parsed = parseInt(adminGithubId, 10)
+    it('should link a pre-granted admin record to the user on login', () => {
+      const adminAccount = { githubId: 12345, userId: null }
+      const loggedInUser = { id: 'user_1', githubId: 12345 }
 
-      expect(Number.isNaN(parsed)).toBe(true)
+      const shouldRelink = adminAccount.githubId === loggedInUser.githubId && adminAccount.userId !== loggedInUser.id
+
+      expect(shouldRelink).toBe(true)
     })
   })
 })

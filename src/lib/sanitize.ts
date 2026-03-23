@@ -55,13 +55,27 @@ export function sanitizeHTML(html: string): string {
  * @returns true if the string contains only allowed tags (or no tags)
  */
 export function validateHTML(html: string): boolean {
-  // Remove allowed tags
-  let cleaned = html
-  for (const tag of ALLOWED_TAGS) {
-    cleaned = cleaned.replace(new RegExp(`<${tag}>`, 'gi'), '')
-    cleaned = cleaned.replace(new RegExp(`</${tag}>`, 'gi'), '')
+  let currentIndex = 0
+
+  while (currentIndex < html.length) {
+    const tagStart = html.indexOf('<', currentIndex)
+    if (tagStart === -1) {
+      return true
+    }
+
+    const tagEnd = html.indexOf('>', tagStart + 1)
+    if (tagEnd === -1) {
+      return false
+    }
+
+    const tagContent = html.slice(tagStart + 1, tagEnd).trim().toLowerCase()
+    const isAllowed = ALLOWED_TAGS.some((tag) => tagContent === tag || tagContent === `/${tag}`)
+    if (!isAllowed) {
+      return false
+    }
+
+    currentIndex = tagEnd + 1
   }
 
-  // Check if any other tags remain (anything that looks like <...>)
-  return !/<[^>]+>/.test(cleaned)
+  return true
 }

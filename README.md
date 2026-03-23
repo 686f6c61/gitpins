@@ -216,7 +216,6 @@ GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----..."
 NEXT_PUBLIC_APP_URL="https://your-domain.com"
 JWT_SECRET="generate_with_openssl_rand_base64_32"
 ENCRYPTION_SECRET="generate_with_openssl_rand_base64_32"
-ADMIN_GITHUB_ID="your_github_user_id"
 ```
 
 ### 4. Setup Database
@@ -336,11 +335,10 @@ GitPins includes an admin dashboard for managing users and viewing statistics.
 ### Accessing the Admin Panel
 
 1. **Grant admin access in the allowlist** (`admin_accounts` table).
+   Use `npm run admin:access -- grant --github-id <id>` or insert directly in DB.
 2. **Log in with the granted account.**
 3. **Access the dashboard:**
    Navigate to `/admin` after logging in with the admin account.
-
-> `ADMIN_GITHUB_ID` is supported as a temporary fallback during migrations, but DB allowlist is the primary source of truth.
 
 ### Admin Features
 

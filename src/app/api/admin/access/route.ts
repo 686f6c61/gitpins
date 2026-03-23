@@ -27,9 +27,11 @@ export async function GET() {
         githubId: true,
         userId: true,
         grantedByUserId: true,
+        revokedByUserId: true,
         reason: true,
         revokedAt: true,
         createdAt: true,
+        updatedAt: true,
         user: {
           select: {
             username: true,

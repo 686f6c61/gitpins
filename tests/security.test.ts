@@ -1,4 +1,14 @@
-import { isValidRepoName, isValidRepoFullName, sanitizeInput } from '@/lib/security'
+import { NextResponse } from 'next/server'
+import {
+  addSecurityHeaders,
+  checkAPIRateLimit,
+  isValidRepoName,
+  isValidRepoFullName,
+  sanitizeInput,
+  sanitizePlainText,
+  stripControlCharacters,
+  validateOrigin,
+} from '@/lib/security'
 
 describe('Security Module', () => {
   describe('isValidRepoName', () => {
@@ -91,6 +101,107 @@ describe('Security Module', () => {
 
     it('should preserve valid input', () => {
       expect(sanitizeInput('valid input')).toBe('valid input')
+    })
+  })
+
+  describe('stripControlCharacters', () => {
+    it('should remove ASCII control characters', () => {
+      expect(stripControlCharacters('hello\u0000\tworld\u007f')).toBe('helloworld')
+    })
+
+    it('should return empty string for invalid input', () => {
+      expect(stripControlCharacters(null as unknown as string)).toBe('')
+    })
+  })
+
+  describe('sanitizePlainText', () => {
+    it('should remove control characters, trim and truncate', () => {
+      const input = `  hello\u0000world${'x'.repeat(20)}  `
+      expect(sanitizePlainText(input, 10)).toBe('helloworld')
+    })
+  })
+
+  describe('validateOrigin', () => {
+    it('should allow GET requests without origin headers', () => {
+      const request = {
+        method: 'GET',
+        headers: new Headers(),
+      }
+
+      expect(validateOrigin(request as never)).toBe(true)
+    })
+
+    it('should reject mutating requests without origin or referer', () => {
+      const request = {
+        method: 'POST',
+        headers: new Headers(),
+      }
+
+      expect(validateOrigin(request as never)).toBe(false)
+    })
+
+    it('should allow the configured app origin', () => {
+      const request = {
+        method: 'POST',
+        headers: new Headers({
+          origin: 'http://localhost:3000',
+        }),
+      }
+
+      expect(validateOrigin(request as never)).toBe(true)
+    })
+
+    it('should reject unknown origins', () => {
+      const request = {
+        method: 'POST',
+        headers: new Headers({
+          origin: 'https://evil.example.com',
+        }),
+      }
+
+      expect(validateOrigin(request as never)).toBe(false)
+    })
+  })
+
+  describe('addSecurityHeaders', () => {
+    it('should append defensive headers to API responses', () => {
+      const response = addSecurityHeaders(NextResponse.json({ ok: true }))
+
+      expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff')
+      expect(response.headers.get('X-Frame-Options')).toBe('DENY')
+      expect(response.headers.get('X-XSS-Protection')).toBe('1; mode=block')
+      expect(response.headers.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin')
+    })
+  })
+
+  describe('checkAPIRateLimit', () => {
+    it('should allow requests below the API limit', () => {
+      const request = {
+        headers: new Headers({
+          'x-real-ip': `test-ip-${Date.now()}`,
+        }),
+      }
+
+      const result = checkAPIRateLimit(request as never)
+      expect(result.allowed).toBe(true)
+      expect(result.response).toBeUndefined()
+    })
+
+    it('should block requests above the API limit', () => {
+      const identifier = `test-user-${Date.now()}`
+      const request = {
+        headers: new Headers(),
+      }
+
+      let result = checkAPIRateLimit(request as never, identifier)
+      expect(result.allowed).toBe(true)
+
+      for (let index = 0; index < 100; index++) {
+        result = checkAPIRateLimit(request as never, identifier)
+      }
+
+      expect(result.allowed).toBe(false)
+      expect(result.response?.status).toBe(429)
     })
   })
 })

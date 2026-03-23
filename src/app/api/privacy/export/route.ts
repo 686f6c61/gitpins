@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const [user, repoOrder, snapshots, syncLogs, targetedAdminLogs, privacyEvents, exportJobs, adminAccounts] = await Promise.all([
+    const [user, repoOrder, snapshots, syncLogs, privacyEvents, exportJobs, adminAccounts] = await Promise.all([
       prisma.user.findUnique({
         where: { id: session.userId },
         select: {
@@ -183,17 +183,6 @@ export async function POST(request: NextRequest) {
           createdAt: true,
         },
       }),
-      prisma.adminLog.findMany({
-        where: { targetUserId: session.userId },
-        orderBy: { createdAt: 'asc' },
-        select: {
-          id: true,
-          action: true,
-          reason: true,
-          details: true,
-          createdAt: true,
-        },
-      }),
       prisma.privacyEvent.findMany({
         where: { userId: session.userId },
         orderBy: { createdAt: 'asc' },
@@ -227,9 +216,11 @@ export async function POST(request: NextRequest) {
         select: {
           githubId: true,
           grantedByUserId: true,
+          revokedByUserId: true,
           reason: true,
           revokedAt: true,
           createdAt: true,
+          updatedAt: true,
         },
       }),
     ])
@@ -251,6 +242,27 @@ export async function POST(request: NextRequest) {
     const subjectHash = subjectHashFromGithubId(user.githubId)
     const ipHash = ipHashFromRequest(request)
     const userAgent = userAgentFromRequest(request)
+    const targetedAdminLogs = await prisma.adminLog.findMany({
+      where: {
+        OR: [
+          { targetUserId: session.userId },
+          { targetGithubId: user.githubId },
+        ],
+      },
+      orderBy: { createdAt: 'asc' },
+      select: {
+        id: true,
+        action: true,
+        reason: true,
+        details: true,
+        adminGithubId: true,
+        adminUsernameSnapshot: true,
+        targetGithubId: true,
+        targetUsernameSnapshot: true,
+        createdAt: true,
+      },
+    })
+    const hasActiveAdminAccess = adminAccounts.some((account) => account.revokedAt === null)
 
     const payload = {
       exportVersion: 1,
@@ -264,7 +276,8 @@ export async function POST(request: NextRequest) {
         email: user.email,
         avatarUrl: user.avatarUrl,
         installationId: user.installationId,
-        isAdmin: user.isAdmin,
+        hasActiveAdminAccess,
+        legacyIsAdminFlag: user.isAdmin,
         isBanned: user.isBanned,
         bannedAt: user.bannedAt?.toISOString() ?? null,
         bannedReason: user.bannedReason,
@@ -317,14 +330,20 @@ export async function POST(request: NextRequest) {
           action: l.action,
           reason: l.reason,
           details: l.details,
+          adminGithubId: l.adminGithubId,
+          adminUsernameSnapshot: l.adminUsernameSnapshot,
+          targetGithubId: l.targetGithubId,
+          targetUsernameSnapshot: l.targetUsernameSnapshot,
           createdAt: l.createdAt.toISOString(),
         })),
         allowlistEntries: adminAccounts.map((a) => ({
           githubId: a.githubId,
           grantedByUserId: a.grantedByUserId,
+          revokedByUserId: a.revokedByUserId,
           reason: a.reason,
           revokedAt: a.revokedAt?.toISOString() ?? null,
           createdAt: a.createdAt.toISOString(),
+          updatedAt: a.updatedAt.toISOString(),
         })),
       },
       privacy: {

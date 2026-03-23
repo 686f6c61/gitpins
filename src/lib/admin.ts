@@ -9,28 +9,32 @@
  * Centralized security functions for admin access control.
  */
 
+import type { NextRequest } from 'next/server'
 import { getSession, verifyCSRFToken } from './session'
 import { checkRateLimit, rateLimits } from './rate-limit'
 import { prisma } from './prisma'
+import { validateOrigin } from './security'
+import { isSudoActive } from './sudo'
 
-interface Session {
+export interface Session {
   userId: string
   githubId: number
   username: string
 }
 
-/**
- * Verifies if the current session belongs to an admin user.
- * Uses DB allowlist and temporary fallback to ADMIN_GITHUB_ID during migration.
- * @returns true if user is admin, false otherwise
- */
-function parseAdminGithubId(): number | null {
-  const envValue = process.env.ADMIN_GITHUB_ID
-  if (!envValue) return null
-  const parsed = parseInt(envValue, 10)
-  return Number.isNaN(parsed) ? null : parsed
+interface AdminTarget {
+  id?: string | null
+  githubId?: number | null
+  username?: string | null
 }
 
+type AdminLogWriter = Pick<typeof prisma, 'adminLog'>
+type AdminMutationAuthorization = { session: Session } | { response: Response }
+
+/**
+ * Verifies if the current session belongs to an admin user.
+ * @returns true if user is admin, false otherwise
+ */
 export async function verifyAdmin(sessionOverride?: Session | null): Promise<boolean> {
   const session = (sessionOverride ?? await getSession()) as Session | null
 
@@ -48,13 +52,10 @@ export async function verifyAdmin(sessionOverride?: Session | null): Promise<boo
       return true
     }
   } catch (error) {
-    // Allow temporary fallback when migrations are not yet applied
-    console.error('Admin allowlist lookup warning:', error)
+    console.error('Admin allowlist lookup error:', error)
   }
 
-  // Temporary fallback during migration to DB allowlist
-  const envAdminGithubId = parseAdminGithubId()
-  return envAdminGithubId !== null && session.githubId === envAdminGithubId
+  return false
 }
 
 /**
@@ -138,6 +139,30 @@ export function csrfFailedResponse(): Response {
 }
 
 /**
+ * Creates a 403 response for invalid request origin / CSRF origin mismatch.
+ */
+export function invalidRequestResponse(): Response {
+  return new Response(
+    JSON.stringify({ error: 'Forbidden', message: 'Invalid request origin' }),
+    { status: 403, headers: { 'Content-Type': 'application/json' } }
+  )
+}
+
+/**
+ * Creates a 403 response when a sensitive admin action requires recent reauthentication.
+ */
+export function adminReauthRequiredResponse(): Response {
+  return new Response(
+    JSON.stringify({
+      error: 'Forbidden',
+      message: 'Recent reauthentication required',
+      reason: 'reauth_required',
+    }),
+    { status: 403, headers: { 'Content-Type': 'application/json' } }
+  )
+}
+
+/**
  * Verifies CSRF token from request header.
  * Token should be sent in 'X-CSRF-Token' header.
  * @param request - NextRequest object
@@ -149,4 +174,92 @@ export async function verifyCSRF(request: Request): Promise<boolean> {
     return false
   }
   return verifyCSRFToken(csrfToken)
+}
+
+/**
+ * Shared guard for mutating admin endpoints.
+ * Enforces session, allowlist, origin+CSRF validation, rate limits and optional sudo mode.
+ */
+export async function authorizeAdminMutation(
+  request: NextRequest,
+  options?: { requireSudo?: boolean }
+): Promise<AdminMutationAuthorization> {
+  const session = await getSession() as Session | null
+  if (!session) {
+    return { response: unauthorizedResponse() }
+  }
+
+  const isAdmin = await verifyAdmin(session)
+  if (!isAdmin) {
+    return { response: forbiddenResponse() }
+  }
+
+  if (!validateOrigin(request)) {
+    return { response: invalidRequestResponse() }
+  }
+
+  const csrfValid = await verifyCSRF(request)
+  if (!csrfValid) {
+    return { response: csrfFailedResponse() }
+  }
+
+  const rateLimit = checkAdminRateLimit(session.userId)
+  if (!rateLimit.allowed) {
+    return { response: rateLimit.response! }
+  }
+
+  const requireSudo = options?.requireSudo ?? true
+  if (requireSudo) {
+    const sudo = await isSudoActive()
+    if (!sudo) {
+      return { response: adminReauthRequiredResponse() }
+    }
+  }
+
+  return { session }
+}
+
+/**
+ * Links an allowlisted admin account to the concrete user row on login.
+ * This lets us pre-grant admin access by GitHub ID before the user exists in DB.
+ */
+export async function syncAdminAccountUserLink(user: Pick<Session, 'userId' | 'githubId'>): Promise<void> {
+  await prisma.adminAccount.updateMany({
+    where: {
+      githubId: user.githubId,
+      userId: { not: user.userId },
+    },
+    data: { userId: user.userId },
+  })
+}
+
+/**
+ * Creates an admin audit log that preserves actor/target identity even if users are later deleted.
+ */
+export async function createAdminAuditLog(input: {
+  action: string
+  admin: Session | null
+  target?: AdminTarget | null
+  targetGithubId?: number | null
+  targetUsernameSnapshot?: string | null
+  reason?: string | null
+  details?: string | null
+  client?: AdminLogWriter
+}): Promise<void> {
+  const target = input.target ?? null
+  const client = input.client ?? prisma
+
+  await client.adminLog.create({
+    data: {
+      adminId: input.admin?.userId ?? null,
+      adminGithubId: input.admin?.githubId ?? null,
+      adminUsernameSnapshot: input.admin?.username ?? null,
+      targetUserId: target?.id ?? null,
+      targetGithubId: target?.githubId ?? input.targetGithubId ?? null,
+      targetUsernameSnapshot: target?.username ?? input.targetUsernameSnapshot ?? null,
+      action: input.action,
+      reason: input.reason ?? null,
+      details: input.details ?? null,
+    },
+  })
 }

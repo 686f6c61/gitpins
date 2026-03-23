@@ -129,6 +129,25 @@ export function AdminClient() {
     }
   }
 
+  const redirectToAdminSudoLogin = () => {
+    globalThis.location.href = `/api/auth/login?sudo=1&returnTo=${encodeURIComponent('/admin')}`
+  }
+
+  const ensureAdminActionSucceeded = async (response: Response, fallbackMessage: string) => {
+    if (response.ok) {
+      return
+    }
+
+    const data = await response.json().catch(() => null) as { error?: string; reason?: string } | null
+    if (response.status === 403 && data?.reason === 'reauth_required') {
+      setError('Recent reauthentication required. Redirecting to GitHub...')
+      redirectToAdminSudoLogin()
+      throw new Error('__handled__')
+    }
+
+    throw new Error(data?.error || fallbackMessage)
+  }
+
   const handleBan = async (userId: string, reason: string) => {
     try {
       setActionLoading(userId)
@@ -147,14 +166,17 @@ export function AdminClient() {
         body: JSON.stringify({ reason })
       })
 
-      if (!res.ok) throw new Error('Failed to ban user')
+      await ensureAdminActionSucceeded(res, 'Failed to ban user')
 
       await fetchData()
       setBanModal(null)
       setBanReason('')
     } catch (err) {
+      if (err instanceof Error && err.message === '__handled__') {
+        return
+      }
       console.error(err)
-      setError('Error banning user')
+      setError(err instanceof Error ? err.message : 'Error banning user')
     } finally {
       setActionLoading(null)
     }
@@ -176,12 +198,15 @@ export function AdminClient() {
         },
       })
 
-      if (!res.ok) throw new Error('Failed to unban user')
+      await ensureAdminActionSucceeded(res, 'Failed to unban user')
 
       await fetchData()
     } catch (err) {
+      if (err instanceof Error && err.message === '__handled__') {
+        return
+      }
       console.error(err)
-      setError('Error unbanning user')
+      setError(err instanceof Error ? err.message : 'Error unbanning user')
     } finally {
       setActionLoading(null)
     }
@@ -207,12 +232,15 @@ export function AdminClient() {
         },
       })
 
-      if (!res.ok) throw new Error('Failed to delete user')
+      await ensureAdminActionSucceeded(res, 'Failed to delete user')
 
       await fetchData()
     } catch (err) {
+      if (err instanceof Error && err.message === '__handled__') {
+        return
+      }
       console.error(err)
-      setError('Error deleting user')
+      setError(err instanceof Error ? err.message : 'Error deleting user')
     } finally {
       setActionLoading(null)
     }
