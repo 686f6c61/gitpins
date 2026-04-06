@@ -13,7 +13,7 @@
 [![Prisma](https://img.shields.io/badge/Prisma-7.1-2D3748?logo=prisma&logoColor=white)](https://www.prisma.io/)
 [![Vercel](https://img.shields.io/badge/Vercel-Deployed-black?logo=vercel&logoColor=white)](https://vercel.com/)
 
-[Live Demo](https://gitpins.vercel.app) | [Documentation](#documentation) | [Self-Hosting](#self-hosting)
+[Live Demo](https://gitpins.com) | [Documentation](#documentation) | [Self-Hosting](#self-hosting)
 
 ---
 

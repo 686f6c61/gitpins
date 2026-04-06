@@ -10,7 +10,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const internalUrl = new URL(`/api/sync/${secret}`, request.url)
+    const baseUrl = `http://localhost:${process.env.PORT || 3000}`
+    const internalUrl = new URL(`/api/sync/${secret}`, baseUrl)
 
     for (const [key, value] of request.nextUrl.searchParams.entries()) {
       internalUrl.searchParams.set(key, value)

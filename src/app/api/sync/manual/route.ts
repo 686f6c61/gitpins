@@ -39,7 +39,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const internalUrl = new URL(`/api/sync/${repoOrder.syncSecret}`, request.url)
+    const baseUrl = `http://localhost:${process.env.PORT || 3000}`
+    const internalUrl = new URL(`/api/sync/${repoOrder.syncSecret}`, baseUrl)
     internalUrl.searchParams.set('force', 'true')
 
     const internalResponse = await fetch(internalUrl.toString(), {

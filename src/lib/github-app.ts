@@ -12,7 +12,16 @@
 
 import { Octokit } from 'octokit'
 import { createAppAuth } from '@octokit/auth-app'
+import { readFileSync, existsSync } from 'node:fs'
 import packageJson from '../../package.json'
+
+function getPrivateKey(): string {
+  const keyPath = '/app/github-key.pem'
+  if (existsSync(keyPath)) {
+    return readFileSync(keyPath, 'utf-8')
+  }
+  return process.env.GITHUB_APP_PRIVATE_KEY!
+}
 
 /**
  * Creates an Octokit client authenticated as a GitHub App installation.
@@ -25,7 +34,7 @@ export function createAppOctokit(installationId: number): Octokit {
     authStrategy: createAppAuth,
     auth: {
       appId: process.env.GITHUB_APP_ID!,
-      privateKey: process.env.GITHUB_APP_PRIVATE_KEY!,
+      privateKey: getPrivateKey(),
       installationId,
     },
   })
@@ -148,14 +157,14 @@ export function generateReadme(username: string): string {
 
 ---
 
-**@${username}** config file for [GitPins](https://gitpins.vercel.app)
+**@${username}** config file for [GitPins](https://gitpins.com)
 
 **Files / Archivos:**
 - \`config.json\` - Repos & settings / Repos y configuración
 - \`.github/workflows/maintain-order.yml\` - GitHub Action
 
 **Links:**
-- Web: [gitpins.vercel.app](https://gitpins.vercel.app)
+- Web: [gitpins.com](https://gitpins.com)
 - Repo: [github.com/686f6c61/gitpins](https://github.com/686f6c61/gitpins)
 
 **Uninstall / Desinstalar:** Delete this repo & uninstall the app at [github.com/settings/installations](https://github.com/settings/installations)

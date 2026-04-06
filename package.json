@@ -1,6 +1,6 @@
 {
   "name": "gitpins",
-  "version": "3.9.6",
+  "version": "3.9.7",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -53,5 +53,6 @@
   "overrides": {
     "prisma": "7.5.0",
     "@prisma/client": "7.5.0"
-  }
+  },
+  "homepage": "https://gitpins.com"
 }
