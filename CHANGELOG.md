@@ -4,7 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog.
 
-## Unreleased
+## 4.0.0 - 2026-07-14
+
+### Changed
+- Curated public documentation to keep only externally useful docs in the main reading path.
+- Rewrote deployment documentation to describe a generic self-hosted model instead of a specific operator setup.
+- Simplified local development and privacy docs by removing production-clone guidance from the public documentation set.
+- Moved the public/private visibility filter into the main repository filter bar and clarified the all-repositories counter.
+- Refreshed README product screenshots with current dashboard, configuration, and admin captures.
+- Removed internal database-clone helper scripts from the public repository surface.
 
 ## 3.9.6 - 2026-03-23
 

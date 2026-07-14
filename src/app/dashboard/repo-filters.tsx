@@ -23,10 +23,14 @@ export interface FilterState {
   minStars: number
 }
 
+export type VisibilityFilter = 'all' | 'public' | 'private'
+
 interface RepoFiltersProps {
   repos: Repo[]
   filters: FilterState
+  visibilityFilter: VisibilityFilter
   onFiltersChange: (filters: FilterState) => void
+  onVisibilityFilterChange: (filter: VisibilityFilter) => void
 }
 
 /**
@@ -65,21 +69,65 @@ function getUniqueOwners(repos: Repo[]): { name: string; isOrg: boolean }[] {
  * Repository filters component.
  * Allows filtering by search term, language, owner, and minimum stars.
  */
-export function RepoFilters({ repos, filters, onFiltersChange }: RepoFiltersProps) {
+export function RepoFilters({
+  repos,
+  filters,
+  visibilityFilter,
+  onFiltersChange,
+  onVisibilityFilterChange,
+}: RepoFiltersProps) {
   const { t } = useTranslation()
 
   const languages = useMemo(() => getUniqueLanguages(repos), [repos])
   const owners = useMemo(() => getUniqueOwners(repos), [repos])
   const hasOrgs = owners.some(o => o.isOrg)
 
-  const hasActiveFilters = filters.search || filters.language || filters.owner || filters.minStars > 0
+  const hasActiveFilters =
+    filters.search || filters.language || filters.owner || filters.minStars > 0 || visibilityFilter !== 'all'
 
   const handleClear = () => {
     onFiltersChange({ search: '', language: '', owner: '', minStars: 0 })
+    onVisibilityFilterChange('all')
   }
 
   return (
     <div className="flex flex-wrap items-center gap-3 mb-4">
+      <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/50 p-1">
+        <button
+          type="button"
+          onClick={() => onVisibilityFilterChange('all')}
+          className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+            visibilityFilter === 'all'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          {t('dashboard.filter.all')}
+        </button>
+        <button
+          type="button"
+          onClick={() => onVisibilityFilterChange('public')}
+          className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+            visibilityFilter === 'public'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          {t('dashboard.filter.public')}
+        </button>
+        <button
+          type="button"
+          onClick={() => onVisibilityFilterChange('private')}
+          className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+            visibilityFilter === 'private'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          {t('dashboard.filter.private')}
+        </button>
+      </div>
+
       {/* Search */}
       <div className="relative flex-1 min-w-[200px]">
         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

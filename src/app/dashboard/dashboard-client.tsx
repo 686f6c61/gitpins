@@ -41,7 +41,7 @@ import { LanguageToggle } from '@/components/language-toggle'
 import { SortableRepoItem } from './sortable-repo-item'
 import { SettingsModal } from './settings-modal'
 import { OnboardingWizard } from './onboarding-wizard'
-import { RepoFilters, applyFilters, type FilterState } from './repo-filters'
+import { RepoFilters, applyFilters, type FilterState, type VisibilityFilter } from './repo-filters'
 import { Footer } from '@/components/footer'
 import { ActivityHistory } from '@/components/activity-history'
 import { useTranslation } from '@/i18n'
@@ -117,7 +117,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
   const [authError, setAuthError] = useState(false)
   const [csrfToken, setCsrfToken] = useState<string | null>(null)
   const [filters, setFilters] = useState<FilterState>({ search: '', language: '', owner: '', minStars: 0 })
-  const [visibilityFilter, setVisibilityFilter] = useState<'all' | 'public' | 'private'>('all')
+  const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>('all')
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [onboardingChecked, setOnboardingChecked] = useState(false)
   const [autoOpenDelete, setAutoOpenDelete] = useState(false)
@@ -254,6 +254,14 @@ export function DashboardClient({ user }: DashboardClientProps) {
     if (visibilityFilter === 'public') return poolRepos.filter(r => !r.isPrivate)
     return poolRepos.filter(r => r.isPrivate)
   }, [poolRepos, visibilityFilter])
+
+  const allReposCountLabel = useMemo(() => {
+    if (visibilityFilter === 'all') {
+      return `${displayedPoolRepos.length}`
+    }
+
+    return `${displayedPoolRepos.length}/${poolRepos.length}`
+  }, [displayedPoolRepos.length, poolRepos.length, visibilityFilter])
 
   const activeRepo = useMemo(() => {
     if (!activeId) return null
@@ -722,45 +730,10 @@ export function DashboardClient({ user }: DashboardClientProps) {
               </div>
             )}
 
-            {/* Sync Control & Visibility Filter */}
+            {/* Sync Control */}
             {settings && pinnedRepos.length > 0 && (
               <>
-                <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  {/* Visibility Filter */}
-                  <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
-                    <button
-                      onClick={() => setVisibilityFilter('all')}
-                      className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                        visibilityFilter === 'all'
-                          ? 'bg-background text-foreground shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      {t('dashboard.filter.all')}
-                    </button>
-                    <button
-                      onClick={() => setVisibilityFilter('public')}
-                      className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                        visibilityFilter === 'public'
-                          ? 'bg-background text-foreground shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      {t('dashboard.filter.public')}
-                    </button>
-                    <button
-                      onClick={() => setVisibilityFilter('private')}
-                      className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                        visibilityFilter === 'private'
-                          ? 'bg-background text-foreground shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      {t('dashboard.filter.private')}
-                    </button>
-                  </div>
-
-                  {/* Sync Button */}
+                <div className="mb-6 flex justify-end">
                   <button
                     onClick={handleSyncNow}
                     disabled={syncing}
@@ -865,7 +838,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
               <div data-onboarding="dashboard-pool-zone">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold text-muted-foreground">
-                    {t('dashboard.allRepos.title')} ({displayedPoolRepos.length})
+                    {t('dashboard.allRepos.title')} ({allReposCountLabel})
                   </h2>
                   <span className="text-xs text-muted-foreground">
                     {t('dashboard.allRepos.dragHint')}
@@ -876,7 +849,9 @@ export function DashboardClient({ user }: DashboardClientProps) {
                 <RepoFilters
                   repos={filteredRepos.filter(r => !pinnedRepos.includes(r.fullName))}
                   filters={filters}
+                  visibilityFilter={visibilityFilter}
                   onFiltersChange={setFilters}
+                  onVisibilityFilterChange={setVisibilityFilter}
                 />
 
                 <DroppableZone id="pool-zone" className="rounded-xl transition-all">

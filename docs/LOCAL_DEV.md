@@ -1,12 +1,11 @@
 # Local Development
 
-This document describes a reproducible local setup using Docker Compose (app + Postgres) and optional cloning of a production PostgreSQL database into local Postgres.
+This document describes a reproducible local setup using Docker Compose (app + Postgres).
 
 ## Prerequisites
 
 1. Docker Desktop with Docker Compose v2.
 2. Git.
-3. For production DB cloning: `pg_dump`, `pg_restore`, `psql` installed on your host machine.
 
 ## Quick Start (Docker Compose)
 
@@ -85,41 +84,6 @@ Schema management:
 1. In Docker, the app currently runs `prisma db push` at startup to ensure the schema matches `prisma/schema.prisma`.
 2. The repository also contains SQL migrations in `prisma/migrations/`. If you need production-safe migration workflows, see `docs/MIGRATIONS.md`.
 
-## Clone Production DB to Local Postgres (One-Shot)
-
-Script:
-1. `scripts/clone-production-db-to-local.sh`
-
-Steps:
-1. Start only the DB container:
-
-```bash
-docker compose up -d db
-```
-
-2. Run the clone script from your host machine:
-
-```bash
-SOURCE_DB_URL='postgresql://...' ./scripts/clone-production-db-to-local.sh
-```
-
-If Docker Postgres is exposed on a non-default host port:
-
-```bash
-GITPINS_DB_PORT=5433 SOURCE_DB_URL='postgresql://...' ./scripts/clone-production-db-to-local.sh
-```
-
-What it does:
-1. Creates the target database (`gitpins_local_clone`) if missing.
-2. `pg_dump` from the production PostgreSQL source to a temporary file under `/tmp`.
-3. `pg_restore` into local Postgres with `--clean --if-exists`.
-4. Prints row counts for a few tables.
-5. Removes the temporary dump file.
-
-Security notes:
-1. Never commit production DB URLs or dumps.
-2. Treat dumps as production data.
-
 ## Running Tests and Checks
 
 From the host machine:
@@ -145,4 +109,4 @@ docker compose exec app pnpm exec eslint .
 1. Ensure `docker compose up -d` was run after pulling schema changes.
 2. For a full reset: stop containers and remove the DB volume (destructive).
 3. If `localhost:5432` points to another PostgreSQL instance on your machine, start Docker with `GITPINS_DB_PORT=5433`.
-4. A cloned or `db push`-managed database will fail under `prisma migrate deploy` with `P3005` unless you baseline `_prisma_migrations` first. For local development, use `pnpm exec prisma db push`.
+4. A database created with `prisma db push` will fail under `prisma migrate deploy` with `P3005` unless you baseline `_prisma_migrations` first. For local development, use `pnpm exec prisma db push`.

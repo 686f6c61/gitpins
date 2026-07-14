@@ -1,6 +1,6 @@
 # GitPins Documentation
 
-This folder contains the technical and operational documentation for GitPins.
+This folder contains the public technical documentation for GitPins.
 
 It is written for:
 1. Maintainers of the open source project.
@@ -12,11 +12,11 @@ It is written for:
 
 If you are new to the project:
 1. `ARCHITECTURE.md` - system overview, trust boundaries, and main request flows.
-2. `ORDERING.md` - how GitPins actually changes repository recency and why.
-3. `SECURITY.md` - authentication, authorization, CSRF, secrets, and operational risk.
-4. `PRIVACY.md` - data model, exports, deletion, and retention.
-5. `LOCAL_DEV.md` - Docker-based local setup and production DB clone workflow.
-6. `DEPLOYMENT.md` - Coolify/self-hosted deployment model and production checklist.
+2. `LOCAL_DEV.md` - Docker-based local development setup and localhost GitHub App wiring.
+3. `DEPLOYMENT.md` - generic self-hosted deployment checklist for production.
+4. `ORDERING.md` - how GitPins actually changes repository recency and why.
+5. `SECURITY.md` - authentication, authorization, CSRF, secrets, and operational risk.
+6. `PRIVACY.md` - data model, exports, deletion, and retention.
 7. `ADMIN.md` - allowlist model, admin bootstrap, sudo mode, and audit trail.
 8. `API.md` - API surface grouped by auth, repos, sync, admin, and privacy.
 9. `MIGRATIONS.md` - how schema changes are applied safely on existing databases.
@@ -70,15 +70,15 @@ Admin mutations are protected by:
 ## Documentation Map
 
 - `ARCHITECTURE.md`: components, flows, data model, trust boundaries.
+- `LOCAL_DEV.md`: Docker setup, localhost GitHub App, and day-to-day development workflow.
+- `DEPLOYMENT.md`: production-oriented self-hosting checklist for any Docker-compatible platform.
 - `ORDERING.md`: ordering algorithm, minimal-prefix optimization, single-pass behavior.
 - `SECURITY.md`: auth, tokens, sync secret, admin hardening, known limitations.
 - `PRIVACY.md`: exports, deletion, audit records, stored data.
-- `LOCAL_DEV.md`: Docker setup, localhost GitHub App, production DB clone.
-- `DEPLOYMENT.md`: Coolify/self-hosted deployment and rollback guidance.
 - `ADMIN.md`: admin operations, recovery, audit semantics.
 - `API.md`: HTTP contract summary for maintainers.
 - `MIGRATIONS.md`: applying SQL migrations to existing databases.
-- `TROUBLESHOOTING.md`: operational runbook for common production issues.
+- `TROUBLESHOOTING.md`: common setup and runtime failures.
 
 ## Contribution Rule for Docs
 

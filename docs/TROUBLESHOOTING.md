@@ -134,8 +134,7 @@ Reason:
 
 Fix:
 1. Start GitPins DB on another host port: `GITPINS_DB_PORT=5433 docker compose up -d db`
-2. Use the same port for cloning: `GITPINS_DB_PORT=5433 SOURCE_DB_URL='postgresql://...' ./scripts/clone-production-db-to-local.sh`
-3. Or stop the local PostgreSQL service that owns `127.0.0.1:5432`
+2. Or stop the local PostgreSQL service that owns `127.0.0.1:5432`
 
 ## `prisma migrate deploy` Returns `P3005`
 
@@ -151,17 +150,6 @@ Fix:
 1. For local development, use `pnpm exec prisma db push`
 2. For existing production-style databases, apply the SQL files in `prisma/migrations/` manually
 3. Only adopt `prisma migrate deploy` after creating and resolving a proper baseline
-
-## SonarQube Shows Old Findings
-
-### Symptom
-
-Local code is fixed but Sonar still shows old bugs/hotspots.
-
-Check:
-1. A fresh scan has been run.
-2. The local SonarQube CE task completed successfully.
-3. You are looking at the latest analysis for the correct project key.
 
 ## `Failed to find Server Action` After Deploy
 

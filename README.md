@@ -11,7 +11,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white)](https://nextjs.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Prisma](https://img.shields.io/badge/Prisma-7.8-2D3748?logo=prisma&logoColor=white)](https://www.prisma.io/)
-[![Deployment](https://img.shields.io/badge/Deployment-Coolify%20(Self--Hosted)-0f766e?logo=docker&logoColor=white)](#deployment-model)
+[![Deployment](https://img.shields.io/badge/Deployment-Self--Hosted-0f766e?logo=docker&logoColor=white)](#deployment-model)
 
 [Live Demo](https://gitpins.com) | [Documentation](#documentation) | [Self-Hosting](#self-hosting)
 
@@ -113,22 +113,22 @@ GitPins is designed with security in mind:
 - **Auth**: GitHub OAuth (GitHub Apps)
 - **Styling**: Tailwind CSS 4
 - **Drag & Drop**: dnd-kit
-- **Deployment**: Self-hosted Docker via Coolify
+- **Deployment**: Self-hosted Docker or Node.js + PostgreSQL
 
 ## Documentation
 
 Maintainer docs (recommended starting points):
 - `docs/README.md` - documentation index and suggested reading order
-- `docs/LOCAL_DEV.md` - Docker Compose local dev + production DB clone
+- `docs/LOCAL_DEV.md` - Docker Compose local development setup
 - `docs/ARCHITECTURE.md` - system overview and flows
 - `docs/SECURITY.md` - threat model, auth, CSRF, admin, sync secret
 - `docs/PRIVACY.md` - export + deletion model
 - `docs/ORDERING.md` - ordering algorithm details
-- `docs/DEPLOYMENT.md` - Coolify/self-hosted deployment and rollback guidance
+- `docs/DEPLOYMENT.md` - generic self-hosted deployment checklist
 - `docs/ADMIN.md` - allowlist, sudo, audit model, bootstrap CLI
 - `docs/API.md` - maintainer API overview
 - `docs/MIGRATIONS.md` - Prisma migration notes for existing DBs
-- `docs/TROUBLESHOOTING.md` - common failure modes and operational fixes
+- `docs/TROUBLESHOOTING.md` - common setup and runtime issues
 
 ## Self-Hosting
 
@@ -140,11 +140,12 @@ Maintainer docs (recommended starting points):
 
 #### Deployment Model
 
-GitPins is portable, but the current reference production deployment is:
-- Coolify running on a self-hosted Contabo server
-- A Docker-built Next.js application
-- A PostgreSQL service managed inside the same Coolify environment
-- A user-owned external scheduler for automatic sync
+GitPins is portable and designed for self-hosting. A typical setup is:
+- a Docker-capable host or Node.js runtime
+- a PostgreSQL database
+- a public HTTPS domain
+- a GitHub App configured for that domain
+- an optional external scheduler for automatic sync
 
 Compatible database options:
 - Self-hosted PostgreSQL
@@ -231,6 +232,8 @@ ENCRYPTION_SECRET="generate_with_openssl_rand_base64_32"
 pnpm exec prisma db push
 ```
 
+For incremental production updates on an existing database, review `docs/MIGRATIONS.md`.
+
 ### 5. Run
 
 ```bash
@@ -272,28 +275,6 @@ Services:
 By default, local Docker runs with:
 - `GITPINS_DISABLE_GITHUB_MUTATIONS=true` (safe mode: no GitHub write operations)
 
-### One-shot Clone: Production DB -> Local Postgres
-
-```bash
-# 1) Start only the DB
-docker compose up -d db
-
-# 2) Clone production data to local
-SOURCE_DB_URL='postgresql://...' ./scripts/clone-production-db-to-local.sh
-```
-
-If Docker Postgres is exposed on another host port:
-
-```bash
-GITPINS_DB_PORT=5433 SOURCE_DB_URL='postgresql://...' ./scripts/clone-production-db-to-local.sh
-```
-
-Notes:
-- The script does not hardcode production credentials.
-- It writes a temporary dump to `/tmp` and removes it after restore.
-- Use this only in secure local environments because data is cloned with full fidelity.
-- A cloned or `db push`-managed database is expected to fail under `prisma migrate deploy` with `P3005` until you baseline `_prisma_migrations`. For local development, use `pnpm exec prisma db push`.
-
 #### Required OAuth Scopes
 
 When authenticating, GitPins requests these OAuth scopes:
@@ -304,9 +285,9 @@ If you're experiencing "Resource not accessible by integration" errors, the user
 
 ### Scheduled Sync (GitHub Actions or Any Scheduler)
 
-GitPins provides the sync endpoint (`POST /api/sync`) but does not automatically create a `gitpins-config` repository for you.
+GitPins provides the sync endpoint (`POST /api/sync`) but does not run scheduled jobs by itself.
 
-A common setup is to create a private repo (many people name it `gitpins-config`) and add a scheduled GitHub Actions workflow that calls your GitPins instance. If you prefer, any scheduler that can send the same HTTP request will work.
+Any scheduler that can send an HTTP request will work. GitHub Actions is a common option because many GitHub users already have it available.
 
 ```yaml
 name: GitPins - Maintain Repo Order
@@ -347,13 +328,7 @@ GitPins ships as a normal Next.js app and can run anywhere you can provide:
 3. HTTPS with a stable canonical domain
 4. A GitHub App configured for that domain
 
-The reference production setup today is:
-1. Coolify as the deployment orchestrator
-2. A self-hosted Contabo server
-3. PostgreSQL attached inside the same Coolify project
-4. External scheduled sync calls to `POST /api/sync`
-
-If you want the exact operator workflow, see `docs/DEPLOYMENT.md`.
+See `docs/DEPLOYMENT.md` for the production checklist.
 
 ## Admin Dashboard
 
@@ -370,7 +345,7 @@ GitPins includes an admin dashboard for managing users and viewing statistics.
 ### Admin Features
 
 - **User Statistics**: Total users, active users, banned users, sync counts
-- **User Management**: View all users with their config repos and activity
+- **User Management**: View all users with their saved setups and activity
 - **Ban/Unban Users**: Suspend users who violate terms of service
 - **Delete Users**: Remove users from the application (they can re-register)
 - **Activity Charts**: Visual graphs of registrations and syncs over 30 days

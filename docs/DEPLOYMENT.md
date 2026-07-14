@@ -1,32 +1,27 @@
 # Deployment
 
-This document describes how GitPins is deployed and operated in production today.
+This document describes the public, self-hostable deployment model for GitPins.
 
-## Reference Production Topology
+GitPins is designed to run as:
+1. A Next.js application.
+2. A PostgreSQL-backed service.
+3. A GitHub App integration.
+4. An optional external scheduler for automatic sync.
 
-The current reference deployment model is:
-1. Coolify as the application orchestrator.
-2. A self-hosted Contabo server running the Docker workloads.
-3. A PostgreSQL service attached inside the same Coolify project.
-4. A GitHub App for OAuth and installation-based repository access.
-5. An external scheduler that calls `POST /api/sync`.
+GitPins does not depend on any specific hosting vendor.
 
-Notes:
-1. GitPins does not depend on Vercel.
-2. GitPins does not require a managed database provider such as Neon.
-3. The app remains portable to other Docker-compatible platforms as long as the environment variables and PostgreSQL connectivity are equivalent.
+## Minimum Production Requirements
 
-## Sources of Truth
-
-When local files and production differ, trust production in this order:
-1. Coolify application settings and environment variables.
-2. The running container environment.
-3. Coolify deployment history (`application_deployment_queues`).
-4. The repository documentation.
-
-Why:
-1. Old local `.env` files can preserve obsolete providers or domains.
-2. The running container proves what the app is actually using now.
+You need:
+1. A stable public origin such as `https://your-domain.com`.
+2. A PostgreSQL database.
+3. A place to run the Next.js app:
+   - Docker host,
+   - container platform,
+   - VM,
+   - or equivalent Node.js environment.
+4. A GitHub App configured for that public origin.
+5. HTTPS in front of the app.
 
 ## Required Environment Variables
 
@@ -43,21 +38,12 @@ Required:
 
 Optional:
 1. `GITPINS_DISABLE_GITHUB_MUTATIONS`
-2. `ADMIN_GITHUB_ID` as a temporary fallback during migrations only
-3. Observability variables such as Sentry/GlitchTip DSNs
+2. observability variables such as Sentry-compatible DSNs
 
 Notes:
-1. `NEXT_PUBLIC_APP_URL` must match the canonical production origin exactly.
-2. If `NEXT_PUBLIC_APP_URL` is wrong, login redirects and origin checks can fail.
-3. `DATABASE_URL` and `DIRECT_URL` can point to the same PostgreSQL host if you are not separating pooled and direct connections.
-
-## Current Runtime Assumptions
-
-The production app currently expects:
-1. Port `3000` inside the container.
-2. `NODE_ENV=production`.
-3. HTTPS termination in the reverse proxy layer.
-4. A PostgreSQL schema already present before the app version depending on it is rolled out.
+1. `NEXT_PUBLIC_APP_URL` must match the public origin exactly.
+2. `DATABASE_URL` and `DIRECT_URL` can point to the same PostgreSQL server if you do not need separate pooled and direct connections.
+3. In production, `GITPINS_DISABLE_GITHUB_MUTATIONS` should normally be `false`.
 
 ## GitHub App Checklist
 
@@ -71,51 +57,41 @@ Permissions:
 2. Repository metadata: read-only
 3. Account email addresses: read-only
 
-## Database Changes
+OAuth settings:
+1. Enable "Request user authorization (OAuth) during installation".
+
+## Database and Schema
 
 GitPins currently uses:
-1. `prisma db push` for local/dev convenience.
-2. SQL migrations for existing databases.
+1. `prisma db push` for local development convenience.
+2. versioned SQL migrations in `prisma/migrations/` for incremental production updates.
 
 For production:
-1. Apply SQL migrations manually with `psql`.
-2. Verify the new schema objects exist before deploying the app code that requires them.
-3. Prefer additive, forward-compatible changes.
+1. apply SQL migrations in order,
+2. verify the new schema objects exist before rolling out the app version that needs them,
+3. prefer additive and forward-compatible changes.
 
 Reference:
 1. `docs/MIGRATIONS.md`
 
-## Safe Rollout Process
+## Deployment Flow
 
 Recommended order:
-1. Run tests locally.
-2. Build locally with `pnpm exec next build`.
-3. Apply any required SQL migration to the production PostgreSQL database.
-4. Push the code to the tracked branch.
-5. Trigger or wait for the Coolify deployment.
-6. Verify the running container uses the intended commit and environment.
-7. Test login, dashboard, sync, admin, and privacy export on the live domain.
+1. Set all required environment variables.
+2. Build the application.
+3. Apply any required SQL migration to the PostgreSQL database.
+4. Start or update the application.
+5. Verify login, dashboard, sync, admin, and privacy export flows.
 
-## What to Verify in Coolify
+## Runtime Assumptions
 
-Before or after a deployment, verify:
-1. The app points to the correct repository and branch.
-2. The FQDN list matches the intended domains.
-3. The environment variables are set in Coolify, not just locally.
-4. The deployment finished successfully in `application_deployment_queues`.
-5. The running container image/commit matches the rollout you intended.
+The production app expects:
+1. `NODE_ENV=production`
+2. HTTPS at the public origin
+3. database schema already present for the deployed app version
+4. port `3000` inside the container image when using the provided Docker setup
 
-## Rollback Strategy
-
-Application rollback:
-1. Redeploy the last known-good commit in Coolify.
-2. Confirm the running container changed to that commit.
-
-Database rollback:
-1. Prefer forward-fixes over destructive rollback.
-2. Only revert schema manually if you have reviewed the effect on existing data and app compatibility.
-
-## Operational Checks After Deploy
+## Post-Deploy Verification
 
 Check these first:
 1. Can users log in?
@@ -124,14 +100,16 @@ Check these first:
 4. Does manual sync work?
 5. Does admin `/admin` access behave correctly for an allowlisted admin?
 6. Does privacy export still work?
-7. Do response headers include the expected hardening configuration?
 
-## Common Post-Deploy Gotcha
+## Rollback Strategy
 
-If users report `Failed to find Server Action` shortly after a release:
-1. Ask them to hard refresh or reopen the tab.
-2. Check whether a stale page is calling server actions from an older build.
-3. Confirm only the latest app version is serving traffic.
+Application rollback:
+1. redeploy the last known-good application version,
+2. confirm the running app really changed.
+
+Database rollback:
+1. prefer forward-fixes over destructive rollback,
+2. only revert schema manually after reviewing app compatibility and existing data impact.
 
 ## Secret Hygiene
 
@@ -146,10 +124,10 @@ If any of these are exposed outside approved secret storage, rotate them:
 
 GitPins does not run scheduled jobs by itself.
 
-Automatic sync depends on an external caller hitting `POST /api/sync`.
+Automatic sync requires an external caller to hit `POST /api/sync`.
 
 That caller can be:
-1. GitHub Actions.
-2. Another CI runner.
-3. A cron job.
-4. A platform scheduler.
+1. GitHub Actions
+2. another CI runner
+3. cron
+4. any scheduler capable of sending an HTTP request

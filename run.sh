@@ -26,4 +26,3 @@ echo -e "App:       ${GREEN}http://localhost:3001${NC}"
 echo -e "Database:  ${GREEN}localhost:5432${NC}"
 echo
 echo -e "To follow logs: ${YELLOW}docker compose logs -f app${NC}"
-echo -e "To clone Neon to local: ${YELLOW}SOURCE_DB_URL='postgresql://...' ./scripts/clone-neon-to-local.sh${NC}"

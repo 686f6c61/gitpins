@@ -126,17 +126,6 @@ What survives deletion (pseudonymized audit trail):
 
 Important: GitPins account deletion does not delete any GitHub repositories.
 
-## Local Clones of Production Data
-
-If you clone a production database into a local Postgres instance:
-1. Treat the dump as sensitive.
-2. Store dumps outside the repository (example: `/tmp`).
-3. Do not commit dumps.
-4. Prefer working in an isolated machine/account.
-
-Script reference:
-1. `scripts/clone-production-db-to-local.sh`
-
 ## Suggested Future Improvements
 
 1. Add a scheduled job to purge `privacy_events` older than a defined retention window (policy decision).
