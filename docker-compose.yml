@@ -39,7 +39,7 @@ services:
       - gitpins_node_modules:/app/node_modules
       - gitpins_next_cache:/app/.next
     command: >
-      sh -c "pnpm install --frozen-lockfile && pnpm exec prisma db push --accept-data-loss && pnpm run dev -- --hostname 0.0.0.0 -p 3000"
+      sh -c "pnpm install --frozen-lockfile && pnpm exec prisma db push --accept-data-loss && pnpm exec next dev --hostname 0.0.0.0 -p 3000"
 
 volumes:
   gitpins_pgdata:

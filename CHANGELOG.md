@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog.
 
+## 4.0.1 - 2026-07-14
+
+### Changed
+- Reworked the home page to describe manual and externally scheduled sync accurately, surface current 4.0.1 capabilities, and remove unsupported organization and unlimited-ordering claims.
+- Rebuilt the help center around the real authorization, ordering, temporary-tag, history, privacy, and account-deletion flows.
+- Replaced the ineffective in-app frequency selector with explicit external scheduler guidance while retaining the preferred UTC-hour gate.
+- Removed remaining public references to legacy branch-based ordering and automatic dashboard history cleanup.
+- Fixed the Docker development command for Next.js 16 so the app starts correctly on the configured host and port.
+
 ## 4.0.0 - 2026-07-14
 
 ### Changed

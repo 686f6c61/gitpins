@@ -284,10 +284,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
     }).format(date)
   }, [locale, settings?.lastSyncAt, t])
 
-  const syncFrequencyLabel = useMemo(() => {
-    if (!settings) return ''
-    return t(`settings.syncFrequency.options.${settings.syncFrequency}`)
-  }, [settings, t])
+  const syncFrequencyLabel = t('dashboard.summary.externalScheduler')
 
   async function fetchRepos() {
     setLoading(true)

@@ -18,9 +18,14 @@
     "hero": {
       "title1": "Ordena tus repositorios",
       "title2": "como tú quieras en GitHub",
-      "subtitle": "GitHub ordena tus repos cronológicamente. Un commit en un proyecto viejo y tu mejor trabajo desaparece. Con GitPins, tú decides el orden.",
+      "subtitle": "La actividad reciente puede cambiar el orden de tu lista de repositorios y esconder tus mejores proyectos. Con GitPins, tú decides cuáles deben aparecer primero.",
       "cta": "Ordenar",
-      "noCreditCard": "Gratis y open source"
+      "noCreditCard": "Gratis, open source y autohospedable",
+      "points": {
+        "manual": "Sincronización manual desde el dashboard",
+        "noBranches": "Sin commits ni ramas de GitPins",
+        "dataControl": "Exportación y eliminación de cuenta"
+      }
     },
     "visualDemo": {
       "badge": "¿Te ha pasado esto?",
@@ -44,73 +49,73 @@
         "label": "Después",
         "title": "Orden curado con GitPins",
         "tag": "Prioridad fijada",
-        "desc": "Tus repos principales se quedan delante como escaparate público. La actividad de fondo puede continuar sin desordenar tu perfil.",
-        "pinned": "Fijado"
+        "desc": "Tus repos principales se priorizan en la lista pública. Una sincronización posterior puede restaurar el orden cuando nueva actividad lo cambie.",
+        "pinned": "Prioridad"
       }
     },
     "howItWorks": {
       "title": "Cómo funciona",
       "step1": {
-        "title": "Conecta tu GitHub",
-        "desc": "Instala la app en tu cuenta en menos de 30 segundos"
+        "title": "Autoriza e instala",
+        "desc": "Identifícate con GitHub e instala la app solo en los repositorios que quieras gestionar"
       },
       "step2": {
-        "title": "Arrastra y ordena",
-        "desc": "Define qué repos quieres que aparezcan primero en tu perfil"
+        "title": "Filtra y ordena",
+        "desc": "Busca, filtra y arrastra hasta 100 repositorios a tu lista prioritaria"
       },
       "step3": {
-        "title": "Automático",
-        "desc": "Un GitHub Action mantiene tu orden. Configura una vez, funciona siempre"
+        "title": "Guarda y sincroniza",
+        "desc": "Guarda la configuración y aplica el orden manualmente desde el dashboard"
       },
       "step4": {
-        "title": "Sin rastro",
-        "desc": "Las refs temporales se eliminan automáticamente. El historial del branch principal queda intacto"
+        "title": "Programa si quieres",
+        "desc": "Para mantenerlo automáticamente, conecta GitHub Actions, cron u otro scheduler externo"
       }
     },
     "faq": {
       "title": "Preguntas frecuentes",
       "q1": {
         "question": "¿Modifica mi código?",
-        "answer": "No. Crea y borra refs temporales sin modificar archivos versionados. El historial del branch principal queda intacto."
+        "answer": "La estrategia actual no crea commits, ramas ni cambios de archivos. GitPins usa Contents: write exclusivamente para crear y borrar una tag ref temporal durante la sincronización."
       },
       "q2": {
         "question": "¿Cuánto cuesta?",
-        "answer": "Nada. GitPins es 100% gratuito y open source. Usa los minutos de GitHub Actions de tu cuenta (muy pocos)."
+        "answer": "GitPins es gratuito y open source. La sincronización manual no usa GitHub Actions; si eliges Actions como scheduler, consumirá los minutos correspondientes de tu cuenta."
       },
       "q3": {
         "question": "¿Puedo dejar de usarlo?",
-        "answer": "Sí, sin problemas. Desactiva o borra el workflow que hayas configurado (mucha gente usa un repo llamado gitpins-config). Sin vendor lock-in."
+        "answer": "Sí. Desactiva tu scheduler, desinstala la GitHub App y, si quieres, elimina tu cuenta y datos desde Settings. El proyecto también puede autohospedarse."
       },
       "q4": {
         "question": "¿Funciona con repos privados?",
-        "answer": "Sí. Puedes elegir incluir o excluir repos privados en la configuración."
+        "answer": "Sí, siempre que autorices el acceso y la GitHub App esté instalada en esos repositorios. Puedes incluirlos, excluirlos o filtrarlos en el dashboard."
       },
       "q5": {
         "question": "¿Es seguro para mis repositorios?",
-        "answer": "Sí. GitPins solo tiene permisos para crear y borrar refs temporales. No puede borrar repositorios, modificar tu código ni acceder a información sensible."
+        "answer": "GitPins no solicita permiso para borrar repositorios ni leer secrets de Actions. Contents: write es necesario para gestionar refs; el código actual lo limita a tags temporales y es auditable al ser open source."
       },
       "q6": {
         "question": "¿Qué pasa si desinstalo GitPins?",
-        "answer": "Nada. Tus repositorios quedan exactamente igual. Si configuraste un workflow programado, puedes mantenerlo, desactivarlo o borrarlo cuando quieras."
+        "answer": "No se borra ningún repositorio ni archivo. El orden logrado permanecerá hasta que nueva actividad de GitHub lo cambie. Desactiva también cualquier scheduler externo para evitar llamadas fallidas."
       }
     },
     "features": {
       "title": "Por qué GitPins",
       "noLimit": {
-        "title": "Sin límite de repos",
-        "desc": "GitHub solo permite fijar 6 repos. Con GitPins puedes ordenar todos los que quieras."
+        "title": "Hasta 100 prioridades",
+        "desc": "Más allá de los seis repos fijados nativamente por GitHub, puedes priorizar hasta 100 repositorios de tu lista."
       },
       "automatic": {
-        "title": "Automático",
-        "desc": "Configura una vez y el Action mantiene tu orden. No tienes que hacer nada más."
+        "title": "Manual o programado",
+        "desc": "Ejecuta el sync desde el dashboard o conecta GitHub Actions, cron o cualquier scheduler HTTP."
       },
       "noLockIn": {
         "title": "Sin vendor lock-in",
-        "desc": "Todo corre en tu propia cuenta. Si dejas GitPins, el Action sigue funcionando."
+        "desc": "El código, la API y la documentación son públicos. Puedes auditarlo o desplegar tu propia instancia."
       },
       "cleanCommits": {
-        "title": "Commits limpios",
-        "desc": "Las refs temporales se borran automáticamente. El historial del branch principal queda intacto."
+        "title": "Sin commits ni ramas",
+        "desc": "Las tags temporales se borran tras cada toque. GitPins no añade commits ni crea ramas para ordenar."
       }
     },
     "useCases": {
@@ -134,32 +139,32 @@
     },
     "cta": {
       "title": "Empieza a ordenar tus repos",
-      "subtitle": "Es gratis. Solo toma 2 minutos configurarlo.",
-      "button": "Conectar con GitHub"
+      "subtitle": "Empieza con sincronización manual y añade automatización solo si la necesitas.",
+      "button": "Conectar con GitHub",
+      "help": "Ver cómo funciona"
     },
-    "comingSoon": {
-      "title": "Funcionalidades v3.9.6",
-      "subtitle": "",
+    "capabilities": {
+      "title": "Incluido en GitPins 4.0.1",
       "filters": {
         "title": "Filtros avanzados",
-        "desc": "Filtra tus repos por lenguaje, estrellas, fecha y más"
+        "desc": "Busca y filtra por visibilidad, lenguaje, propietario y estrellas mínimas."
       },
       "history": {
         "title": "Histórico de cambios",
-        "desc": "Revisa y restaura órdenes anteriores de tus repos"
+        "desc": "Consulta actividad y restaura cualquiera de los últimos 20 snapshots de orden."
       },
-      "schedule": {
-        "title": "Programación horaria",
-        "desc": "Elige exactamente cuándo sincronizar: diario, semanal, hora específica"
+      "privacy": {
+        "title": "Control de tus datos",
+        "desc": "Descarga una exportación completa o elimina tu cuenta con reautenticación."
       },
-      "organizations": {
-        "title": "GitHub Organizations",
-        "desc": "Ordena también los repos de tus organizaciones"
+      "onboarding": {
+        "title": "Guía interactiva",
+        "desc": "Un recorrido inicial explica el dashboard y puede reiniciarse desde Settings."
       }
     },
     "disclaimer": {
       "title": "Antes de continuar",
-      "text": "GitPins es un proyecto open source que crea y borra refs temporales para mantener el orden que configures. Esto no modifica tus archivos versionados.",
+      "text": "GitPins usa el permiso Contents: write para crear y borrar tags temporales durante el ordenado. La estrategia actual no crea commits, ramas ni cambios de archivos.",
       "text2": "Al continuar, aceptas que usas este servicio bajo tu propia responsabilidad. El código es open source y está a tu disposición para revisarlo, mejorarlo o ejecutarlo en tu propia infraestructura.",
       "accept": "Acepto y continuar",
       "cancel": "Cancelar",
@@ -216,7 +221,8 @@
       "lastSync": "Último sync",
       "never": "Todavía no",
       "anyHour": "Puede ejecutarse a cualquier hora UTC",
-      "preferredHour": "Hora preferida: {hour}:00 UTC"
+      "preferredHour": "Hora preferida: {hour}:00 UTC",
+      "externalScheduler": "Frecuencia definida fuera de GitPins"
     },
     "syncNow": {
       "button": "Ejecutar ahora",
@@ -277,15 +283,15 @@
       "steps": {
         "welcome": {
           "title": "Bienvenido a GitPins",
-          "desc": "Este asistente te muestra cómo ordenar repos, guardar cambios y configurar la sincronización automática en menos de 2 minutos."
+          "desc": "Este asistente te muestra cómo ordenar repos, guardar cambios, sincronizar y entender las opciones de automatización."
         },
         "headerControls": {
           "title": "Controles rápidos",
           "desc": "Aquí puedes cambiar idioma/tema, abrir ayuda, entrar en configuración, refrescar datos y cerrar sesión."
         },
         "pinnedZone": {
-          "title": "Zona superior (repos fijados)",
-          "desc": "Arrastra aquí los repos que quieres mantener arriba. El contador muestra cuántos tienes fijados frente al límite actual."
+          "title": "Repos a mantener arriba",
+          "desc": "Arrastra aquí tus repos prioritarios. El contador muestra cuántos has seleccionado frente al límite actual."
         },
         "poolZone": {
           "title": "Pool de repositorios",
@@ -293,19 +299,19 @@
         },
         "settingsButton": {
           "title": "Entrar en opciones",
-          "desc": "Desde este botón abres configuración avanzada para límite, privados, frecuencia y horario de sync."
+          "desc": "Desde este botón abres configuración para límite, privados, automatización externa, horario y privacidad."
         },
         "settingsTopN": {
-          "title": "Límite de repos fijados",
+          "title": "Límite de repos prioritarios",
           "desc": "Define cuántos repos quieres mantener arriba. Si lo reduces por debajo de tu lista actual, se recorta desde el final."
         },
         "settingsPrivate": {
           "title": "Incluir repos privados",
-          "desc": "Actívalo para que el orden automático tenga en cuenta también repos privados."
+          "desc": "Actívalo para que las sincronizaciones también tengan en cuenta repos privados autorizados."
         },
         "settingsFrequency": {
-          "title": "Frecuencia de sincronización",
-          "desc": "Controla cada cuánto se ejecuta el ordenado automático. Más frecuencia = reacción más rápida, pero más consumo de Actions."
+          "title": "Scheduler externo",
+          "desc": "GitPins no ejecuta cron por sí mismo. La frecuencia se configura en GitHub Actions, cron o el scheduler HTTP que llame a /api/sync."
         },
         "settingsSchedule": {
           "title": "Horario preferido (UTC)",
@@ -338,7 +344,7 @@
       },
       "sync": {
         "title": "Sincronización programada",
-        "desc": "Controla cada cuánto GitPins debe restaurar tu orden preferido y con qué reglas horarias."
+        "desc": "Controla si GitPins acepta llamadas programadas y qué regla horaria UTC aplica. La frecuencia se define en el scheduler externo."
       },
       "privacy": {
         "title": "Privacidad y datos",
@@ -360,7 +366,10 @@
     },
     "syncFrequency": {
       "label": "Frecuencia de sincronización",
-      "hint": "6h recomendado: buen balance entre respuesta y consumo de Actions (~120 min/mes)",
+      "hint": "La frecuencia real depende del scheduler externo.",
+      "externalTitle": "La frecuencia se configura fuera de GitPins",
+      "externalDesc": "Usa GitHub Actions, cron u otro scheduler para llamar a POST /api/sync. Settings no puede reescribir automáticamente ese cron externo.",
+      "help": "Ver configuración y ejemplo completo",
       "options": {
         "1": "Cada hora",
         "2": "Cada 2 horas",
@@ -382,15 +391,11 @@
       "utcNote": "La hora está en UTC (hora del servidor). La sincronización solo se ejecutará a esta hora."
     },
     "commitStrategy": {
-      "label": "Estrategia de commits",
+      "label": "Estrategia de ordenado",
       "learnMore": "Más información",
       "revert": {
         "title": "Toque con ref temporal",
         "desc": "Crea una tag ref temporal apuntando a HEAD y la borra inmediatamente."
-      },
-      "branch": {
-        "title": "Flujo legacy por branch",
-        "desc": "Obsoleto. GitPins ahora usa solo toque con ref temporal."
       }
     },
     "autoSync": {
@@ -447,7 +452,7 @@
     "understood": "Entendido"
   },
   "strategyInfo": {
-    "title": "Estrategias de commits",
+    "title": "Cómo se aplica el orden",
     "intro": "Para mantener tus repos arriba, GitPins actualiza la recencia creando una tag ref temporal que apunta a HEAD y eliminándola al instante.",
     "noteLabel": "Nota",
     "revert": {
@@ -459,16 +464,7 @@
       "pro": "+ Sin ruido de commits en main/master",
       "con": "~ Depende del comportamiento de recencia de GitHub"
     },
-    "branch": {
-      "title": "Flujo legacy por branch",
-      "desc": "Flujo obsoleto mantenido solo como referencia.",
-      "step1": "# Paso 1: Crear branch",
-      "step2": "# Paso 2: Commit",
-      "step3": "# Paso 3: Merge",
-      "pro": "+ N/A",
-      "con": "~ No se usa"
-    },
-    "note": "GitPins no modifica archivos del repositorio. Solo toca metadatos de commit mediante refs temporales."
+    "note": "GitPins no crea commits, ramas ni cambios de archivos. Solo crea y elimina tags temporales."
   },
   "howItWorksPage": {
     "title": "Cómo funciona GitPins",
@@ -480,8 +476,8 @@
     },
     "solution": {
       "title": "La solución",
-      "p1": "GitPins utiliza un mecanismo simple pero efectivo: <strong>actualizar la fecha de último commit</strong> de tus repositorios en el orden que tú elijas.",
-      "p2": "Esto se hace con tag refs temporales que se crean y borran al instante. No se modifican archivos versionados y el historial del branch principal queda limpio."
+      "p1": "GitPins utiliza un mecanismo simple: <strong>actualizar las señales de recencia</strong> de los repositorios en el orden que tú elijas.",
+      "p2": "Se crean tags temporales que apuntan al HEAD existente y se borran al instante. No se crean commits, ramas ni cambios de archivos."
     },
     "steps": {
       "title": "Proceso paso a paso",
@@ -503,31 +499,26 @@
       }
     },
     "strategies": {
-      "title": "Estrategias de commit",
-      "intro": "GitPins usa una unica estrategia predecible para mantener el historial auditable:",
+      "title": "Estrategia de ordenado",
+      "intro": "GitPins utiliza una única estrategia predecible y auditable:",
       "revert": {
         "title": "Toque con ref temporal",
         "desc": "Creamos una tag ref temporal que apunta a HEAD y la borramos al instante. La recencia cambia sin ensuciar el historial del branch principal.",
-        "comment": "# Lo que hace el Action:"
-      },
-      "branch": {
-        "title": "Branch temporal",
-        "desc": "Estrategia obsoleta, mantenida solo como referencia histórica. GitPins no la usa.",
-        "comment": "# Lo que hace el Action:"
+        "comment": "# Operaciones conceptuales del API:"
       }
     },
     "actionCode": {
-      "title": "El GitHub Action",
-      "intro": "Somos 100% transparentes. La sincronización programada normalmente la ejecuta un GitHub Action en un repositorio que controlas, para que puedas revisarlo, modificarlo o auditarlo cuando quieras.",
-      "whatItDoes": "¿Qué hace el Action?",
+      "title": "El scheduler externo",
+      "intro": "GitPins no ejecuta cron por sí mismo. GitHub Actions es una opción habitual, pero también puedes usar cron o cualquier scheduler capaz de llamar por HTTP a tu instancia.",
+      "whatItDoes": "¿Qué ocurre en una ejecución programada?",
       "steps": {
         "step1": "Llama a tu instancia de GitPins (/api/sync) con tu sync secret por usuario",
-        "step2": "Para cada repositorio (en orden inverso para que el primero quede más reciente):",
-        "step2a": "Detecta el branch principal (main/master)",
-        "step2b": "Resuelve el SHA actual de HEAD",
+        "step2": "GitPins valida configuración, hora UTC, cooldown y orden actual:",
+        "step2a": "Calcula el prefijo mínimo que necesita tocar",
+        "step2b": "Resuelve el SHA actual de la rama por defecto",
         "step2c": "Crea y borra una tag ref temporal para ese SHA",
-        "step3": "Espera 1 segundo entre repos para no saturar la API",
-        "step4": "Reporta el resultado en los logs del Action"
+        "step3": "Procesa una sola pasada en orden inverso y limita la velocidad de llamadas",
+        "step4": "Guarda resultados y duración en los logs de GitPins"
       },
       "viewCode": "Ver código completo",
       "codeLocation": "Si usas GitHub Actions para la sincronización programada, el workflow vive en <code>.github/workflows/maintain-order.yml</code> dentro del repositorio que hayas elegido."
@@ -537,38 +528,38 @@
       "permissionsTitle": "Permisos exactos de nuestra GitHub App",
       "permissionsIntro": "Nuestra aplicación solicita los <strong>permisos mínimos necesarios</strong>. Esto es exactamente lo que podemos y NO podemos hacer:",
       "canDo": {
-        "title": "Lo que SÍ podemos hacer:",
-        "item1": "Leer la lista de tus repositorios (metadata)",
-        "item2": "Crear y borrar refs temporales (sin modificar archivos)",
-        "item3": "Crear y borrar refs temporales para aplicar el orden",
-        "item4": "Opcionalmente reescribir historial para limpieza (solo cuando ejecutas limpieza explícitamente)"
+        "title": "Lo que GitPins hace:",
+        "item1": "Leer perfil y metadatos de repositorios autorizados",
+        "item2": "Resolver HEAD y crear tags temporales",
+        "item3": "Borrar cada tag temporal tras aplicar el toque",
+        "item4": "Guardar configuración, historial y logs de sync"
       },
       "cannotDo": {
-        "title": "Lo que NO podemos hacer:",
-        "item1": "<strong>JAMÁS borrar repositorios</strong> - No tenemos ese permiso",
-        "item2": "Modificar tus archivos versionados",
-        "item3": "Acceder a tus secrets o variables de entorno",
-        "item4": "Cambiar configuración de tus repos (settings)",
-        "item5": "Acceder a Issues, PRs, Wikis o Discussions",
-        "item6": "Invitar colaboradores o cambiar permisos"
+        "title": "Lo que GitPins no hace:",
+        "item1": "<strong>No borra repositorios</strong> - No solicita ese permiso",
+        "item2": "No crea commits, ramas ni cambios de archivos",
+        "item3": "No lee secrets de Actions ni variables privadas",
+        "item4": "No cambia settings del repositorio",
+        "item5": "No accede a Issues, PRs, Wikis o Discussions",
+        "item6": "No invita colaboradores ni cambia permisos"
       },
-      "technicalNote": "<strong>Nota técnica:</strong> Los permisos de GitHub Apps son granulares y verificables. Puedes revisar exactamente qué permisos tiene GitPins instalada en tu cuenta desde",
+      "technicalNote": "<strong>Nota técnica:</strong> Contents: write tiene capacidad técnica de escritura, pero el código actual limita su uso a tags temporales. Puedes revisar los permisos instalados desde",
       "installationsLink": "github.com/settings/installations",
       "noCodeStorage": {
         "title": "No almacenamos tu código",
         "desc": "Solo guardamos configuración de orden y logs en base de datos. No clonamos repositorios ni almacenamos código."
       },
       "runsOnYourAccount": {
-        "title": "El Action corre en tu cuenta",
-        "desc": "El GitHub Action se ejecuta en tu propio repositorio, usando tus minutos de Actions. Tienes control total."
+        "title": "El scheduler está bajo tu control",
+        "desc": "Si eliges GitHub Actions, el workflow corre en un repositorio tuyo. También puedes usar cron u otro scheduler."
       },
       "canDisable": {
         "title": "Puedes desactivarlo cuando quieras",
-        "desc": "Simplemente desactiva el Action o elimina el repositorio de configuración. No hay bloqueos."
+        "desc": "Desactiva auto sync en Settings y pausa el scheduler externo. Tu orden guardado permanece."
       },
       "openSource": {
         "title": "Código abierto y auditable",
-        "desc": "El GitHub Action que se instala en tu cuenta es visible arriba. Puedes revisarlo línea por línea antes de activarlo."
+        "desc": "La aplicación, el endpoint y el ejemplo de workflow son públicos y pueden autohospedarse."
       }
     },
     "faq": {
@@ -579,15 +570,15 @@
       },
       "actionsMinutes": {
         "q": "¿Cuántos minutos de Actions consume?",
-        "a": "Muy pocos. Cada ejecución tarda menos de 1 minuto. Con la frecuencia por defecto (cada 6 horas), usarás aproximadamente 120 minutos al mes, muy por debajo del límite gratuito de GitHub (2000 min/mes)."
+        "a": "La sincronización manual no consume Actions. Si usas GitHub Actions como scheduler, el consumo depende de la frecuencia que configures y de las reglas vigentes de tu plan."
       },
       "privateRepos": {
         "q": "¿Funciona con repositorios privados?",
-        "a": "Sí. Puedes elegir incluir o excluir repositorios privados en la configuración. Ten en cuenta que los repos privados también consumen minutos de Actions (al doble de tasa en el plan gratuito)."
+        "a": "Sí, si autorizas el acceso y la GitHub App está instalada en esos repositorios. Puedes incluirlos o excluirlos en Settings."
       },
       "whatIfPush": {
         "q": "¿Qué pasa si hago push a un repo?",
-        "a": "En la próxima ejecución del Action, detectará que el orden cambió y lo restaurará automáticamente al orden que configuraste."
+        "a": "La actividad puede cambiar la recencia. Sincroniza manualmente o deja que tu scheduler externo llame de nuevo a GitPins para restaurar el orden."
       },
       "canPause": {
         "q": "¿Puedo pausar la sincronización?",
@@ -905,114 +896,129 @@
   "help": {
     "hero": {
       "title": "Centro de Ayuda",
-      "subtitle": "Todo lo que necesitas saber para ordenar tus repositorios en GitHub"
+      "subtitle": "Cómo configurar, aplicar y mantener tu orden de repositorios con control sobre permisos y datos"
     },
     "toc": {
       "quickstart": "Empezar",
-      "github-app": "GitHub App",
+      "github-app": "Acceso a GitHub",
       "ordering": "Ordenar repos",
       "sync": "Sincronización",
-      "strategies": "Estrategias",
+      "strategies": "Cómo se aplica",
       "history": "Historial",
+      "privacy": "Privacidad",
       "troubleshooting": "Problemas"
     },
     "quickstart": {
       "title": "Empezar",
       "step1": {
-        "title": "Instalar App",
-        "desc": "Conecta tu cuenta de GitHub instalando la GitPins App"
+        "title": "Autorizar e instalar",
+        "desc": "Inicia sesión e instala la GitHub App en los repos que quieras gestionar"
       },
       "step2": {
-        "title": "Arrastrar repos",
-        "desc": "Arrastra los repositorios que quieres mostrar primero"
+        "title": "Filtrar y ordenar",
+        "desc": "Busca, filtra y arrastra repositorios a la zona que quieres mantener arriba"
       },
       "step3": {
         "title": "Guardar",
-        "desc": "Pulsa guardar para guardar tu orden y configuración"
+        "desc": "Guarda el orden y las opciones para crear un snapshot restaurable"
       },
       "step4": {
-        "title": "Listo",
-        "desc": "Sincroniza manualmente desde el dashboard, o programa la sincronización con GitHub Actions"
+        "title": "Aplicar",
+        "desc": "Sincroniza manualmente o conecta un scheduler externo para automatizarlo"
       }
     },
     "githubApp": {
-      "title": "Conectar GitHub App",
-      "intro": "GitPins usa una GitHub App para interactuar con tus repositorios. Es más seguro que OAuth porque los permisos son granulares y puedes revocarlos en cualquier momento.",
+      "title": "Autorización e instalación de GitHub App",
+      "intro": "GitPins combina la autorización de tu usuario, usada para identificarte y mostrar tus repositorios, con una instalación de GitHub App que realiza las operaciones de ordenado únicamente en los repositorios autorizados.",
       "permissionsTitle": "Permisos solicitados",
       "permission": "Permiso",
       "why": "Para qué se usa",
-      "perm1": "Crear y borrar refs temporales para actualizar la recencia del repositorio",
-      "perm2": "Leer la lista de tus repositorios (nombre, estrellas, lenguaje)",
-      "canDo": "Lo que SÍ puede hacer",
-      "can1": "Leer metadatos de tus repos (nombre, descripción, estrellas)",
-      "can2": "Crear y borrar refs temporales (sin modificar archivos)",
-      "can3": "Crear y borrar refs temporales para aplicar el orden",
-      "can4": "Opcionalmente reescribir historial para limpieza (solo cuando ejecutas limpieza explícitamente)",
-      "cannotDo": "Lo que NO puede hacer",
-      "cannot1": "Borrar repositorios",
-      "cannot2": "Modificar tus archivos versionados",
-      "cannot3": "Acceder a secrets o variables de entorno",
-      "cannot4": "Cambiar configuración de repos o permisos",
+      "userAuthorization": "Autorización de usuario",
+      "permUser": "Identificar tu cuenta, leer el email si está disponible y obtener la lista de repositorios que puedes ver",
+      "permMetadata": "Leer nombre, descripción, visibilidad, lenguaje, estrellas y rama por defecto",
+      "permContents": "Resolver HEAD y crear o borrar exclusivamente las tags temporales usadas para ordenar",
+      "canDo": "Lo que GitPins hace",
+      "can1": "Leer el perfil y metadatos de los repositorios autorizados",
+      "can2": "Crear y borrar una tag ref temporal durante cada toque",
+      "can3": "Guardar tu orden, configuración, snapshots y logs de sync",
+      "can4": "Exportar o eliminar los datos de tu cuenta cuando lo solicitas",
+      "cannotDo": "Lo que GitPins no hace",
+      "cannot1": "Borrar repositorios de GitHub",
+      "cannot2": "Crear commits, crear ramas o editar archivos en la estrategia actual",
+      "cannot3": "Leer secrets de GitHub Actions ni variables privadas del repositorio",
+      "cannot4": "Operar sobre repositorios fuera de la instalación autorizada",
+      "permissionNote": "Contents: write es un permiso con capacidad técnica de escritura. El código actual lo limita a crear y borrar tags temporales; por eso hablamos de lo que GitPins hace, no de una imposibilidad absoluta del permiso.",
       "verify": "Puedes verificar y revocar permisos en cualquier momento desde"
     },
     "ordering": {
       "title": "Ordenar repositorios",
-      "intro": "El dashboard tiene dos zonas: la zona de repos pinneados (arriba) y el pool de todos tus repos (abajo). Arrastra repos entre las zonas para ordenarlos.",
+      "intro": "El dashboard separa los repositorios que quieres mantener arriba del resto. Puedes buscar y filtrar por público/privado, lenguaje, propietario y estrellas antes de arrastrarlos.",
       "demoTitle": "Demo interactivo",
-      "demoDesc": "Haz clic en un repo del pool para añadirlo a la zona pinneada. Usa la X para quitarlo.",
+      "demoDesc": "Haz clic en un repositorio para añadirlo a la zona prioritaria. Usa la X para retirarlo.",
       "saveTitle": "Qué ocurre al guardar",
       "save1": "Tu orden se guarda en la base de datos",
-      "save2": "Se crea un snapshot en el historial (para poder restaurar)",
-      "save3": "Puedes pulsar Sincronizar ahora para aplicar el orden inmediatamente",
-      "save4": "Opcional: configura un workflow programado (GitHub Actions) para mantener el orden automáticamente"
+      "save2": "Se crea uno de los 20 snapshots restaurables más recientes",
+      "save3": "Guardar no modifica GitHub: pulsa Sincronizar ahora para aplicar el orden",
+      "save4": "La automatización es opcional y requiere un scheduler externo"
     },
     "demo": {
-      "pinnedZone": "Repos pinneados",
+      "pinnedZone": "Repos a mantener arriba",
       "allRepos": "Todos los repos",
       "dragHere": "Haz clic en repos para añadirlos"
     },
     "sync": {
-      "title": "Configurar sincronización",
-      "intro": "La sincronización mantiene tus repos en el orden que configuraste. Puedes ejecutarla manualmente o programarla con GitHub Actions.",
-      "frequencyTitle": "Frecuencia",
-      "frequencyDesc": "Con qué frecuencia la sincronización programada verifica y reordena tus repos.",
-      "freq1": "Muy frecuente, más consumo de Actions",
-      "freq6": "Recomendado - buen balance",
-      "freq24": "Menos frecuente, mínimo consumo",
-      "hourTitle": "Hora preferida (UTC)",
-      "hourDesc": "Opcionalmente, elige una hora específica para la sincronización.",
-      "hourExample": "Ejemplo:",
-      "hourNote": "Si configuras 14:00 UTC, el sync solo se ejecutará a esa hora",
-      "actionTitle": "Cómo funciona el GitHub Action",
-      "actionDesc": "Para ejecutar la sincronización programada, añade un workflow (ejemplo abajo) en un repositorio que controles y haz que llame a tu instancia de GitPins.",
-      "actionCron": "Ejecuta cada 6 horas"
+      "title": "Sincronización manual y programada",
+      "intro": "Guardar define el orden deseado. Sincronizar compara ese orden con GitHub y toca únicamente los repositorios necesarios para restaurarlo.",
+      "manualTitle": "Sincronización manual",
+      "manualDesc": "El botón Sincronizar ahora llama a un endpoint autenticado y protegido con CSRF. Las ejecuciones demasiado próximas se omiten durante un cooldown de 10 minutos.",
+      "scheduledTitle": "Sincronización programada",
+      "scheduledDesc": "GitPins expone POST /api/sync, pero no ejecuta cron por sí mismo. GitHub Actions, cron u otro scheduler debe realizar la llamada.",
+      "settingsTitle": "Qué significan las opciones de programación",
+      "frequencyReality": "La frecuencia real depende del cron externo. El valor guardado en Settings no modifica automáticamente un workflow que ya exista.",
+      "hourReality": "La hora preferida es una regla UTC: las llamadas programadas fuera de esa hora se omiten. El scheduler debe llamar dentro de la hora elegida.",
+      "actionTitle": "Ejemplo completo con GitHub Actions",
+      "actionDesc": "Crea este workflow en un repositorio que controles. Define GITPINS_APP_URL como variable y GITPINS_SYNC_SECRET como secret del repositorio.",
+      "secretNote": "No escribas el sync secret en el YAML ni lo publiques. También puedes usar cualquier scheduler capaz de enviar esta misma petición POST."
     },
     "strategies": {
-      "title": "Estrategias de commit",
-      "intro": "Para actualizar la recencia de un repo, GitPins crea una tag ref temporal que apunta a HEAD y la borra inmediatamente.",
+      "title": "Cómo aplica GitPins el orden",
+      "intro": "GitPins utiliza una única estrategia: un toque con tag ref temporal. No existe una estrategia alternativa basada en ramas o commits.",
       "revertTitle": "Toque con ref temporal",
-      "recommended": "Recomendada",
+      "recommended": "Estrategia única",
+      "step1": "Resolver HEAD de la rama por defecto",
+      "step2": "Crear refs/tags/gitpins-touch-<id>",
+      "step3": "Borrar la tag temporal inmediatamente",
       "revertPro1": "Sin cambios de archivos",
-      "revertPro2": "Sin ruido de commits en el branch principal",
-      "branchTitle": "Branch temporal",
-      "branchPro1": "Funciona en todos los casos",
-      "branchCon1": "Deja merge commits en el historial"
+      "revertPro2": "Sin commits ni ramas de GitPins",
+      "revertPro3": "Una sola pasada, procesada en orden inverso",
+      "revertPro4": "Solo toca el prefijo mínimo necesario"
     },
     "history": {
-      "title": "Historial y exportación",
-      "intro": "GitPins registra toda la actividad: cambios de orden, sincronizaciones automáticas y restauraciones. Puedes exportar los datos o restaurar órdenes anteriores.",
+      "title": "Historial y exportación de actividad",
+      "intro": "El dashboard combina snapshots de orden y logs de sincronización. Los snapshots restaurables se limitan a los 20 más recientes.",
       "loggedTitle": "Qué se registra",
       "logged1": "Cambios manuales de orden",
-      "logged2": "Sincronizaciones automáticas",
+      "logged2": "Sincronizaciones manuales y programadas",
       "logged3": "Sincronizaciones omitidas",
       "logged4": "Restauraciones de orden",
-      "exportTitle": "Exportar datos",
-      "exportDesc": "Descarga tu historial de actividad en dos formatos:",
-      "csv": "Para Excel/hojas de cálculo",
-      "json": "Para análisis o backup",
+      "exportTitle": "Exportar actividad visible",
+      "exportDesc": "La sección de actividad exporta las entradas que hayas cargado:",
+      "csv": "Entradas cargadas para hojas de cálculo",
+      "json": "Entradas cargadas para análisis",
+      "exportNote": "La exportación completa de cuenta es una descarga JSON separada disponible en Settings.",
       "restoreTitle": "Restaurar orden",
-      "restoreDesc": "Puedes volver a cualquier orden anterior haciendo clic en Restaurar.",
-      "restoreNote": "Se crea un nuevo snapshot al restaurar, así que siempre puedes deshacer."
+      "restoreDesc": "Puedes restaurar cualquiera de los snapshots conservados y volver a aplicarlo con Sincronizar ahora.",
+      "restoreNote": "Restaurar cambia la configuración guardada; no modifica GitHub hasta ejecutar una sincronización."
+    },
+    "privacy": {
+      "title": "Privacidad y control de la cuenta",
+      "intro": "Desde Settings puedes descargar los datos almacenados o eliminar tu cuenta. Estas acciones afectan a GitPins, nunca borran repositorios de GitHub.",
+      "exportTitle": "Exportación completa",
+      "exportDesc": "Genera un JSON con perfil, configuración, snapshots, logs y auditoría disponible. El archivo se prepara como un trabajo temporal.",
+      "secretsTitle": "Secretos excluidos",
+      "secretsDesc": "Los tokens OAuth, refresh tokens y el sync secret nunca se incluyen en la exportación descargable.",
+      "deleteTitle": "Eliminar cuenta",
+      "deleteDesc": "Requiere reautenticación reciente y confirmación escrita. Borra los datos de usuario de GitPins, pero no repositorios ni código."
     },
     "troubleshooting": {
       "title": "Solución de problemas",
@@ -1022,19 +1028,23 @@
       },
       "q2": {
         "q": "La sincronización no funciona",
-        "a": "Verifica que: 1) La sincronización automática está activada en Settings, 2) Si configuraste una hora preferida, el sync solo se ejecuta a esa hora UTC, 3) Revisa los logs de Actions en el repositorio donde tengas el workflow."
+        "a": "Para sync manual, revisa instalación, cooldown y permisos. Para sync programado, comprueba además que el scheduler envía POST /api/sync con X-GitPins-Sync-Secret, que auto sync está activo y que la llamada ocurre dentro de la hora UTC elegida."
       },
       "q3": {
         "q": "Quiero pausar la sincronización",
-        "a": "Ve a Settings en el dashboard y desactiva la opción de sincronización automática. Tu configuración se mantiene guardada."
+        "a": "Desactiva la sincronización automática en Settings y pausa también el scheduler externo. Tu orden guardado se conserva."
       },
       "q4": {
         "q": "Quiero desinstalar GitPins",
-        "a": "1) Desactiva o borra cualquier workflow programado que hayas configurado, 2) Ve a github.com/settings/installations y desinstala la app GitPins. Tus repositorios quedarán intactos."
+        "a": "Desactiva cualquier scheduler, desinstala la app desde github.com/settings/installations y elimina tu cuenta en Settings si también quieres borrar los datos almacenados. Ningún repositorio será eliminado."
       },
       "q5": {
         "q": "Los commits de GitPins aparecen en mi historial",
-        "a": "La estrategia actual evita crear commits en tu branch principal. Si aún tienes commits antiguos de GitPins de versiones previas, usa la herramienta de limpieza del dashboard (aviso: la limpieza reescribe el historial)."
+        "a": "La versión actual no crea commits ni ramas. Los commits [GitPins] proceden de versiones antiguas. Eliminarlos exige reescribir historial: crea un backup y sigue un procedimiento manual revisado antes de hacer force-push; GitPins no lo ejecuta automáticamente desde el dashboard."
+      },
+      "q6": {
+        "q": "GitHub vuelve a cambiar el orden",
+        "a": "Es normal después de commits, merges, releases u otra actividad. Ejecuta Sincronizar ahora o configura un scheduler externo para restaurar periódicamente tu lista prioritaria."
       }
     },
     "cta": {

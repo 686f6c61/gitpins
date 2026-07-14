@@ -15,7 +15,21 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui'
-import { GitHubIcon, PinIcon, CheckIcon, XIcon, AlertTriangleIcon, BriefcaseIcon, UserIcon, BuildingIcon, CodeIcon, FilterIcon, HistoryIcon, CalendarIcon } from '@/components/icons'
+import {
+  GitHubIcon,
+  PinIcon,
+  CheckIcon,
+  XIcon,
+  AlertTriangleIcon,
+  BriefcaseIcon,
+  UserIcon,
+  BuildingIcon,
+  CodeIcon,
+  FilterIcon,
+  HistoryIcon,
+  ShieldIcon,
+  SparklesIcon,
+} from '@/components/icons'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { LanguageToggle } from '@/components/language-toggle'
 import { Footer } from '@/components/footer'
@@ -141,20 +155,30 @@ export function LandingContent() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 h-16 flex items-center justify-between gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <PinIcon className="w-6 h-6" />
             <span className="text-xl font-bold">GitPins</span>
           </div>
-          <div className="flex items-center gap-3">
-            <Link href="/help" className="text-sm text-muted-foreground hover:text-foreground">
-              {t('nav.help')}
-            </Link>
+          <div className="flex min-w-0 items-center gap-1 sm:gap-3">
+            <nav className="hidden sm:flex items-center gap-4">
+              <Link href="/how-it-works" className="text-sm text-muted-foreground hover:text-foreground">
+                {t('nav.howItWorks')}
+              </Link>
+              <Link href="/help" className="text-sm text-muted-foreground hover:text-foreground">
+                {t('nav.help')}
+              </Link>
+            </nav>
             <LanguageToggle />
             <ThemeToggle />
-            <Button onClick={handleOrderClick}>
-              <GitHubIcon className="w-4 h-4 mr-2" />
-              {t('nav.connect')}
+            <Button
+              onClick={handleOrderClick}
+              className="shrink-0 px-3 sm:px-4"
+              aria-label={t('nav.connect')}
+              title={t('nav.connect')}
+            >
+              <GitHubIcon className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">{t('nav.connect')}</span>
             </Button>
           </div>
         </div>
@@ -178,6 +202,14 @@ export function LandingContent() {
           <p className="text-sm text-muted-foreground mt-4">
             {t('landing.hero.noCreditCard')}
           </p>
+          <div className="mx-auto mt-8 flex max-w-4xl flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
+            {['manual', 'noBranches', 'dataControl'].map((point) => (
+              <span key={point} className="inline-flex items-center gap-2">
+                <CheckIcon className="h-4 w-4 text-foreground" />
+                {t(`landing.hero.points.${point}`)}
+              </span>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -301,39 +333,39 @@ export function LandingContent() {
         </div>
       </section>
 
-      {/* Coming Soon */}
+      {/* Current capabilities */}
       <section className="py-20 border-y border-border">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-12">
-            {t('landing.comingSoon.title')}
+            {t('landing.capabilities.title')}
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="p-6 border border-border rounded-xl">
               <FilterIcon className="w-6 h-6 mb-3 text-muted-foreground" />
-              <h3 className="font-semibold mb-2">{t('landing.comingSoon.filters.title')}</h3>
+              <h3 className="font-semibold mb-2">{t('landing.capabilities.filters.title')}</h3>
               <p className="text-muted-foreground text-sm">
-                {t('landing.comingSoon.filters.desc')}
+                {t('landing.capabilities.filters.desc')}
               </p>
             </div>
             <div className="p-6 border border-border rounded-xl">
               <HistoryIcon className="w-6 h-6 mb-3 text-muted-foreground" />
-              <h3 className="font-semibold mb-2">{t('landing.comingSoon.history.title')}</h3>
+              <h3 className="font-semibold mb-2">{t('landing.capabilities.history.title')}</h3>
               <p className="text-muted-foreground text-sm">
-                {t('landing.comingSoon.history.desc')}
+                {t('landing.capabilities.history.desc')}
               </p>
             </div>
             <div className="p-6 border border-border rounded-xl">
-              <CalendarIcon className="w-6 h-6 mb-3 text-muted-foreground" />
-              <h3 className="font-semibold mb-2">{t('landing.comingSoon.schedule.title')}</h3>
+              <ShieldIcon className="w-6 h-6 mb-3 text-muted-foreground" />
+              <h3 className="font-semibold mb-2">{t('landing.capabilities.privacy.title')}</h3>
               <p className="text-muted-foreground text-sm">
-                {t('landing.comingSoon.schedule.desc')}
+                {t('landing.capabilities.privacy.desc')}
               </p>
             </div>
             <div className="p-6 border border-border rounded-xl">
-              <BuildingIcon className="w-6 h-6 mb-3 text-muted-foreground" />
-              <h3 className="font-semibold mb-2">{t('landing.comingSoon.organizations.title')}</h3>
+              <SparklesIcon className="w-6 h-6 mb-3 text-muted-foreground" />
+              <h3 className="font-semibold mb-2">{t('landing.capabilities.onboarding.title')}</h3>
               <p className="text-muted-foreground text-sm">
-                {t('landing.comingSoon.organizations.desc')}
+                {t('landing.capabilities.onboarding.desc')}
               </p>
             </div>
           </div>
@@ -423,10 +455,17 @@ export function LandingContent() {
           <p className="text-muted-foreground mb-8">
             {t('landing.cta.subtitle')}
           </p>
-          <Button size="lg" onClick={handleOrderClick}>
-            <GitHubIcon className="w-5 h-5 mr-2" />
-            {t('landing.cta.button')}
-          </Button>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Button size="lg" onClick={handleOrderClick}>
+              <GitHubIcon className="w-5 h-5 mr-2" />
+              {t('landing.cta.button')}
+            </Button>
+            <Link href="/help">
+              <Button size="lg" variant="secondary">
+                {t('landing.cta.help')}
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 

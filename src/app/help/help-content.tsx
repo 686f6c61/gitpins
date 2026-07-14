@@ -27,11 +27,32 @@ import {
   HistoryIcon,
   GripVerticalIcon,
   StarIcon,
+  ShieldIcon,
 } from '@/components/icons'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { LanguageToggle } from '@/components/language-toggle'
 import { Footer } from '@/components/footer'
 import { useTranslation } from '@/i18n'
+
+const SCHEDULED_SYNC_EXAMPLE = `name: GitPins - Maintain order
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync GitPins order
+        run: |
+          curl --fail --silent --show-error \\
+            --request POST "$GITPINS_URL/api/sync" \\
+            --header "X-GitPins-Sync-Secret: $SYNC_SECRET"
+        env:
+          GITPINS_URL: \${{ vars.GITPINS_APP_URL }}
+          SYNC_SECRET: \${{ secrets.GITPINS_SYNC_SECRET }}`
 
 /** Interactive drag demo component */
 function DragDemo() {
@@ -170,12 +191,12 @@ export function HelpContent() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border sticky top-0 bg-background z-10">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 h-16 flex items-center justify-between gap-2">
+          <Link href="/" className="flex shrink-0 items-center gap-2" aria-label="GitPins">
             <PinIcon className="w-6 h-6" />
-            <span className="text-xl font-bold">GitPins</span>
+            <span className="hidden text-xl font-bold sm:inline">GitPins</span>
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-1 sm:gap-3">
             <LanguageToggle />
             <ThemeToggle />
             <Link href="/dashboard">
@@ -203,7 +224,7 @@ export function HelpContent() {
       <section className="py-8 border-b border-border bg-muted/30">
         <div className="max-w-5xl mx-auto px-4">
           <div className="flex flex-wrap gap-3 justify-center">
-            {['quickstart', 'github-app', 'ordering', 'sync', 'strategies', 'history', 'troubleshooting'].map((id) => (
+            {['quickstart', 'github-app', 'ordering', 'sync', 'strategies', 'history', 'privacy', 'troubleshooting'].map((id) => (
               <button
                 key={id}
                 onClick={() => scrollToSection(id)}
@@ -255,12 +276,16 @@ export function HelpContent() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   <tr>
-                    <td className="px-4 py-3 text-sm font-mono">Contents (write)</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">{t('help.githubApp.perm1')}</td>
+                    <td className="px-4 py-3 text-sm font-mono">{t('help.githubApp.userAuthorization')}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{t('help.githubApp.permUser')}</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-3 text-sm font-mono">Metadata (read)</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">{t('help.githubApp.perm2')}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{t('help.githubApp.permMetadata')}</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-3 text-sm font-mono">Contents (write)</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{t('help.githubApp.permContents')}</td>
                   </tr>
                 </tbody>
               </table>
@@ -296,6 +321,9 @@ export function HelpContent() {
           </div>
 
           <p className="text-sm text-muted-foreground mt-6">
+            {t('help.githubApp.permissionNote')}
+          </p>
+          <p className="text-sm text-muted-foreground mt-3">
             {t('help.githubApp.verify')}{' '}
             <a
               href="https://github.com/settings/installations"
@@ -357,56 +385,41 @@ export function HelpContent() {
           <p className="text-muted-foreground mb-8">{t('help.sync.intro')}</p>
 
           <div className="grid md:grid-cols-2 gap-6 mb-8">
-            {/* Frequency */}
+            {/* Manual sync */}
+            <div className="border border-border rounded-xl p-6 bg-background">
+              <h3 className="font-semibold mb-4 flex items-center gap-2">
+                <RefreshIcon className="w-5 h-5" />
+                {t('help.sync.manualTitle')}
+              </h3>
+              <p className="text-sm text-muted-foreground">{t('help.sync.manualDesc')}</p>
+            </div>
+
+            {/* Scheduled sync */}
             <div className="border border-border rounded-xl p-6 bg-background">
               <h3 className="font-semibold mb-4 flex items-center gap-2">
                 <SettingsIcon className="w-5 h-5" />
-                {t('help.sync.frequencyTitle')}
+                {t('help.sync.scheduledTitle')}
               </h3>
-              <p className="text-sm text-muted-foreground mb-4">{t('help.sync.frequencyDesc')}</p>
-              <div className="text-sm space-y-1">
-                <div className="flex justify-between py-1">
-                  <span>1-2h</span>
-                  <span className="text-muted-foreground">{t('help.sync.freq1')}</span>
-                </div>
-                <div className="flex justify-between py-1 font-medium">
-                  <span>6h</span>
-                  <span className="text-muted-foreground">{t('help.sync.freq6')}</span>
-                </div>
-                <div className="flex justify-between py-1">
-                  <span>24h+</span>
-                  <span className="text-muted-foreground">{t('help.sync.freq24')}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Preferred hour */}
-            <div className="border border-border rounded-xl p-6 bg-background">
-              <h3 className="font-semibold mb-4">{t('help.sync.hourTitle')}</h3>
-              <p className="text-sm text-muted-foreground mb-4">{t('help.sync.hourDesc')}</p>
-              <div className="bg-muted/50 rounded-lg p-4 text-sm font-mono">
-                <div className="text-muted-foreground">{t('help.sync.hourExample')}</div>
-                <div className="mt-2">
-                  <span className="text-foreground">preferredHour: 14</span>
-                  <span className="text-muted-foreground"> = 14:00 UTC</span>
-                </div>
-                <div className="text-xs text-muted-foreground mt-2">
-                  {t('help.sync.hourNote')}
-                </div>
-              </div>
+              <p className="text-sm text-muted-foreground">{t('help.sync.scheduledDesc')}</p>
             </div>
           </div>
 
-          {/* How GitHub Action works */}
+          <div className="mb-8 rounded-xl border border-border bg-background p-6">
+            <h3 className="font-semibold mb-3">{t('help.sync.settingsTitle')}</h3>
+            <div className="grid gap-4 text-sm text-muted-foreground md:grid-cols-2">
+              <p>{t('help.sync.frequencyReality')}</p>
+              <p>{t('help.sync.hourReality')}</p>
+            </div>
+          </div>
+
+          {/* External scheduler example */}
           <div className="border border-border rounded-xl p-6 bg-background">
             <h3 className="font-semibold mb-4">{t('help.sync.actionTitle')}</h3>
             <p className="text-sm text-muted-foreground mb-4">{t('help.sync.actionDesc')}</p>
-            <div className="bg-muted/50 rounded-lg p-4 text-sm font-mono space-y-1">
-              <div className="text-muted-foreground"># .github/workflows/maintain-order.yml</div>
-              <div>schedule:</div>
-              <div className="pl-4">- cron: &apos;0 */6 * * *&apos;</div>
-              <div className="text-muted-foreground mt-2"># {t('help.sync.actionCron')}</div>
-            </div>
+            <pre className="overflow-x-auto rounded-lg bg-muted/50 p-4 text-xs leading-6">
+              <code>{SCHEDULED_SYNC_EXAMPLE}</code>
+            </pre>
+            <p className="mt-4 text-xs text-muted-foreground">{t('help.sync.secretNote')}</p>
           </div>
         </div>
       </section>
@@ -427,11 +440,11 @@ export function HelpContent() {
               </div>
               <div className="bg-muted/50 rounded-lg p-4 text-sm font-mono space-y-1 mb-4">
                 <div className="text-muted-foreground"># Step 1</div>
-                <div>git rev-parse HEAD</div>
+                <div>{t('help.strategies.step1')}</div>
                 <div className="text-muted-foreground mt-2"># Step 2</div>
-                <div>git push origin HEAD:refs/tags/gitpins-touch-abc123</div>
+                <div>{t('help.strategies.step2')}</div>
                 <div className="text-muted-foreground mt-2"># Step 3</div>
-                <div>git push origin :refs/tags/gitpins-touch-abc123</div>
+                <div>{t('help.strategies.step3')}</div>
               </div>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center gap-2 text-green-600">
@@ -441,6 +454,14 @@ export function HelpContent() {
                 <li className="flex items-center gap-2 text-green-600">
                   <CheckIcon className="w-4 h-4" />
                   {t('help.strategies.revertPro2')}
+                </li>
+                <li className="flex items-center gap-2 text-green-600">
+                  <CheckIcon className="w-4 h-4" />
+                  {t('help.strategies.revertPro3')}
+                </li>
+                <li className="flex items-center gap-2 text-green-600">
+                  <CheckIcon className="w-4 h-4" />
+                  {t('help.strategies.revertPro4')}
                 </li>
               </ul>
             </div>
@@ -486,6 +507,7 @@ export function HelpContent() {
                   <span className="text-muted-foreground">{t('help.history.json')}</span>
                 </div>
               </div>
+              <p className="mt-4 text-xs text-muted-foreground">{t('help.history.exportNote')}</p>
             </div>
 
             {/* Restore */}
@@ -500,8 +522,34 @@ export function HelpContent() {
         </div>
       </section>
 
+      {/* Privacy and account control */}
+      <section id="privacy" className="py-16">
+        <div className="max-w-5xl mx-auto px-4">
+          <h2 className="text-2xl font-bold mb-4">{t('help.privacy.title')}</h2>
+          <p className="text-muted-foreground mb-8">{t('help.privacy.intro')}</p>
+
+          <div className="grid gap-6 md:grid-cols-3">
+            <div className="rounded-xl border border-border p-6">
+              <DownloadIcon className="mb-4 h-5 w-5" />
+              <h3 className="font-semibold mb-2">{t('help.privacy.exportTitle')}</h3>
+              <p className="text-sm text-muted-foreground">{t('help.privacy.exportDesc')}</p>
+            </div>
+            <div className="rounded-xl border border-border p-6">
+              <ShieldIcon className="mb-4 h-5 w-5" />
+              <h3 className="font-semibold mb-2">{t('help.privacy.secretsTitle')}</h3>
+              <p className="text-sm text-muted-foreground">{t('help.privacy.secretsDesc')}</p>
+            </div>
+            <div className="rounded-xl border border-border p-6">
+              <XIcon className="mb-4 h-5 w-5" />
+              <h3 className="font-semibold mb-2">{t('help.privacy.deleteTitle')}</h3>
+              <p className="text-sm text-muted-foreground">{t('help.privacy.deleteDesc')}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Troubleshooting */}
-      <section id="troubleshooting" className="py-16">
+      <section id="troubleshooting" className="py-16 bg-muted/30 border-y border-border">
         <div className="max-w-5xl mx-auto px-4">
           <h2 className="text-2xl font-bold mb-8">{t('help.troubleshooting.title')}</h2>
           <div className="space-y-4 max-w-3xl">
@@ -524,6 +572,10 @@ export function HelpContent() {
             <FAQItem
               question={t('help.troubleshooting.q5.q')}
               answer={t('help.troubleshooting.q5.a')}
+            />
+            <FAQItem
+              question={t('help.troubleshooting.q6.q')}
+              answer={t('help.troubleshooting.q6.a')}
             />
           </div>
         </div>

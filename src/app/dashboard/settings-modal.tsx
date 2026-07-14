@@ -9,7 +9,7 @@
  * Modal dialog for configuring repository ordering settings:
  * - Number of repos to pin (topN)
  * - Include/exclude private repos
- * - Sync frequency
+ * - External scheduler guidance and preferred UTC hour
  * - Fixed commit strategy (temporary ref touch)
  * - Auto-sync toggle
  * - Config repo visibility
@@ -374,29 +374,18 @@ export function SettingsModal({
             description={t('settings.sections.sync.desc')}
           >
             <div data-onboarding="settings-frequency">
-              <label className="block text-sm font-medium mb-2">
-                {t('settings.syncFrequency.label')}
-              </label>
-              <select
-                value={settings.syncFrequency}
-                onChange={(e) => onChange({ syncFrequency: parseInt(e.target.value) })}
-                className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-foreground"
-              >
-                <option value={1}>{t('settings.syncFrequency.options.1')}</option>
-                <option value={2}>{t('settings.syncFrequency.options.2')}</option>
-                <option value={4}>{t('settings.syncFrequency.options.4')}</option>
-                <option value={6}>{t('settings.syncFrequency.options.6')}</option>
-                <option value={8}>{t('settings.syncFrequency.options.8')}</option>
-                <option value={12}>{t('settings.syncFrequency.options.12')}</option>
-                <option value={24}>{t('settings.syncFrequency.options.24')}</option>
-                <option value={48}>{t('settings.syncFrequency.options.48')}</option>
-                <option value={168}>{t('settings.syncFrequency.options.168')}</option>
-                <option value={360}>{t('settings.syncFrequency.options.360')}</option>
-                <option value={720}>{t('settings.syncFrequency.options.720')}</option>
-              </select>
-              <p className="text-xs text-muted-foreground mt-1">
-                {t('settings.syncFrequency.hint')}
-              </p>
+              <div className="rounded-lg border border-border bg-background p-4">
+                <div className="text-sm font-medium">{t('settings.syncFrequency.externalTitle')}</div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t('settings.syncFrequency.externalDesc')}
+                </p>
+                <a
+                  href="/help#sync"
+                  className="mt-2 inline-block text-xs underline text-muted-foreground hover:text-foreground"
+                >
+                  {t('settings.syncFrequency.help')}
+                </a>
+              </div>
             </div>
 
             <div className="rounded-lg border border-border bg-background p-4" data-onboarding="settings-schedule">

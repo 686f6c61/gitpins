@@ -9,7 +9,7 @@
  * Detailed explanation of how GitPins works, including:
  * - The problem it solves
  * - Step-by-step process
- * - Commit strategy (temporary ref touch)
+ * - Ordering strategy (temporary tag touch)
  * - Security and permissions info
  * - Technical FAQ
  */
@@ -41,12 +41,12 @@ export default function HowItWorksPage() {
     <div className="min-h-screen bg-muted/30">
       {/* Header */}
       <header className="bg-background border-b border-border">
-        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold">GitPins</Link>
-          <div className="flex items-center gap-4">
+        <div className="max-w-4xl mx-auto px-3 sm:px-4 h-16 flex items-center justify-between gap-2">
+          <Link href="/" className="shrink-0 text-xl font-bold">GitPins</Link>
+          <div className="flex min-w-0 items-center gap-1 sm:gap-4">
             <LanguageToggle />
             <ThemeToggle />
-            <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
+            <Link href="/dashboard" className="hidden text-sm text-muted-foreground hover:text-foreground sm:inline">
               {t('nav.dashboard')}
             </Link>
             <a href="/api/auth/login">
@@ -140,7 +140,7 @@ export default function HowItWorksPage() {
           </div>
         </section>
 
-        {/* Estrategias de commit */}
+        {/* Ordering strategy */}
         <section className="mb-12">
           <h2 className="text-xl font-semibold mb-4">{t('howItWorksPage.strategies.title')}</h2>
           <p className="text-muted-foreground mb-6">
@@ -166,7 +166,7 @@ export default function HowItWorksPage() {
           </div>
         </section>
 
-        {/* GitHub Action */}
+        {/* External scheduler */}
         <section className="mb-12">
           <h2 className="text-xl font-semibold mb-4">{t('howItWorksPage.actionCode.title')}</h2>
           <p className="text-muted-foreground mb-6">

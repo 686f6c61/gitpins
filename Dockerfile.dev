@@ -15,4 +15,4 @@ RUN pnpm install --frozen-lockfile
 
 EXPOSE 3000
 
-CMD ["pnpm", "run", "dev", "--", "--hostname", "0.0.0.0", "-p", "3000"]
+CMD ["pnpm", "exec", "next", "dev", "--hostname", "0.0.0.0", "-p", "3000"]
