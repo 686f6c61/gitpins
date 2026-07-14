@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { checkAdminRateLimit, forbiddenResponse, unauthorizedResponse, verifyAdmin } from '@/lib/admin'
 import { getSession } from '@/lib/session'
+import { addNoStoreHeaders, addSecurityHeaders } from '@/lib/security'
 
 export async function GET() {
   try {
@@ -15,7 +16,7 @@ export async function GET() {
       return forbiddenResponse()
     }
 
-    const rateLimit = checkAdminRateLimit(session.userId)
+    const rateLimit = await checkAdminRateLimit(session.userId)
     if (!rateLimit.allowed) {
       return rateLimit.response!
     }
@@ -42,12 +43,16 @@ export async function GET() {
       },
     })
 
-    return NextResponse.json({
-      admins: adminAccounts,
-      currentGithubId: session.githubId,
-    })
+    return addSecurityHeaders(
+      addNoStoreHeaders(NextResponse.json({
+        admins: adminAccounts,
+        currentGithubId: session.githubId,
+      }))
+    )
   } catch (error) {
     console.error('Admin access list error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return addSecurityHeaders(
+      addNoStoreHeaders(NextResponse.json({ error: 'Internal server error' }, { status: 500 }))
+    )
   }
 }

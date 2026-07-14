@@ -6,74 +6,106 @@
  * @license MIT
  *
  * Rate Limit Module
- * Simple in-memory rate limiter using a sliding window approach.
- * For production with multiple instances, replace with Redis or similar.
+ * Uses PostgreSQL for cross-instance consistency and falls back to in-memory
+ * storage when the database is intentionally unavailable (tests/local scripts).
  */
 
-/** Stores rate limit data per identifier */
 interface RateLimitEntry {
   count: number
   resetTime: number
 }
 
-// In-memory store for rate limit entries (use Redis in production for scaling)
-const rateLimitStore = new Map<string, RateLimitEntry>()
+interface DatabaseRateLimitRow {
+  count: number | bigint
+  expiresAt: Date
+  allowed: boolean
+}
 
 /** Configuration for rate limiting */
-interface RateLimitConfig {
-  windowMs: number    // Time window in milliseconds
-  maxRequests: number // Maximum requests allowed per window
+export interface RateLimitConfig {
+  scope: string
+  windowMs: number
+  maxRequests: number
 }
 
 /** Result returned by checkRateLimit */
 export interface RateLimitResult {
-  success: boolean    // true if request is allowed
-  remaining: number   // Remaining requests in current window
-  resetTime: number   // Unix timestamp when window resets
+  success: boolean
+  remaining: number
+  resetTime: number
 }
 
-/**
- * Garbage collection: Clean up expired entries every minute
- * This prevents memory leaks from abandoned rate limit entries
- */
-setInterval(() => {
-  const now = Date.now()
-  for (const [key, entry] of rateLimitStore.entries()) {
-    if (entry.resetTime < now) {
-      rateLimitStore.delete(key)
+const memoryRateLimitStore = new Map<string, RateLimitEntry>()
+let lastMemoryCleanupAt = 0
+let lastDatabaseCleanupAt = 0
+
+function getWindowStart(now: number, windowMs: number): number {
+  return Math.floor(now / windowMs) * windowMs
+}
+
+function shouldUseDatabase(): boolean {
+  return process.env.NODE_ENV !== 'test' && !!process.env.DATABASE_URL
+}
+
+function maybeCleanupMemoryStore(now: number): void {
+  if (now - lastMemoryCleanupAt < 60_000) {
+    return
+  }
+
+  lastMemoryCleanupAt = now
+  for (const [key, entry] of memoryRateLimitStore.entries()) {
+    if (entry.resetTime <= now) {
+      memoryRateLimitStore.delete(key)
     }
   }
-}, 60000)
+}
 
-/**
- * Check if a request should be rate limited.
- * Uses a fixed window algorithm for simplicity.
- * @param identifier - Unique identifier (user ID, IP, etc.)
- * @param config - Rate limit configuration (window size and max requests)
- * @returns RateLimitResult with success status and metadata
- */
-export function checkRateLimit(
+async function maybeCleanupDatabase(now: number): Promise<void> {
+  if (!shouldUseDatabase() || now - lastDatabaseCleanupAt < 5 * 60_000) {
+    return
+  }
+
+  lastDatabaseCleanupAt = now
+
+  try {
+    const { prisma } = await import('./prisma')
+    await prisma.rateLimitBucket.deleteMany({
+      where: {
+        expiresAt: {
+          lt: new Date(now),
+        },
+      },
+    })
+  } catch {
+    // Cleanup is best-effort and should never block request handling.
+  }
+}
+
+function checkRateLimitInMemory(
   identifier: string,
-  config: RateLimitConfig
+  config: RateLimitConfig,
+  now: number
 ): RateLimitResult {
-  const now = Date.now()
-  const entry = rateLimitStore.get(identifier)
+  maybeCleanupMemoryStore(now)
 
-  // If no entry or expired, create new one
-  if (!entry || entry.resetTime < now) {
-    const newEntry: RateLimitEntry = {
+  const key = `${config.scope}:${identifier}`
+  const windowStart = getWindowStart(now, config.windowMs)
+  const resetTime = windowStart + config.windowMs
+  const entry = memoryRateLimitStore.get(key)
+
+  if (!entry || entry.resetTime <= now) {
+    memoryRateLimitStore.set(key, {
       count: 1,
-      resetTime: now + config.windowMs,
-    }
-    rateLimitStore.set(identifier, newEntry)
+      resetTime,
+    })
+
     return {
       success: true,
       remaining: config.maxRequests - 1,
-      resetTime: newEntry.resetTime,
+      resetTime,
     }
   }
 
-  // Check if limit exceeded
   if (entry.count >= config.maxRequests) {
     return {
       success: false,
@@ -82,8 +114,8 @@ export function checkRateLimit(
     }
   }
 
-  // Increment count
-  entry.count++
+  entry.count += 1
+
   return {
     success: true,
     remaining: config.maxRequests - entry.count,
@@ -91,26 +123,123 @@ export function checkRateLimit(
   }
 }
 
-// Pre-configured rate limiters
+async function checkRateLimitInDatabase(
+  identifier: string,
+  config: RateLimitConfig,
+  now: number
+): Promise<RateLimitResult | null> {
+  if (!shouldUseDatabase()) {
+    return null
+  }
+
+  try {
+    const { prisma } = await import('./prisma')
+    const windowStartMs = getWindowStart(now, config.windowMs)
+    const windowStart = new Date(windowStartMs)
+    const expiresAt = new Date(windowStartMs + config.windowMs)
+
+    const rows = await prisma.$queryRaw<Array<DatabaseRateLimitRow>>`
+      WITH upsert AS (
+        INSERT INTO "rate_limit_buckets" (
+          "scope",
+          "identifier",
+          "windowStart",
+          "expiresAt",
+          "count",
+          "createdAt",
+          "updatedAt"
+        )
+        VALUES (
+          ${config.scope},
+          ${identifier},
+          ${windowStart},
+          ${expiresAt},
+          1,
+          NOW(),
+          NOW()
+        )
+        ON CONFLICT ("scope", "identifier", "windowStart")
+        DO UPDATE SET
+          "count" = "rate_limit_buckets"."count" + 1,
+          "expiresAt" = EXCLUDED."expiresAt",
+          "updatedAt" = NOW()
+        WHERE "rate_limit_buckets"."count" < ${config.maxRequests}
+        RETURNING
+          "count",
+          "expiresAt",
+          TRUE AS "allowed"
+      )
+      SELECT "count", "expiresAt", "allowed" FROM upsert
+      UNION ALL
+      SELECT
+        "count",
+        "expiresAt",
+        FALSE AS "allowed"
+      FROM "rate_limit_buckets"
+      WHERE "scope" = ${config.scope}
+        AND "identifier" = ${identifier}
+        AND "windowStart" = ${windowStart}
+        AND NOT EXISTS (SELECT 1 FROM upsert)
+      LIMIT 1
+    `
+
+    const row = rows[0]
+    if (!row) {
+      return null
+    }
+
+    const count = typeof row.count === 'bigint' ? Number(row.count) : row.count
+    void maybeCleanupDatabase(now)
+
+    return {
+      success: row.allowed,
+      remaining: row.allowed
+        ? Math.max(config.maxRequests - count, 0)
+        : 0,
+      resetTime: row.expiresAt.getTime(),
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Check if a request should be rate limited.
+ * PostgreSQL is used when available so limits remain correct across instances.
+ */
+export async function checkRateLimit(
+  identifier: string,
+  config: RateLimitConfig
+): Promise<RateLimitResult> {
+  const now = Date.now()
+  const databaseResult = await checkRateLimitInDatabase(identifier, config, now)
+
+  if (databaseResult) {
+    return databaseResult
+  }
+
+  return checkRateLimitInMemory(identifier, config, now)
+}
+
 export const rateLimits = {
-  // Sync endpoint: max 10 requests per hour per secret
   sync: {
-    windowMs: 60 * 60 * 1000, // 1 hour
+    scope: 'sync',
+    windowMs: 60 * 60 * 1000,
     maxRequests: 10,
   },
-  // API endpoints: max 100 requests per minute per user
   api: {
-    windowMs: 60 * 1000, // 1 minute
+    scope: 'api',
+    windowMs: 60 * 1000,
     maxRequests: 100,
   },
-  // Auth endpoints: max 10 requests per minute per IP
   auth: {
-    windowMs: 60 * 1000, // 1 minute
+    scope: 'auth',
+    windowMs: 60 * 1000,
     maxRequests: 10,
   },
-  // Admin endpoints: max 30 requests per minute per admin
   admin: {
-    windowMs: 60 * 1000, // 1 minute
+    scope: 'admin',
+    windowMs: 60 * 1000,
     maxRequests: 30,
   },
-}
+} satisfies Record<string, RateLimitConfig>

@@ -4,7 +4,7 @@ import {
   authorizeAdminMutation,
   createAdminAuditLog,
 } from '@/lib/admin'
-import { sanitizePlainText } from '@/lib/security'
+import { addNoStoreHeaders, addSecurityHeaders, sanitizePlainText } from '@/lib/security'
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,7 +20,9 @@ export async function POST(request: NextRequest) {
 
     const githubId = typeof githubIdRaw === 'number' ? githubIdRaw : Number(githubIdRaw)
     if (!Number.isInteger(githubId) || githubId <= 0) {
-      return NextResponse.json({ error: 'Invalid githubId' }, { status: 400 })
+      return addSecurityHeaders(
+        addNoStoreHeaders(NextResponse.json({ error: 'Invalid githubId' }, { status: 400 }))
+      )
     }
 
     const reason = typeof reasonRaw === 'string' && sanitizePlainText(reasonRaw, 500)
@@ -63,9 +65,13 @@ export async function POST(request: NextRequest) {
       return updated
     })
 
-    return NextResponse.json({ success: true, admin: adminAccount })
+    return addSecurityHeaders(
+      addNoStoreHeaders(NextResponse.json({ success: true, admin: adminAccount }))
+    )
   } catch (error) {
     console.error('Admin grant error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return addSecurityHeaders(
+      addNoStoreHeaders(NextResponse.json({ error: 'Internal server error' }, { status: 500 }))
+    )
   }
 }

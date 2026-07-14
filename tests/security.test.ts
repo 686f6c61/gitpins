@@ -171,33 +171,36 @@ describe('Security Module', () => {
       expect(response.headers.get('X-Frame-Options')).toBe('DENY')
       expect(response.headers.get('X-XSS-Protection')).toBe('1; mode=block')
       expect(response.headers.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin')
+      expect(response.headers.get('Permissions-Policy')).toContain('camera=()')
+      expect(response.headers.get('Cross-Origin-Opener-Policy')).toBe('same-origin')
+      expect(response.headers.get('Cross-Origin-Resource-Policy')).toBe('same-origin')
     })
   })
 
   describe('checkAPIRateLimit', () => {
-    it('should allow requests below the API limit', () => {
+    it('should allow requests below the API limit', async () => {
       const request = {
         headers: new Headers({
           'x-real-ip': `test-ip-${Date.now()}`,
         }),
       }
 
-      const result = checkAPIRateLimit(request as never)
+      const result = await checkAPIRateLimit(request as never)
       expect(result.allowed).toBe(true)
       expect(result.response).toBeUndefined()
     })
 
-    it('should block requests above the API limit', () => {
+    it('should block requests above the API limit', async () => {
       const identifier = `test-user-${Date.now()}`
       const request = {
         headers: new Headers(),
       }
 
-      let result = checkAPIRateLimit(request as never, identifier)
+      let result = await checkAPIRateLimit(request as never, identifier)
       expect(result.allowed).toBe(true)
 
       for (let index = 0; index < 100; index++) {
-        result = checkAPIRateLimit(request as never, identifier)
+        result = await checkAPIRateLimit(request as never, identifier)
       }
 
       expect(result.allowed).toBe(false)

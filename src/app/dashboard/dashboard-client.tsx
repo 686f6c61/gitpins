@@ -426,11 +426,19 @@ export function DashboardClient({ user }: DashboardClientProps) {
   async function saveOrder() {
     setSaving(true)
     try {
+      const token = await ensureCsrfToken()
+      if (!token) {
+        return
+      }
+
       // Solo guardar los repos pinneados
       // El resto permanecerá en su orden natural de GitHub
       const response = await fetch('/api/repos/order', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': token,
+        },
         body: JSON.stringify({
           reposOrder: pinnedRepos,
           topN: pinnedRepos.length,

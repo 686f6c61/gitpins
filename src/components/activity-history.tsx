@@ -119,6 +119,24 @@ export function ActivityHistory({ onRestore }: ActivityHistoryProps) {
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
+  const ensureCsrfToken = useCallback(async (): Promise<string | null> => {
+    try {
+      const response = await fetch('/api/auth/csrf', {
+        method: 'GET',
+        cache: 'no-store',
+      })
+
+      if (!response.ok) {
+        return null
+      }
+
+      const data = await response.json()
+      return typeof data.csrfToken === 'string' && data.csrfToken ? data.csrfToken : null
+    } catch {
+      return null
+    }
+  }, [])
+
   const fetchActivity = useCallback(async (offset = 0, append = false) => {
     if (offset === 0) setLoading(true)
     else setLoadingMore(true)
@@ -155,9 +173,18 @@ export function ActivityHistory({ onRestore }: ActivityHistoryProps) {
     setMessage(null)
 
     try {
+      const csrfToken = await ensureCsrfToken()
+      if (!csrfToken) {
+        setMessage({ type: 'error', text: t('activity.restoreError') })
+        return
+      }
+
       const response = await fetch('/api/activity', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
+        },
         body: JSON.stringify({ snapshotId: entry.id }),
       })
 

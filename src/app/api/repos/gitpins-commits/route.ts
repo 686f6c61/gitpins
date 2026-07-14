@@ -14,7 +14,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { createAppOctokit } from '@/lib/github-app'
-import { validateOrigin, addSecurityHeaders } from '@/lib/security'
+import { validateOrigin, addNoStoreHeaders, addSecurityHeaders, checkAPIRateLimit } from '@/lib/security'
 
 interface RepoCommitCount {
   repo: string
@@ -44,6 +44,11 @@ export async function GET(request: NextRequest) {
     )
   }
 
+  const rateLimit = await checkAPIRateLimit(request, session.userId)
+  if (!rateLimit.allowed) {
+    return addSecurityHeaders(rateLimit.response!)
+  }
+
   try {
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
@@ -52,7 +57,7 @@ export async function GET(request: NextRequest) {
 
     if (!user || !user.installationId || !user.repoOrder) {
       return addSecurityHeaders(
-        NextResponse.json({ error: 'Configuration required' }, { status: 400 })
+        addNoStoreHeaders(NextResponse.json({ error: 'Configuration required' }, { status: 400 }))
       )
     }
 
@@ -62,10 +67,10 @@ export async function GET(request: NextRequest) {
     } catch (error: unknown) {
       console.error('Failed to create GitHub App client:', error)
       return addSecurityHeaders(
-        NextResponse.json({
+        addNoStoreHeaders(NextResponse.json({
           error: 'GitHub App authentication failed. Please reinstall the app.',
           needsReinstall: true
-        }, { status: 401 })
+        }, { status: 401 }))
       )
     }
 
@@ -78,7 +83,7 @@ export async function GET(request: NextRequest) {
       }
     } catch {
       return addSecurityHeaders(
-        NextResponse.json({ error: 'Invalid configuration' }, { status: 400 })
+        addNoStoreHeaders(NextResponse.json({ error: 'Invalid configuration' }, { status: 400 }))
       )
     }
 
@@ -131,17 +136,17 @@ export async function GET(request: NextRequest) {
     }
 
     return addSecurityHeaders(
-      NextResponse.json({
+      addNoStoreHeaders(NextResponse.json({
         success: true,
         repos: results,
         totalGitpinsCommits: results.reduce((sum, r) => sum + r.gitpinsCommits, 0),
-      })
+      }))
     )
 
   } catch (error) {
     console.error('Error counting GitPins commits:', error)
     return addSecurityHeaders(
-      NextResponse.json({ error: 'Operation failed' }, { status: 500 })
+      addNoStoreHeaders(NextResponse.json({ error: 'Operation failed' }, { status: 500 }))
     )
   }
 }

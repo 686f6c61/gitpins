@@ -8,7 +8,7 @@ services:
       # Create the DB used by the app on first boot (fresh volume).
       POSTGRES_DB: gitpins_local_clone
     ports:
-      - "5432:5432"
+      - "${GITPINS_DB_PORT:-5432}:5432"
     volumes:
       - gitpins_pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -39,7 +39,7 @@ services:
       - gitpins_node_modules:/app/node_modules
       - gitpins_next_cache:/app/.next
     command: >
-      sh -c "npm ci && npx prisma db push --accept-data-loss && npm run dev -- --hostname 0.0.0.0 -p 3000"
+      sh -c "pnpm install --frozen-lockfile && pnpm exec prisma db push --accept-data-loss && pnpm run dev -- --hostname 0.0.0.0 -p 3000"
 
 volumes:
   gitpins_pgdata:

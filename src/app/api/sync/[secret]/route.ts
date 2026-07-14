@@ -21,7 +21,7 @@ import { checkRateLimit, rateLimits } from '@/lib/rate-limit'
 import { ensureValidToken, getUserRepos } from '@/lib/github'
 import type { Octokit } from 'octokit'
 
-// Configuración de timeout para Vercel Pro (800s máximo permitido)
+// Upper bound for long-running sync executions on hosted Next.js runtimes.
 export const maxDuration = 800
 const GITHUB_MUTATIONS_DISABLED = process.env.GITPINS_DISABLE_GITHUB_MUTATIONS === 'true'
 
@@ -157,7 +157,7 @@ export async function POST(
   }
 
   // Rate limiting per sync secret
-  const rateLimitResult = checkRateLimit(`sync:${secret}`, rateLimits.sync)
+  const rateLimitResult = await checkRateLimit(secret, rateLimits.sync)
   if (!rateLimitResult.success) {
     return NextResponse.json(
       { error: 'Too many requests. Please try again later.' },
@@ -256,29 +256,39 @@ export async function POST(
     }
     // ========== FIN VERIFICACIÓN DE HORA PREFERIDA ==========
 
-    // ========== LOCK: Evitar syncs concurrentes ==========
-    // Si hay un sync en los últimos 10 minutos, saltar
     const TEN_MINUTES = 10 * 60 * 1000
-    if (repoOrder.lastSyncAt) {
-      const timeSinceLastSync = Date.now() - repoOrder.lastSyncAt.getTime()
-      if (timeSinceLastSync < TEN_MINUTES) {
-        return NextResponse.json({
-          success: true,
-          message: 'Sync already in progress or completed recently. Skipping.',
-          skipped: true,
-          reason: 'recent_sync',
-          lastSyncAt: repoOrder.lastSyncAt.toISOString(),
-          waitMinutes: Math.ceil((TEN_MINUTES - timeSinceLastSync) / 60000),
-        })
-      }
-    }
-
-    // Marcar inicio de sync
-    await prisma.repoOrder.update({
-      where: { id: repoOrder.id },
+    const lockCutoff = new Date(Date.now() - TEN_MINUTES)
+    const lockResult = await prisma.repoOrder.updateMany({
+      where: {
+        id: repoOrder.id,
+        OR: [
+          { lastSyncAt: null },
+          { lastSyncAt: { lt: lockCutoff } },
+        ],
+      },
       data: { lastSyncAt: new Date() },
     })
-    // ========== FIN LOCK ==========
+
+    if (lockResult.count === 0) {
+      const latestState = await prisma.repoOrder.findUnique({
+        where: { id: repoOrder.id },
+        select: { lastSyncAt: true },
+      })
+
+      const lastSyncAt = latestState?.lastSyncAt ?? repoOrder.lastSyncAt
+      const waitMinutes = lastSyncAt
+        ? Math.max(Math.ceil((TEN_MINUTES - (Date.now() - lastSyncAt.getTime())) / 60000), 1)
+        : 10
+
+      return NextResponse.json({
+        success: true,
+        message: 'Sync already in progress or completed recently. Skipping.',
+        skipped: true,
+        reason: 'recent_sync',
+        lastSyncAt: lastSyncAt?.toISOString() ?? null,
+        waitMinutes,
+      })
+    }
 
     // Crear cliente con token de la GitHub App
     let octokit

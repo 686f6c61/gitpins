@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Rate limiting
-  const rateLimit = checkAPIRateLimit(request, session.userId)
+  const rateLimit = await checkAPIRateLimit(request, session.userId)
   if (!rateLimit.allowed) {
     return addSecurityHeaders(rateLimit.response!)
   }

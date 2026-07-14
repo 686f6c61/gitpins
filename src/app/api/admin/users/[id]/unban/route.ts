@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { authorizeAdminMutation, createAdminAuditLog } from '@/lib/admin'
+import { addNoStoreHeaders, addSecurityHeaders } from '@/lib/security'
 
 export async function POST(
   request: NextRequest,
@@ -31,9 +32,11 @@ export async function POST(
     })
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
+      return addSecurityHeaders(
+        addNoStoreHeaders(NextResponse.json(
+          { error: 'User not found' },
+          { status: 404 }
+        ))
       )
     }
 
@@ -58,19 +61,23 @@ export async function POST(
       },
     })
 
-    return NextResponse.json({
-      success: true,
-      user: {
-        id: updatedUser.id,
-        username: updatedUser.username,
-        isBanned: updatedUser.isBanned,
-      }
-    })
+    return addSecurityHeaders(
+      addNoStoreHeaders(NextResponse.json({
+        success: true,
+        user: {
+          id: updatedUser.id,
+          username: updatedUser.username,
+          isBanned: updatedUser.isBanned,
+        }
+      }))
+    )
   } catch (error) {
     console.error('Admin unban user error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+    return addSecurityHeaders(
+      addNoStoreHeaders(NextResponse.json(
+        { error: 'Internal server error' },
+        { status: 500 }
+      ))
     )
   }
 }

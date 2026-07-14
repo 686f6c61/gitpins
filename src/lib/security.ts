@@ -85,7 +85,33 @@ export function addSecurityHeaders(response: NextResponse): NextResponse {
   response.headers.set('X-Frame-Options', 'DENY')
   response.headers.set('X-XSS-Protection', '1; mode=block')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  response.headers.set(
+    'Permissions-Policy',
+    'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()'
+  )
+  response.headers.set('Cross-Origin-Opener-Policy', 'same-origin')
+  response.headers.set('Cross-Origin-Resource-Policy', 'same-origin')
   return response
+}
+
+export function addNoStoreHeaders(response: NextResponse): NextResponse {
+  response.headers.set('Cache-Control', 'no-store')
+  return response
+}
+
+function getClientAddress(request: NextRequest): string {
+  const forwarded = request.headers.get('x-forwarded-for')
+  if (forwarded) {
+    const first = forwarded.split(',')[0]?.trim()
+    if (first) return first
+  }
+
+  const realIp = request.headers.get('x-real-ip')
+  if (realIp) {
+    return realIp.trim()
+  }
+
+  return 'unknown'
 }
 
 /**
@@ -95,12 +121,30 @@ export function addSecurityHeaders(response: NextResponse): NextResponse {
  * @param userId - Optional user ID for authenticated requests
  * @returns Object with allowed status and optional rate limit response
  */
-export function checkAPIRateLimit(request: NextRequest, userId?: string): { allowed: boolean; response?: NextResponse } {
-  // Get IP from headers (works with proxies) or use unknown as fallback
-  const forwarded = request.headers.get('x-forwarded-for')
-  const ip = forwarded ? forwarded.split(',')[0].trim() : request.headers.get('x-real-ip') || 'unknown'
-  const identifier = userId || ip
-  const result = checkRateLimit(`api:${identifier}`, rateLimits.api)
+export async function checkAPIRateLimit(request: NextRequest, userId?: string): Promise<{ allowed: boolean; response?: NextResponse }> {
+  const identifier = userId || getClientAddress(request)
+  const result = await checkRateLimit(identifier, rateLimits.api)
+
+  if (!result.success) {
+    const response = NextResponse.json(
+      { error: 'Too many requests' },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(Math.ceil((result.resetTime - Date.now()) / 1000)),
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': String(result.resetTime),
+        },
+      }
+    )
+    return { allowed: false, response }
+  }
+
+  return { allowed: true }
+}
+
+export async function checkAuthRateLimit(request: NextRequest): Promise<{ allowed: boolean; response?: NextResponse }> {
+  const result = await checkRateLimit(getClientAddress(request), rateLimits.auth)
 
   if (!result.success) {
     const response = NextResponse.json(

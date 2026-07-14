@@ -14,6 +14,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthUrl } from '@/lib/github'
 import { generateOAuthState } from '@/lib/session'
 import { setSudoIntent } from '@/lib/sudo'
+import { addSecurityHeaders, checkAuthRateLimit } from '@/lib/security'
 
 /**
  * GET /api/auth/login
@@ -21,6 +22,11 @@ import { setSudoIntent } from '@/lib/sudo'
  * Optional query param: returnTo=/path (internal app path only)
  */
 export async function GET(request: NextRequest) {
+  const rateLimit = await checkAuthRateLimit(request)
+  if (!rateLimit.allowed) {
+    return addSecurityHeaders(rateLimit.response!)
+  }
+
   const returnTo = request.nextUrl.searchParams.get('returnTo') || undefined
   const sudo = request.nextUrl.searchParams.get('sudo')
   if (sudo === '1') {
@@ -29,5 +35,5 @@ export async function GET(request: NextRequest) {
   const state = await generateOAuthState(returnTo)
   const authUrl = getAuthUrl(state)
 
-  return NextResponse.redirect(authUrl)
+  return addSecurityHeaders(NextResponse.redirect(authUrl))
 }

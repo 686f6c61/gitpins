@@ -11,9 +11,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession } from '@/lib/session'
+import { getSession, verifyCSRFToken } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
-import { validateOrigin, checkAPIRateLimit, addSecurityHeaders } from '@/lib/security'
+import { validateOrigin, checkAPIRateLimit, addNoStoreHeaders, addSecurityHeaders } from '@/lib/security'
 
 /** Unified activity entry type */
 interface ActivityEntry {
@@ -40,6 +40,11 @@ export async function GET(request: NextRequest) {
     return addSecurityHeaders(
       NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     )
+  }
+
+  const rateLimit = await checkAPIRateLimit(request, session.userId)
+  if (!rateLimit.allowed) {
+    return addSecurityHeaders(rateLimit.response!)
   }
 
   try {
@@ -126,13 +131,13 @@ export async function GET(request: NextRequest) {
     const total = snapshotCount + syncLogCount
 
     return addSecurityHeaders(
-      NextResponse.json({
+      addNoStoreHeaders(NextResponse.json({
         entries: paginatedEntries,
         total,
         hasMore: offset + limit < total,
         limit,
         offset,
-      })
+      }))
     )
   } catch (error) {
     console.error('Error fetching activity:', error)
@@ -164,9 +169,16 @@ export async function POST(request: NextRequest) {
   }
 
   // Rate limiting
-  const rateLimit = checkAPIRateLimit(request, session.userId)
+  const rateLimit = await checkAPIRateLimit(request, session.userId)
   if (!rateLimit.allowed) {
     return addSecurityHeaders(rateLimit.response!)
+  }
+
+  const csrfToken = request.headers.get('X-CSRF-Token')
+  if (!csrfToken || !(await verifyCSRFToken(csrfToken))) {
+    return addSecurityHeaders(
+      NextResponse.json({ error: 'Forbidden', reason: 'csrf_failed' }, { status: 403 })
+    )
   }
 
   try {

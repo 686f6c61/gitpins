@@ -23,7 +23,7 @@
 import { createAppOctokit } from '@/lib/github-app'
 
 /**
- * Automatic cleanup using GitHub API only (works in serverless)
+ * Automatic cleanup using GitHub API only (no local git checkout required)
  * Strategy: Recreate commit history skipping GitPins commits
  */
 export async function cleanupRepoCommitsAutomatic(

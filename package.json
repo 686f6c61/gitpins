@@ -2,6 +2,11 @@
   "name": "gitpins",
   "version": "3.9.7",
   "private": true,
+  "packageManager": "pnpm@10.33.4",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=10.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
@@ -19,41 +24,48 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@octokit/auth-app": "^8.2.0",
-    "@prisma/adapter-pg": "^7.5.0",
-    "@prisma/client": "7.5.0",
-    "@sentry/nextjs": "^10.47.0",
-    "@vercel/speed-insights": "^1.3.1",
-    "dotenv": "^17.3.1",
-    "jose": "^6.2.2",
-    "libsodium-wrappers": "^0.8.2",
-    "next": "16.2.1",
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "7.8.0",
+    "@sentry/nextjs": "^10.65.0",
+    "jose": "^6.2.3",
+    "libsodium-wrappers": "^0.8.4",
+    "next": "16.2.10",
     "octokit": "^5.0.5",
-    "pg": "^8.20.0",
-    "prisma": "7.5.0",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "pg": "^8.22.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
   },
   "devDependencies": {
     "@jest/globals": "^30.3.0",
     "@tailwindcss/postcss": "^4.2.2",
     "@types/jest": "^30.0.0",
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.5.2",
     "@types/pg": "^8.20.0",
     "@types/react": "^19.2.14",
-    "@types/react-dom": "^19",
-    "baseline-browser-mapping": "^2.10.10",
+    "@types/react-dom": "^19.2.3",
+    "baseline-browser-mapping": "^2.10.16",
+    "dotenv": "^17.4.2",
     "eslint": "^9.39.4",
-    "eslint-config-next": "16.2.1",
+    "eslint-config-next": "16.2.10",
     "jest": "^30.3.0",
+    "prisma": "7.8.0",
     "tailwindcss": "^4.2.2",
-    "ts-jest": "^29.4.6",
+    "ts-jest": "^29.4.9",
     "tsx": "^4.21.0",
-    "typescript": "^5",
-    "vercel": "^50.35.0"
+    "typescript": "^5.9.3"
   },
   "overrides": {
-    "prisma": "7.5.0",
-    "@prisma/client": "7.5.0"
+    "prisma": "7.8.0",
+    "@prisma/client": "7.8.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@babel/core": "^7.29.6",
+      "@hono/node-server": "^1.19.13",
+      "fast-uri": "^3.1.2",
+      "postcss": "^8.5.10",
+      "glob@13.0.6>minimatch@10.2.5>brace-expansion": "^5.0.7"
+    }
   },
   "homepage": "https://gitpins.com"
 }

@@ -10,8 +10,8 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white)](https://nextjs.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Prisma](https://img.shields.io/badge/Prisma-7.1-2D3748?logo=prisma&logoColor=white)](https://www.prisma.io/)
-[![Vercel](https://img.shields.io/badge/Vercel-Deployed-black?logo=vercel&logoColor=white)](https://vercel.com/)
+[![Prisma](https://img.shields.io/badge/Prisma-7.8-2D3748?logo=prisma&logoColor=white)](https://www.prisma.io/)
+[![Deployment](https://img.shields.io/badge/Deployment-Coolify%20(Self--Hosted)-0f766e?logo=docker&logoColor=white)](#deployment-model)
 
 [Live Demo](https://gitpins.com) | [Documentation](#documentation) | [Self-Hosting](#self-hosting)
 
@@ -89,7 +89,7 @@ See `docs/ORDERING.md` for the detailed algorithm, including the minimal-prefix 
 GitPins is designed with security in mind:
 
 - **Minimal GitHub App Permissions** - only what is needed for temporary ref updates
-- **No File Changes** - GitPins creates commits that point to the existing tree
+- **No File Changes** - GitPins creates and deletes temporary refs that point to the existing `HEAD` commit
 - **Encrypted Tokens** - Access tokens are encrypted with AES-256-GCM
 - **Open Source** - full code transparency
 
@@ -100,7 +100,7 @@ GitPins is designed with security in mind:
 
 ### What GitPins CANNOT do:
 - Delete repositories
-- Modify tracked files (it uses the existing tree SHA)
+- Modify tracked files
 - Access other GitHub data (issues, PRs, etc.) unless you grant additional permissions
 
 > Cleanup warning: cleanup rewrites git history (force-updates the default branch). This can impact collaborators and forks. Treat it as a dangerous, opt-in operation.
@@ -113,18 +113,18 @@ GitPins is designed with security in mind:
 - **Auth**: GitHub OAuth (GitHub Apps)
 - **Styling**: Tailwind CSS 4
 - **Drag & Drop**: dnd-kit
-- **Deployment**: Vercel
+- **Deployment**: Self-hosted Docker via Coolify
 
 ## Documentation
 
 Maintainer docs (recommended starting points):
 - `docs/README.md` - documentation index and suggested reading order
-- `docs/LOCAL_DEV.md` - Docker Compose local dev + Neon clone
+- `docs/LOCAL_DEV.md` - Docker Compose local dev + production DB clone
 - `docs/ARCHITECTURE.md` - system overview and flows
 - `docs/SECURITY.md` - threat model, auth, CSRF, admin, sync secret
 - `docs/PRIVACY.md` - export + deletion model
 - `docs/ORDERING.md` - ordering algorithm details
-- `docs/DEPLOYMENT.md` - Vercel/Neon deployment and rollback guidance
+- `docs/DEPLOYMENT.md` - Coolify/self-hosted deployment and rollback guidance
 - `docs/ADMIN.md` - allowlist, sudo, audit model, bootstrap CLI
 - `docs/API.md` - maintainer API overview
 - `docs/MIGRATIONS.md` - Prisma migration notes for existing DBs
@@ -134,19 +134,21 @@ Maintainer docs (recommended starting points):
 
 ### Prerequisites
 
-- Node.js 20+ (recommended) or Docker
+- Node.js 22+ (recommended) or Docker
 - PostgreSQL database
 - GitHub App
 
-#### Recommended Database: Neon
+#### Deployment Model
 
-[Neon](https://neon.tech) offers a generous free tier perfect for GitPins:
-- **Free tier**: 0.5 GB storage, 190 compute hours/month
-- **Serverless**: Scales to zero when not in use
-- **Fast**: Optimized for serverless environments like Vercel
-- **Easy setup**: Create a database in seconds
+GitPins is portable, but the current reference production deployment is:
+- Coolify running on a self-hosted Contabo server
+- A Docker-built Next.js application
+- A PostgreSQL service managed inside the same Coolify environment
+- A user-owned external scheduler for automatic sync
 
-Other compatible options: Supabase, PlanetScale, Railway, or any PostgreSQL provider.
+Compatible database options:
+- Self-hosted PostgreSQL
+- Managed PostgreSQL providers such as Supabase, Railway, Render, or any standard PostgreSQL host
 
 ### 1. Create a GitHub App
 
@@ -172,7 +174,7 @@ Go to [GitHub Developer Settings](https://github.com/settings/apps/new) and crea
 | Webhook URL | Leave empty |
 | Webhook Active | ❌ Unchecked |
 
-If you run `npm run dev` directly (no Docker), use `http://localhost:3000` instead of `3001`.
+If you run `pnpm run dev` directly (no Docker), use `http://localhost:3000` instead of `3001`.
 
 #### Required Permissions
 
@@ -200,7 +202,7 @@ In the OAuth section of your GitHub App:
 ```bash
 git clone https://github.com/686f6c61/gitpins.git
 cd gitpins
-npm install
+pnpm install --frozen-lockfile
 ```
 
 ### 3. Configure Environment
@@ -226,18 +228,18 @@ ENCRYPTION_SECRET="generate_with_openssl_rand_base64_32"
 ### 4. Setup Database
 
 ```bash
-npx prisma db push
+pnpm exec prisma db push
 ```
 
 ### 5. Run
 
 ```bash
 # Development
-npm run dev
+pnpm run dev
 
 # Production
-npm run build
-npm start
+pnpm run build
+pnpm start
 ```
 
 ### Local Development Tips
@@ -257,27 +259,40 @@ cp .env.docker.example .env.docker
 docker compose up -d
 ```
 
+If you already have PostgreSQL listening on `localhost:5432`, run Docker on another host port:
+
+```bash
+GITPINS_DB_PORT=5433 docker compose up -d
+```
+
 Services:
 - App: `http://localhost:3001`
-- Postgres: `localhost:5432`
+- Postgres: `localhost:5432` by default, or `localhost:5433` if `GITPINS_DB_PORT=5433`
 
 By default, local Docker runs with:
 - `GITPINS_DISABLE_GITHUB_MUTATIONS=true` (safe mode: no GitHub write operations)
 
-### One-shot Clone: Neon -> Local Postgres
+### One-shot Clone: Production DB -> Local Postgres
 
 ```bash
 # 1) Start only the DB
 docker compose up -d db
 
 # 2) Clone production data to local
-SOURCE_DB_URL='postgresql://...' ./scripts/clone-neon-to-local.sh
+SOURCE_DB_URL='postgresql://...' ./scripts/clone-production-db-to-local.sh
+```
+
+If Docker Postgres is exposed on another host port:
+
+```bash
+GITPINS_DB_PORT=5433 SOURCE_DB_URL='postgresql://...' ./scripts/clone-production-db-to-local.sh
 ```
 
 Notes:
-- The script does not hardcode Neon credentials.
+- The script does not hardcode production credentials.
 - It writes a temporary dump to `/tmp` and removes it after restore.
 - Use this only in secure local environments because data is cloned with full fidelity.
+- A cloned or `db push`-managed database is expected to fail under `prisma migrate deploy` with `P3005` until you baseline `_prisma_migrations`. For local development, use `pnpm exec prisma db push`.
 
 #### Required OAuth Scopes
 
@@ -324,14 +339,21 @@ You must set:
 | Scheduled sync not running | Check the scheduler logs. If you use GitHub Actions, inspect the workflow logs in the repo that hosts it |
 | Repos not syncing | Verify the GitHub App is installed on those repos |
 
-## Deploy to Vercel
+## Deployment Model
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2F686f6c61%2Fgitpins)
+GitPins ships as a normal Next.js app and can run anywhere you can provide:
+1. A Docker-capable host or platform
+2. A PostgreSQL database
+3. HTTPS with a stable canonical domain
+4. A GitHub App configured for that domain
 
-1. Click the button above
-2. Add a PostgreSQL database (Neon recommended)
-3. Configure environment variables
-4. Deploy!
+The reference production setup today is:
+1. Coolify as the deployment orchestrator
+2. A self-hosted Contabo server
+3. PostgreSQL attached inside the same Coolify project
+4. External scheduled sync calls to `POST /api/sync`
+
+If you want the exact operator workflow, see `docs/DEPLOYMENT.md`.
 
 ## Admin Dashboard
 
@@ -340,7 +362,7 @@ GitPins includes an admin dashboard for managing users and viewing statistics.
 ### Accessing the Admin Panel
 
 1. **Grant admin access in the allowlist** (`admin_accounts` table).
-   Use `npm run admin:access -- grant --github-id <id>` or insert directly in DB.
+   Use `pnpm run admin:access -- grant --github-id <id>` or insert directly in DB.
 2. **Log in with the granted account.**
 3. **Access the dashboard:**
    Navigate to `/admin` after logging in with the admin account.

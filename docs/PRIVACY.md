@@ -135,11 +135,10 @@ If you clone a production database into a local Postgres instance:
 4. Prefer working in an isolated machine/account.
 
 Script reference:
-1. `scripts/clone-neon-to-local.sh`
+1. `scripts/clone-production-db-to-local.sh`
 
 ## Suggested Future Improvements
 
 1. Add a scheduled job to purge `privacy_events` older than a defined retention window (policy decision).
 2. Add an explicit "privacy retention" policy to the public website and README.
 3. Add an admin export of aggregated privacy events for incident response (careful with privacy).
-

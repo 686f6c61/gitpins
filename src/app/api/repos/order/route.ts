@@ -11,7 +11,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession } from '@/lib/session'
+import { getSession, verifyCSRFToken } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { validateOrigin, checkAPIRateLimit, isValidRepoFullName, addSecurityHeaders } from '@/lib/security'
 
@@ -37,9 +37,16 @@ export async function POST(request: NextRequest) {
   }
 
   // Rate limiting
-  const rateLimit = checkAPIRateLimit(request, session.userId)
+  const rateLimit = await checkAPIRateLimit(request, session.userId)
   if (!rateLimit.allowed) {
     return addSecurityHeaders(rateLimit.response!)
+  }
+
+  const csrfToken = request.headers.get('X-CSRF-Token')
+  if (!csrfToken || !(await verifyCSRFToken(csrfToken))) {
+    return addSecurityHeaders(
+      NextResponse.json({ error: 'Forbidden', reason: 'csrf_failed' }, { status: 403 })
+    )
   }
 
   try {

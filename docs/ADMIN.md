@@ -71,9 +71,9 @@ Deletion semantics:
 GitPins includes:
 
 ```bash
-npm run admin:access -- list
-npm run admin:access -- grant --github-id 6115107 --reason "Initial bootstrap"
-npm run admin:access -- revoke --github-id 6115107 --reason "Access removed"
+pnpm run admin:access -- list
+pnpm run admin:access -- grant --github-id 6115107 --reason "Initial bootstrap"
+pnpm run admin:access -- revoke --github-id 6115107 --reason "Access removed"
 ```
 
 File:

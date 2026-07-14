@@ -68,8 +68,8 @@ Check:
 3. The user logged in with the same GitHub account that was allowlisted.
 
 Fix:
-1. `npm run admin:access -- list`
-2. `npm run admin:access -- grant --github-id <id>`
+1. `pnpm run admin:access -- list`
+2. `pnpm run admin:access -- grant --github-id <id>`
 
 ## Admin Action Returns `reauth_required`
 
@@ -122,6 +122,36 @@ Reason:
 Fix:
 1. Replace `@db:` with `@localhost:` when connecting from the host machine.
 
+## `localhost:5432` Hits the Wrong PostgreSQL
+
+### Symptom
+
+`docker compose` reports the GitPins DB as healthy, but host-side `psql` or Prisma talks to a different cluster.
+
+Reason:
+1. A local PostgreSQL service is already bound to `127.0.0.1:5432`.
+2. Docker can still expose the container, but host tools may resolve to the host server instead of the GitPins container.
+
+Fix:
+1. Start GitPins DB on another host port: `GITPINS_DB_PORT=5433 docker compose up -d db`
+2. Use the same port for cloning: `GITPINS_DB_PORT=5433 SOURCE_DB_URL='postgresql://...' ./scripts/clone-production-db-to-local.sh`
+3. Or stop the local PostgreSQL service that owns `127.0.0.1:5432`
+
+## `prisma migrate deploy` Returns `P3005`
+
+### Symptom
+
+Prisma says the database schema is not empty.
+
+Meaning:
+1. The database was created by `prisma db push` or restored from a dump.
+2. It has schema objects but no `_prisma_migrations` baseline history.
+
+Fix:
+1. For local development, use `pnpm exec prisma db push`
+2. For existing production-style databases, apply the SQL files in `prisma/migrations/` manually
+3. Only adopt `prisma migrate deploy` after creating and resolving a proper baseline
+
 ## SonarQube Shows Old Findings
 
 ### Symptom
@@ -132,3 +162,18 @@ Check:
 1. A fresh scan has been run.
 2. The local SonarQube CE task completed successfully.
 3. You are looking at the latest analysis for the correct project key.
+
+## `Failed to find Server Action` After Deploy
+
+### Symptom
+
+Users see `Failed to find Server Action` errors shortly after a deployment.
+
+Meaning:
+1. The browser still holds action identifiers from a previous Next.js build.
+2. The server is already serving a newer build, so those action IDs no longer exist.
+
+Fix:
+1. Hard refresh the page.
+2. Close stale tabs and reopen the app.
+3. If the problem persists for all users, confirm only one active app version is serving traffic and verify the latest deployment completed cleanly.

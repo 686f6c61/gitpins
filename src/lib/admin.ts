@@ -31,6 +31,20 @@ interface AdminTarget {
 type AdminLogWriter = Pick<typeof prisma, 'adminLog'>
 type AdminMutationAuthorization = { session: Session } | { response: Response }
 
+function adminResponseHeaders(): Record<string, string> {
+  return {
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-store',
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'X-XSS-Protection': '1; mode=block',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()',
+    'Cross-Origin-Opener-Policy': 'same-origin',
+    'Cross-Origin-Resource-Policy': 'same-origin',
+  }
+}
+
 /**
  * Verifies if the current session belongs to an admin user.
  * @returns true if user is admin, false otherwise
@@ -83,7 +97,7 @@ export async function getAdminSession(): Promise<Session | null> {
 export function forbiddenResponse(): Response {
   return new Response(
     JSON.stringify({ error: 'Forbidden', message: 'Admin access required' }),
-    { status: 403, headers: { 'Content-Type': 'application/json' } }
+    { status: 403, headers: adminResponseHeaders() }
   )
 }
 
@@ -93,7 +107,7 @@ export function forbiddenResponse(): Response {
 export function unauthorizedResponse(): Response {
   return new Response(
     JSON.stringify({ error: 'Unauthorized', message: 'Authentication required' }),
-    { status: 401, headers: { 'Content-Type': 'application/json' } }
+    { status: 401, headers: adminResponseHeaders() }
   )
 }
 
@@ -106,7 +120,7 @@ export function rateLimitResponse(resetTime: number): Response {
     {
       status: 429,
       headers: {
-        'Content-Type': 'application/json',
+        ...adminResponseHeaders(),
         'Retry-After': String(Math.ceil((resetTime - Date.now()) / 1000)),
         'X-RateLimit-Remaining': '0',
         'X-RateLimit-Reset': String(resetTime),
@@ -120,8 +134,8 @@ export function rateLimitResponse(resetTime: number): Response {
  * @param adminId - Admin user ID for rate limiting
  * @returns Object with allowed status and optional response
  */
-export function checkAdminRateLimit(adminId: string): { allowed: boolean; response?: Response } {
-  const result = checkRateLimit(`admin:${adminId}`, rateLimits.admin)
+export async function checkAdminRateLimit(adminId: string): Promise<{ allowed: boolean; response?: Response }> {
+  const result = await checkRateLimit(adminId, rateLimits.admin)
   if (!result.success) {
     return { allowed: false, response: rateLimitResponse(result.resetTime) }
   }
@@ -134,7 +148,7 @@ export function checkAdminRateLimit(adminId: string): { allowed: boolean; respon
 export function csrfFailedResponse(): Response {
   return new Response(
     JSON.stringify({ error: 'Forbidden', message: 'CSRF validation failed' }),
-    { status: 403, headers: { 'Content-Type': 'application/json' } }
+    { status: 403, headers: adminResponseHeaders() }
   )
 }
 
@@ -144,7 +158,7 @@ export function csrfFailedResponse(): Response {
 export function invalidRequestResponse(): Response {
   return new Response(
     JSON.stringify({ error: 'Forbidden', message: 'Invalid request origin' }),
-    { status: 403, headers: { 'Content-Type': 'application/json' } }
+    { status: 403, headers: adminResponseHeaders() }
   )
 }
 
@@ -158,7 +172,7 @@ export function adminReauthRequiredResponse(): Response {
       message: 'Recent reauthentication required',
       reason: 'reauth_required',
     }),
-    { status: 403, headers: { 'Content-Type': 'application/json' } }
+    { status: 403, headers: adminResponseHeaders() }
   )
 }
 
@@ -203,7 +217,7 @@ export async function authorizeAdminMutation(
     return { response: csrfFailedResponse() }
   }
 
-  const rateLimit = checkAdminRateLimit(session.userId)
+  const rateLimit = await checkAdminRateLimit(session.userId)
   if (!rateLimit.allowed) {
     return { response: rateLimit.response! }
   }

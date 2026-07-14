@@ -4,7 +4,7 @@ import {
   authorizeAdminMutation,
   createAdminAuditLog,
 } from '@/lib/admin'
-import { sanitizePlainText } from '@/lib/security'
+import { addNoStoreHeaders, addSecurityHeaders, sanitizePlainText } from '@/lib/security'
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,11 +20,15 @@ export async function POST(request: NextRequest) {
 
     const githubId = typeof githubIdRaw === 'number' ? githubIdRaw : Number(githubIdRaw)
     if (!Number.isInteger(githubId) || githubId <= 0) {
-      return NextResponse.json({ error: 'Invalid githubId' }, { status: 400 })
+      return addSecurityHeaders(
+        addNoStoreHeaders(NextResponse.json({ error: 'Invalid githubId' }, { status: 400 }))
+      )
     }
 
     if (githubId === session.githubId) {
-      return NextResponse.json({ error: 'Cannot revoke your own admin access' }, { status: 400 })
+      return addSecurityHeaders(
+        addNoStoreHeaders(NextResponse.json({ error: 'Cannot revoke your own admin access' }, { status: 400 }))
+      )
     }
 
     const adminAccount = await prisma.adminAccount.findUnique({
@@ -44,7 +48,9 @@ export async function POST(request: NextRequest) {
     })
 
     if (!adminAccount) {
-      return NextResponse.json({ error: 'Admin account not found' }, { status: 404 })
+      return addSecurityHeaders(
+        addNoStoreHeaders(NextResponse.json({ error: 'Admin account not found' }, { status: 404 }))
+      )
     }
 
     const reason = typeof reasonRaw === 'string' && sanitizePlainText(reasonRaw, 500)
@@ -73,9 +79,13 @@ export async function POST(request: NextRequest) {
       return updated
     })
 
-    return NextResponse.json({ success: true, admin: revoked })
+    return addSecurityHeaders(
+      addNoStoreHeaders(NextResponse.json({ success: true, admin: revoked }))
+    )
   } catch (error) {
     console.error('Admin revoke error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return addSecurityHeaders(
+      addNoStoreHeaders(NextResponse.json({ error: 'Internal server error' }, { status: 500 }))
+    )
   }
 }

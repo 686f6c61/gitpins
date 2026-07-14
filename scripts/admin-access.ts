@@ -28,7 +28,7 @@ function getCommand(): Command {
   if (command === 'grant' || command === 'revoke' || command === 'list') {
     return command
   }
-  throw new Error('Usage: npm run admin:access -- <grant|revoke|list> [--github-id <id>] [--reason <text>]')
+  throw new Error('Usage: pnpm run admin:access -- <grant|revoke|list> [--github-id <id>] [--reason <text>]')
 }
 
 async function listAdmins(): Promise<void> {

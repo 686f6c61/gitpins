@@ -15,8 +15,8 @@ If you are new to the project:
 2. `ORDERING.md` - how GitPins actually changes repository recency and why.
 3. `SECURITY.md` - authentication, authorization, CSRF, secrets, and operational risk.
 4. `PRIVACY.md` - data model, exports, deletion, and retention.
-5. `LOCAL_DEV.md` - Docker-based local setup and Neon clone workflow.
-6. `DEPLOYMENT.md` - Vercel/Neon deployment model and production checklist.
+5. `LOCAL_DEV.md` - Docker-based local setup and production DB clone workflow.
+6. `DEPLOYMENT.md` - Coolify/self-hosted deployment model and production checklist.
 7. `ADMIN.md` - allowlist model, admin bootstrap, sudo mode, and audit trail.
 8. `API.md` - API surface grouped by auth, repos, sync, admin, and privacy.
 9. `MIGRATIONS.md` - how schema changes are applied safely on existing databases.
@@ -73,8 +73,8 @@ Admin mutations are protected by:
 - `ORDERING.md`: ordering algorithm, minimal-prefix optimization, single-pass behavior.
 - `SECURITY.md`: auth, tokens, sync secret, admin hardening, known limitations.
 - `PRIVACY.md`: exports, deletion, audit records, stored data.
-- `LOCAL_DEV.md`: Docker setup, localhost GitHub App, Neon clone.
-- `DEPLOYMENT.md`: Vercel/Neon deployment and rollback guidance.
+- `LOCAL_DEV.md`: Docker setup, localhost GitHub App, production DB clone.
+- `DEPLOYMENT.md`: Coolify/self-hosted deployment and rollback guidance.
 - `ADMIN.md`: admin operations, recovery, audit semantics.
 - `API.md`: HTTP contract summary for maintainers.
 - `MIGRATIONS.md`: applying SQL migrations to existing databases.

@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { authorizeAdminMutation, createAdminAuditLog } from '@/lib/admin'
+import { addNoStoreHeaders, addSecurityHeaders } from '@/lib/security'
 
 export async function DELETE(
   request: NextRequest,
@@ -31,17 +32,21 @@ export async function DELETE(
     })
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
+      return addSecurityHeaders(
+        addNoStoreHeaders(NextResponse.json(
+          { error: 'User not found' },
+          { status: 404 }
+        ))
       )
     }
 
     // Prevent deleting yourself
     if (user.githubId === session.githubId) {
-      return NextResponse.json(
-        { error: 'Cannot delete admin user' },
-        { status: 400 }
+      return addSecurityHeaders(
+        addNoStoreHeaders(NextResponse.json(
+          { error: 'Cannot delete admin user' },
+          { status: 400 }
+        ))
       )
     }
 
@@ -53,9 +58,11 @@ export async function DELETE(
       select: { id: true },
     })
     if (activeAdmin) {
-      return NextResponse.json(
-        { error: 'Cannot delete an active admin account' },
-        { status: 400 }
+      return addSecurityHeaders(
+        addNoStoreHeaders(NextResponse.json(
+          { error: 'Cannot delete an active admin account' },
+          { status: 400 }
+        ))
       )
     }
 
@@ -76,15 +83,19 @@ export async function DELETE(
       where: { id }
     })
 
-    return NextResponse.json({
-      success: true,
-      message: `User ${user.username} deleted successfully`
-    })
+    return addSecurityHeaders(
+      addNoStoreHeaders(NextResponse.json({
+        success: true,
+        message: `User ${user.username} deleted successfully`
+      }))
+    )
   } catch (error) {
     console.error('Admin delete user error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+    return addSecurityHeaders(
+      addNoStoreHeaders(NextResponse.json(
+        { error: 'Internal server error' },
+        { status: 500 }
+      ))
     )
   }
 }

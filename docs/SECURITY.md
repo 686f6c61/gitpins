@@ -171,7 +171,7 @@ Design:
 GitPins should request only what it needs.
 
 Required in practice for temporary-ref touch:
-1. Repository contents read/write (to create commits).
+1. Repository contents read/write (to create and delete temporary refs).
 2. Repository metadata read (to list repos and read default branch).
 
 Non-goals:
@@ -194,4 +194,4 @@ If you keep the cleanup feature, documentation and UI should always describe it 
 3. Ensure `NEXT_PUBLIC_APP_URL` matches the deployed origin exactly.
 4. Run behind HTTPS in production.
 5. Enable database backups and access controls.
-6. Consider replacing in-memory rate limiting with Redis.
+6. Verify the database-backed rate limiting table exists in production before deploying code that depends on it.

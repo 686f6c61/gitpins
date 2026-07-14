@@ -12,6 +12,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyAdmin, forbiddenResponse, unauthorizedResponse, checkAdminRateLimit } from '@/lib/admin'
 import { getSession } from '@/lib/session'
+import { addNoStoreHeaders, addSecurityHeaders } from '@/lib/security'
 
 export async function GET() {
   try {
@@ -28,7 +29,7 @@ export async function GET() {
     }
 
     // Rate limiting for admin
-    const rateLimit = checkAdminRateLimit(session.userId)
+    const rateLimit = await checkAdminRateLimit(session.userId)
     if (!rateLimit.allowed) {
       return rateLimit.response!
     }
@@ -104,32 +105,36 @@ export async function GET() {
       where: { createdAt: { gte: weekAgo } }
     })
 
-    return NextResponse.json({
-      totals: {
-        users: totalUsers,
-        activeUsers,
-        bannedUsers,
-        configRepos,
-        syncs: totalSyncs,
-        syncsToday,
-        syncsThisWeek,
-      },
-      charts: {
-        usersPerDay: Object.entries(usersByDay).map(([date, count]) => ({
-          date,
-          count
-        })),
-        syncsPerDay: Object.entries(syncsByDay).map(([date, count]) => ({
-          date,
-          count
-        })),
-      }
-    })
+    return addSecurityHeaders(
+      addNoStoreHeaders(NextResponse.json({
+        totals: {
+          users: totalUsers,
+          activeUsers,
+          bannedUsers,
+          configRepos,
+          syncs: totalSyncs,
+          syncsToday,
+          syncsThisWeek,
+        },
+        charts: {
+          usersPerDay: Object.entries(usersByDay).map(([date, count]) => ({
+            date,
+            count
+          })),
+          syncsPerDay: Object.entries(syncsByDay).map(([date, count]) => ({
+            date,
+            count
+          })),
+        }
+      }))
+    )
   } catch (error) {
     console.error('Admin stats error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+    return addSecurityHeaders(
+      addNoStoreHeaders(NextResponse.json(
+        { error: 'Internal server error' },
+        { status: 500 }
+      ))
     )
   }
 }

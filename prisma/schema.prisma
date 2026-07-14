@@ -214,3 +214,17 @@ model AccountDeletionAudit {
   @@index([subjectHash, requestedAt])
   @@map("account_deletion_audits")
 }
+
+model RateLimitBucket {
+  scope       String
+  identifier  String
+  windowStart DateTime
+  expiresAt   DateTime
+  count       Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@id([scope, identifier, windowStart])
+  @@index([expiresAt])
+  @@map("rate_limit_buckets")
+}

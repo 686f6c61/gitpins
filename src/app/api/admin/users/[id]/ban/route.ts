@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { authorizeAdminMutation, createAdminAuditLog } from '@/lib/admin'
-import { sanitizePlainText } from '@/lib/security'
+import { addNoStoreHeaders, addSecurityHeaders, sanitizePlainText } from '@/lib/security'
 
 export async function POST(
   request: NextRequest,
@@ -39,17 +39,21 @@ export async function POST(
     })
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
+      return addSecurityHeaders(
+        addNoStoreHeaders(NextResponse.json(
+          { error: 'User not found' },
+          { status: 404 }
+        ))
       )
     }
 
     // Prevent banning yourself
     if (user.githubId === session.githubId) {
-      return NextResponse.json(
-        { error: 'Cannot ban admin user' },
-        { status: 400 }
+      return addSecurityHeaders(
+        addNoStoreHeaders(NextResponse.json(
+          { error: 'Cannot ban admin user' },
+          { status: 400 }
+        ))
       )
     }
 
@@ -61,9 +65,11 @@ export async function POST(
       select: { id: true },
     })
     if (activeAdmin) {
-      return NextResponse.json(
-        { error: 'Cannot ban an active admin account' },
-        { status: 400 }
+      return addSecurityHeaders(
+        addNoStoreHeaders(NextResponse.json(
+          { error: 'Cannot ban an active admin account' },
+          { status: 400 }
+        ))
       )
     }
 
@@ -89,21 +95,25 @@ export async function POST(
       reason,
     })
 
-    return NextResponse.json({
-      success: true,
-      user: {
-        id: updatedUser.id,
-        username: updatedUser.username,
-        isBanned: updatedUser.isBanned,
-        bannedAt: updatedUser.bannedAt,
-        bannedReason: updatedUser.bannedReason,
-      }
-    })
+    return addSecurityHeaders(
+      addNoStoreHeaders(NextResponse.json({
+        success: true,
+        user: {
+          id: updatedUser.id,
+          username: updatedUser.username,
+          isBanned: updatedUser.isBanned,
+          bannedAt: updatedUser.bannedAt,
+          bannedReason: updatedUser.bannedReason,
+        }
+      }))
+    )
   } catch (error) {
     console.error('Admin ban user error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+    return addSecurityHeaders(
+      addNoStoreHeaders(NextResponse.json(
+        { error: 'Internal server error' },
+        { status: 500 }
+      ))
     )
   }
 }

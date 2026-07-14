@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     return addSecurityHeaders(NextResponse.json({ error: 'CSRF validation failed' }, { status: 403 }))
   }
 
-  const rateLimit = checkAPIRateLimit(request, session.userId)
+  const rateLimit = await checkAPIRateLimit(request, session.userId)
   if (!rateLimit.allowed) {
     return addSecurityHeaders(rateLimit.response!)
   }

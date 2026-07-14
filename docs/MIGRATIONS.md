@@ -17,7 +17,7 @@ This document explains what exists today and how to apply changes safely.
 ### Local Development
 
 Use:
-1. `npx prisma db push`
+1. `pnpm exec prisma db push`
 
 Reason:
 1. It creates/updates the schema quickly and avoids baseline issues.
@@ -52,6 +52,8 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260211223002_m2_r
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260211223003_m3_sync_secret_unique/migration.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260211223004_m4_drop_legacy_tokens/migration.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260212001000_m5_privacy_audit_and_exports/migration.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260323205246_m6_admin_hardening/migration.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/20260714193000_m7_rate_limit_buckets/migration.sql
 ```
 
 Notes:
@@ -66,4 +68,3 @@ If you want to fully adopt Prisma Migrate:
 3. Mark already-applied migrations as applied (`prisma migrate resolve`) if needed.
 
 This requires careful planning because a database created by `db push` has no migration history.
-
